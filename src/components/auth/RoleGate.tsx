@@ -111,24 +111,11 @@ const RoleGate: React.FC<RoleGateProps> = ({
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   
-  // Debug logging (temporary)
-  useEffect(() => {
-    console.log('[RoleGate] State:', {
-      authReady,
-      userId: user?.id?.slice(0, 8),
-      role,
-      roleLoading,
-      roleError,
-      requiredRole,
-      path: window.location.pathname
-    });
-  }, [authReady, user?.id, role, roleLoading, roleError, requiredRole]);
 
   // Timeout failsafe
   useEffect(() => {
     if (roleLoading && !timedOut) {
       timeoutRef.current = setTimeout(() => {
-        console.warn('[RoleGate] Role loading timed out');
         setTimedOut(true);
       }, ROLE_LOADING_TIMEOUT);
     }
