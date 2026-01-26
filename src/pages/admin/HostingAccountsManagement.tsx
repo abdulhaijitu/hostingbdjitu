@@ -3,7 +3,7 @@ import {
   Server, Search, RefreshCw, Ban, CheckCircle, Trash2, 
   Eye, HardDrive, Mail, Database, Globe, User
 } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -178,15 +178,14 @@ const HostingAccountsManagement: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'হোস্টিং অ্যাকাউন্ট ম্যানেজমেন্ট' : 'Hosting Accounts Management'}
         description="Manage all hosting accounts"
         canonicalUrl="/admin/hosting-accounts"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold font-display flex items-center gap-3">
@@ -376,8 +375,6 @@ const HostingAccountsManagement: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* Suspend Dialog */}
       <Dialog open={showSuspendDialog} onOpenChange={setShowSuspendDialog}>
@@ -438,7 +435,8 @@ const HostingAccountsManagement: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -4,7 +4,7 @@ import {
   ArrowLeft, Package, Calendar, User, CreditCard, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -120,15 +120,14 @@ const OrdersManagement: React.FC = () => {
   const totalRevenue = orders?.reduce((sum, o) => sum + Number(o.amount), 0) || 0;
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'অর্ডার ম্যানেজমেন্ট' : 'Order Management'}
         description="Manage orders"
         canonicalUrl="/admin/orders"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -398,8 +397,8 @@ const OrdersManagement: React.FC = () => {
             </DialogContent>
           </Dialog>
         </div>
-      </section>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

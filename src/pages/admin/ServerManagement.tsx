@@ -3,7 +3,7 @@ import {
   Server, Plus, RefreshCw, Edit2, Trash2, Globe, 
   CheckCircle, XCircle, Loader2, Activity, HardDrive
 } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -176,15 +176,14 @@ const ServerManagement: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'সার্ভার ম্যানেজমেন্ট' : 'Server Management'}
         description="Manage WHM/cPanel servers"
         canonicalUrl="/admin/servers"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -355,8 +354,6 @@ const ServerManagement: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* Create Server Dialog */}
       <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
@@ -559,7 +556,8 @@ const ServerManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

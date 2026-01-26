@@ -9,7 +9,7 @@ import {
   Package, Users, Calendar, ArrowLeft, UserCheck, UserX, Heart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -220,15 +220,14 @@ const AnalyticsDashboard: React.FC = () => {
   }, [payments]);
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'অ্যানালিটিক্স' : 'Analytics'}
         description="Sales and order analytics dashboard"
         canonicalUrl="/admin/analytics"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -691,10 +690,9 @@ const AnalyticsDashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
         </div>
-      </section>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

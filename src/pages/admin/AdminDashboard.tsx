@@ -1,15 +1,12 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
-  LayoutDashboard, Users, Package, CreditCard, Globe, Server, 
-  FileText, Settings, LogOut, TrendingUp, DollarSign, ShoppingCart,
-  Webhook, MessageSquare, BarChart3, ListTodo, Link2, HardDrive
+  LayoutDashboard, TrendingUp, DollarSign, ShoppingCart,
+  Package, Server, Users, MessageSquare, BarChart3
 } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
-import { Button } from '@/components/ui/button';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
 import { useOrders } from '@/hooks/useOrders';
 import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
@@ -18,15 +15,8 @@ import { NotificationBell } from '@/components/client-dashboard/NotificationSyst
 
 const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
-  const { user, signOut } = useAuth();
-  const navigate = useNavigate();
   const { data: orders, isLoading: ordersLoading } = useOrders();
   const { data: payments, isLoading: paymentsLoading } = usePayments();
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-  };
 
   // Calculate stats
   const totalRevenue = payments?.filter(p => p.status === 'completed').reduce((sum, p) => sum + Number(p.amount), 0) || 0;
@@ -34,50 +24,37 @@ const AdminDashboard: React.FC = () => {
   const completedOrders = orders?.filter(o => o.status === 'completed').length || 0;
   const totalOrders = orders?.length || 0;
 
-  const adminLinks = [
-    { icon: BarChart3, label: language === 'bn' ? 'অ্যানালিটিক্স' : 'Analytics', href: '/admin/analytics', highlight: true },
-    { icon: Server, label: language === 'bn' ? 'সার্ভার ম্যানেজমেন্ট' : 'Server Management', href: '/admin/servers' },
-    { icon: HardDrive, label: language === 'bn' ? 'হোস্টিং অ্যাকাউন্ট' : 'Hosting Accounts', href: '/admin/hosting-accounts' },
-    { icon: ListTodo, label: language === 'bn' ? 'প্রভিশনিং কিউ' : 'Provisioning Queue', href: '/admin/provisioning' },
-    { icon: Link2, label: language === 'bn' ? 'প্যাকেজ ম্যাপিং' : 'Package Mapping', href: '/admin/package-mapping' },
-    { icon: Package, label: language === 'bn' ? 'হোস্টিং প্ল্যান' : 'Hosting Plans', href: '/admin/hosting-plans' },
-    { icon: Globe, label: language === 'bn' ? 'ডোমেইন প্রাইসিং' : 'Domain Pricing', href: '/admin/domain-pricing' },
-    { icon: ShoppingCart, label: language === 'bn' ? 'অর্ডার' : 'Orders', href: '/admin/orders' },
-    { icon: CreditCard, label: language === 'bn' ? 'পেমেন্ট' : 'Payments', href: '/admin/payments' },
-    { icon: MessageSquare, label: language === 'bn' ? 'সাপোর্ট টিকেট' : 'Support Tickets', href: '/admin/tickets' },
-    { icon: Users, label: language === 'bn' ? 'ইউজার' : 'Users', href: '/admin/users' },
-    { icon: Webhook, label: language === 'bn' ? 'ওয়েবহুক লগ' : 'Webhook Logs', href: '/admin/webhooks' },
+  // Quick access cards for dashboard home
+  const quickAccessCards = [
+    { icon: BarChart3, label: language === 'bn' ? 'অ্যানালিটিক্স' : 'Analytics', href: '/admin/analytics', color: 'from-violet-500/10 to-purple-500/10 border-violet-500/20' },
+    { icon: Server, label: language === 'bn' ? 'সার্ভার' : 'Servers', href: '/admin/servers', color: 'from-blue-500/10 to-cyan-500/10 border-blue-500/20' },
+    { icon: Users, label: language === 'bn' ? 'ইউজার' : 'Users', href: '/admin/users', color: 'from-emerald-500/10 to-green-500/10 border-emerald-500/20' },
+    { icon: MessageSquare, label: language === 'bn' ? 'সাপোর্ট' : 'Support', href: '/admin/tickets', color: 'from-orange-500/10 to-amber-500/10 border-orange-500/20' },
   ];
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'অ্যাডমিন ড্যাশবোর্ড' : 'Admin Dashboard'}
         description="Admin dashboard for CHost"
         canonicalUrl="/admin"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-3xl font-bold font-display flex items-center gap-3">
-                <LayoutDashboard className="h-8 w-8 text-primary" />
-                {language === 'bn' ? 'অ্যাডমিন ড্যাশবোর্ড' : 'Admin Dashboard'}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {language === 'bn' ? 'সাইট পরিচালনা করুন' : 'Manage your site'}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <NotificationBell />
-              <Button variant="outline" onClick={handleSignOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                {language === 'bn' ? 'লগআউট' : 'Logout'}
-              </Button>
-            </div>
+      <div className="p-6 lg:p-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-2xl lg:text-3xl font-bold font-display flex items-center gap-3">
+              {language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {language === 'bn' ? 'আপনার সাইট ওভারভিউ' : 'Your site overview'}
+            </p>
           </div>
+          <div className="flex items-center gap-3">
+            <NotificationBell />
+          </div>
+        </div>
 
           {/* Stats Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -146,31 +123,24 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </div>
 
-          {/* Admin Links Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-            {adminLinks.map((link) => (
-              <Card 
-                key={link.href} 
-                className={`hover:border-primary/50 transition-colors cursor-pointer ${
-                  (link as any).highlight ? 'bg-gradient-to-br from-primary/10 to-accent/10 border-primary/30' : ''
-                }`}
-              >
-                <Link to={link.href}>
-                  <CardHeader>
-                    <div className="flex items-center gap-4">
-                      <div className={`p-3 rounded-xl ${(link as any).highlight ? 'bg-primary/20' : 'bg-primary/10'}`}>
-                        <link.icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <CardTitle className="text-lg">{link.label}</CardTitle>
-                    </div>
-                  </CardHeader>
-                </Link>
+        {/* Quick Access Cards */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {quickAccessCards.map((card) => (
+            <Link key={card.href} to={card.href}>
+              <Card className={`bg-gradient-to-br ${card.color} hover:shadow-md transition-all duration-200 cursor-pointer group`}>
+                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
+                  <div className="p-3 rounded-xl bg-background/50 mb-2 group-hover:scale-110 transition-transform duration-200">
+                    <card.icon className="h-5 w-5 text-foreground/80" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground/90">{card.label}</span>
+                </CardContent>
               </Card>
-            ))}
-          </div>
+            </Link>
+          ))}
+        </div>
 
-          {/* Recent Activity */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Activity */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
                 <CardTitle>{language === 'bn' ? 'সাম্প্রতিক অর্ডার' : 'Recent Orders'}</CardTitle>
@@ -240,10 +210,9 @@ const AdminDashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
-          </div>
         </div>
-      </section>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 
