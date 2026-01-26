@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Bell, ShoppingCart, MessageSquare, AlertCircle, CheckCircle, X, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Bell, ShoppingCart, MessageSquare, AlertCircle, CheckCircle, X, ExternalLink, CreditCard, Volume2, VolumeX, BellRing } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,7 +12,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { format, formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from 'date-fns';
+import { bn } from 'date-fns/locale';
 
 interface Notification {
   id: string;
@@ -23,6 +24,7 @@ interface Notification {
   read: boolean;
   link?: string;
   data?: any;
+  priority?: 'low' | 'medium' | 'high';
 }
 
 interface AdminNotificationBellProps {
@@ -36,11 +38,26 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
   const [soundEnabled, setSoundEnabled] = useState(() => {
     return localStorage.getItem('admin-notification-sound') !== 'false';
   });
+  const [pushEnabled, setPushEnabled] = useState(() => {
+    return localStorage.getItem('admin-notification-push') === 'true';
+  });
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // Play notification sound
-  const playNotificationSound = () => {
+  // Request browser notification permission
+  const requestPushPermission = async () => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setPushEnabled(true);
+        localStorage.setItem('admin-notification-push', 'true');
+      }
+    }
+  };
+
+  // Play notification sound with different tones for different types
+  const playNotificationSound = useCallback((type: string, priority?: string) => {
     if (!soundEnabled) return;
     try {
       const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
@@ -50,20 +67,63 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
       
-      oscillator.frequency.value = 800;
-      oscillator.type = 'sine';
-      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+      // Different frequencies for different notification types
+      const frequencies: Record<string, number> = {
+        order: 880,    // Higher pitch for orders
+        payment: 660,  // Medium pitch for payments
+        ticket: 440,   // Lower pitch for tickets
+        system: 520,
+      };
+      
+      oscillator.frequency.value = frequencies[type] || 600;
+      oscillator.type = priority === 'high' ? 'square' : 'sine';
+      
+      const volume = priority === 'high' ? 0.4 : 0.25;
+      gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
       
       oscillator.start(audioContext.currentTime);
-      oscillator.stop(audioContext.currentTime + 0.3);
+      oscillator.stop(audioContext.currentTime + 0.4);
+      
+      // Double beep for high priority
+      if (priority === 'high') {
+        setTimeout(() => {
+          const osc2 = audioContext.createOscillator();
+          const gain2 = audioContext.createGain();
+          osc2.connect(gain2);
+          gain2.connect(audioContext.destination);
+          osc2.frequency.value = frequencies[type] || 600;
+          osc2.type = 'square';
+          gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+          osc2.start(audioContext.currentTime);
+          osc2.stop(audioContext.currentTime + 0.3);
+        }, 150);
+      }
     } catch (e) {
       console.log('Audio not supported');
     }
-  };
+  }, [soundEnabled]);
+
+  // Show browser push notification
+  const showPushNotification = useCallback((title: string, message: string, icon?: string) => {
+    if (!pushEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+    
+    try {
+      new Notification(title, {
+        body: message,
+        icon: icon || '/favicon.png',
+        badge: '/favicon.png',
+        tag: `admin-${Date.now()}`,
+        requireInteraction: false,
+      });
+    } catch (e) {
+      console.log('Push notification not supported');
+    }
+  }, [pushEnabled]);
 
   // Add new notification
-  const addNotification = (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
+  const addNotification = useCallback((notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: Notification = {
       ...notification,
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -72,14 +132,19 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
     };
     
     setNotifications(prev => [newNotification, ...prev].slice(0, 50));
-    playNotificationSound();
+    playNotificationSound(notification.type, notification.priority);
+    showPushNotification(notification.title, notification.message);
+    
+    // Trigger bell animation
+    setIsAnimating(true);
+    setTimeout(() => setIsAnimating(false), 1000);
     
     // Show toast for new notification
     toast({
       title: notification.title,
       description: notification.message,
     });
-  };
+  }, [playNotificationSound, showPushNotification, toast]);
 
   // Listen to real-time events
   useEffect(() => {
@@ -139,19 +204,64 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
       )
       .subscribe();
 
-    // Listen to payments
+    // Listen to new payments
     const paymentsChannel = supabase
       .channel('admin-payments')
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'payments' },
         (payload) => {
-          if (payload.new.status === 'completed') {
+          addNotification({
+            type: 'payment',
+            title: payload.new.status === 'completed' ? '✅ পেমেন্ট সম্পন্ন' : '⏳ নতুন পেমেন্ট',
+            message: `৳${payload.new.amount} - ${payload.new.payment_method || 'অনলাইন'}`,
+            link: '/admin/payments',
+            data: payload.new,
+            priority: payload.new.status === 'completed' ? 'high' : 'medium',
+          });
+        }
+      )
+      .subscribe();
+
+    // Listen to payment status updates
+    const paymentUpdatesChannel = supabase
+      .channel('admin-payment-updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'payments' },
+        (payload) => {
+          if (payload.new.status !== payload.old?.status) {
+            const statusMessages: Record<string, string> = {
+              completed: '✅ পেমেন্ট সম্পন্ন হয়েছে',
+              failed: '❌ পেমেন্ট ব্যর্থ হয়েছে',
+              refunded: '↩️ পেমেন্ট রিফান্ড করা হয়েছে',
+            };
             addNotification({
               type: 'payment',
-              title: 'পেমেন্ট সম্পন্ন',
-              message: `৳${payload.new.amount} পেমেন্ট পাওয়া গেছে`,
+              title: statusMessages[payload.new.status] || 'পেমেন্ট আপডেট',
+              message: `৳${payload.new.amount} - ${payload.new.transaction_id || ''}`,
               link: '/admin/payments',
+              data: payload.new,
+              priority: payload.new.status === 'completed' ? 'high' : 'medium',
+            });
+          }
+        }
+      )
+      .subscribe();
+
+    // Listen to order status changes
+    const orderUpdatesChannel = supabase
+      .channel('admin-order-updates')
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'orders' },
+        (payload) => {
+          if (payload.new.status !== payload.old?.status) {
+            addNotification({
+              type: 'order',
+              title: `অর্ডার স্ট্যাটাস: ${payload.new.status}`,
+              message: `অর্ডার #${payload.new.order_number}`,
+              link: '/admin/orders',
               data: payload.new,
             });
           }
@@ -164,8 +274,10 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
       supabase.removeChannel(ticketsChannel);
       supabase.removeChannel(ticketUpdatesChannel);
       supabase.removeChannel(paymentsChannel);
+      supabase.removeChannel(paymentUpdatesChannel);
+      supabase.removeChannel(orderUpdatesChannel);
     };
-  }, []);
+  }, [addNotification]);
 
   const markAsRead = (id: string) => {
     setNotifications(prev => 
@@ -181,16 +293,26 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
     setNotifications([]);
   };
 
-  const getIcon = (type: string) => {
+  const getIcon = (type: string, priority?: string) => {
+    const baseClass = priority === 'high' ? 'animate-pulse' : '';
     switch (type) {
       case 'order':
-        return <ShoppingCart className="h-4 w-4 text-primary" />;
+        return <ShoppingCart className={cn("h-4 w-4 text-blue-500", baseClass)} />;
       case 'ticket':
-        return <MessageSquare className="h-4 w-4 text-warning" />;
+        return <MessageSquare className={cn("h-4 w-4 text-amber-500", baseClass)} />;
       case 'payment':
-        return <CheckCircle className="h-4 w-4 text-success" />;
+        return <CreditCard className={cn("h-4 w-4 text-emerald-500", baseClass)} />;
       default:
-        return <AlertCircle className="h-4 w-4 text-muted-foreground" />;
+        return <AlertCircle className={cn("h-4 w-4 text-muted-foreground", baseClass)} />;
+    }
+  };
+
+  const togglePush = async () => {
+    if (!pushEnabled) {
+      await requestPushPermission();
+    } else {
+      setPushEnabled(false);
+      localStorage.setItem('admin-notification-push', 'false');
     }
   };
 
@@ -206,12 +328,19 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 hover:bg-sidebar-accent rounded-lg"
+          className={cn(
+            "relative h-9 w-9 hover:bg-slate-800/60 rounded-xl transition-all duration-200",
+            isAnimating && "animate-bounce"
+          )}
         >
-          <Bell className="h-4 w-4" />
+          {isAnimating ? (
+            <BellRing className="h-4 w-4 text-primary animate-pulse" />
+          ) : (
+            <Bell className="h-4 w-4" />
+          )}
           {unreadCount > 0 && (
             <Badge 
-              className="absolute -top-1 -right-1 h-5 min-w-[20px] px-1 flex items-center justify-center bg-destructive text-destructive-foreground text-[10px] font-bold animate-pulse"
+              className="absolute -top-1.5 -right-1.5 h-5 min-w-[20px] px-1.5 flex items-center justify-center bg-gradient-to-r from-red-500 to-orange-500 text-white text-[10px] font-bold shadow-lg shadow-red-500/30"
             >
               {unreadCount > 99 ? '99+' : unreadCount}
             </Badge>
@@ -224,25 +353,36 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
         side={collapsed ? 'right' : 'bottom'}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-3 border-b">
+        <div className="flex items-center justify-between p-3 border-b bg-gradient-to-r from-slate-900/50 to-transparent">
           <div className="flex items-center gap-2">
-            <Bell className="h-4 w-4" />
+            <div className="p-1.5 rounded-lg bg-primary/10">
+              <Bell className="h-4 w-4 text-primary" />
+            </div>
             <span className="font-semibold text-sm">নোটিফিকেশন</span>
             {unreadCount > 0 && (
-              <Badge variant="secondary" className="text-xs">
+              <Badge className="bg-gradient-to-r from-red-500/20 to-orange-500/20 text-orange-400 border-orange-500/30 text-xs">
                 {unreadCount} নতুন
               </Badge>
             )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="h-7 w-7 hover:bg-slate-800/50"
               onClick={toggleSound}
               title={soundEnabled ? 'সাউন্ড বন্ধ করুন' : 'সাউন্ড চালু করুন'}
             >
-              {soundEnabled ? '🔔' : '🔕'}
+              {soundEnabled ? <Volume2 className="h-3.5 w-3.5 text-emerald-400" /> : <VolumeX className="h-3.5 w-3.5 text-slate-400" />}
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 hover:bg-slate-800/50"
+              onClick={togglePush}
+              title={pushEnabled ? 'পুশ বন্ধ করুন' : 'পুশ চালু করুন'}
+            >
+              {pushEnabled ? <BellRing className="h-3.5 w-3.5 text-emerald-400" /> : <Bell className="h-3.5 w-3.5 text-slate-400" />}
             </Button>
           </div>
         </div>
@@ -255,40 +395,43 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
               <p className="text-sm text-muted-foreground">কোন নোটিফিকেশন নেই</p>
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-y divide-border/50">
               {notifications.map(notification => (
                 <div
                   key={notification.id}
                   className={cn(
-                    "p-3 hover:bg-muted/50 transition-colors cursor-pointer",
-                    !notification.read && "bg-primary/5"
+                    "p-3 hover:bg-slate-800/30 transition-all duration-200 cursor-pointer group",
+                    !notification.read && "bg-gradient-to-r from-primary/5 to-transparent border-l-2 border-primary"
                   )}
                   onClick={() => markAsRead(notification.id)}
                 >
                   <div className="flex gap-3">
-                    <div className="mt-0.5">
-                      {getIcon(notification.type)}
+                    <div className="mt-0.5 p-1.5 rounded-lg bg-slate-800/50 group-hover:bg-slate-700/50 transition-colors">
+                      {getIcon(notification.type, notification.priority)}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium truncate">
+                        <p className={cn(
+                          "text-sm truncate",
+                          !notification.read ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+                        )}>
                           {notification.title}
                         </p>
                         {!notification.read && (
-                          <span className="w-2 h-2 rounded-full bg-primary shrink-0 mt-1.5" />
+                          <span className="w-2 h-2 rounded-full bg-gradient-to-r from-primary to-orange-500 shrink-0 mt-1.5 animate-pulse" />
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
                         {notification.message}
                       </p>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDistanceToNow(notification.timestamp, { addSuffix: true })}
+                      <div className="flex items-center justify-between mt-2">
+                        <span className="text-[10px] text-muted-foreground/70">
+                          {formatDistanceToNow(notification.timestamp, { addSuffix: true, locale: bn })}
                         </span>
                         {notification.link && (
                           <Link
                             to={notification.link}
-                            className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                            className="text-[10px] text-primary hover:text-primary/80 flex items-center gap-0.5 font-medium"
                             onClick={(e) => e.stopPropagation()}
                           >
                             দেখুন <ExternalLink className="h-2.5 w-2.5" />
