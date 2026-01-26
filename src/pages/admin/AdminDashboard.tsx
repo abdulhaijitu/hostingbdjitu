@@ -12,7 +12,7 @@ import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
 import { Skeleton } from '@/components/ui/skeleton';
 import { NotificationBell } from '@/components/client-dashboard/NotificationSystem';
-
+import ServerHealthMonitor from '@/components/admin/ServerHealthMonitor';
 const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
   const { data: orders, isLoading: ordersLoading } = useOrders();
@@ -137,6 +137,11 @@ const AdminDashboard: React.FC = () => {
               </Card>
             </Link>
           ))}
+        </div>
+
+        {/* Server Health Monitoring */}
+        <div className="mb-8">
+          <ServerHealthMonitor />
         </div>
 
         {/* Recent Activity */}
