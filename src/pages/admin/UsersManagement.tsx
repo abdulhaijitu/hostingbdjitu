@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square } from 'lucide-react';
+import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square, Shield, UserCog } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -10,12 +10,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
 import { format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface UserWithProfile {
   id: string;
@@ -34,6 +36,7 @@ interface UserWithProfile {
 const UsersManagement: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -43,6 +46,10 @@ const UsersManagement: React.FC = () => {
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
   const [isBulkActionDialogOpen, setIsBulkActionDialogOpen] = useState(false);
   const [bulkAction, setBulkAction] = useState<'delete' | 'export' | null>(null);
+  const [isRoleDialogOpen, setIsRoleDialogOpen] = useState(false);
+  const [roleChangeUser, setRoleChangeUser] = useState<UserWithProfile | null>(null);
+  const [newRole, setNewRole] = useState<'customer' | 'admin'>('customer');
+  const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -120,6 +127,64 @@ const UsersManagement: React.FC = () => {
       setIsOrdersDialogOpen(true);
     } catch (error) {
       console.error('Error fetching user orders:', error);
+    }
+  };
+
+  const openRoleChangeDialog = (user: UserWithProfile) => {
+    setRoleChangeUser(user);
+    setNewRole(user.role as 'customer' | 'admin');
+    setIsRoleDialogOpen(true);
+  };
+
+  const handleRoleChange = async () => {
+    if (!roleChangeUser) return;
+    
+    // Prevent self-demotion
+    if (roleChangeUser.id === currentUser?.id && newRole === 'customer') {
+      toast({
+        title: language === 'bn' ? 'অনুমতি নেই' : 'Not Allowed',
+        description: language === 'bn' 
+          ? 'আপনি নিজের রোল পরিবর্তন করতে পারবেন না' 
+          : 'You cannot change your own role',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsUpdatingRole(true);
+    try {
+      const { error } = await supabase
+        .from('user_roles')
+        .update({ role: newRole })
+        .eq('user_id', roleChangeUser.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setUsers(prev => prev.map(u => 
+        u.id === roleChangeUser.id ? { ...u, role: newRole } : u
+      ));
+
+      toast({
+        title: language === 'bn' ? 'রোল পরিবর্তন সফল' : 'Role Updated',
+        description: language === 'bn' 
+          ? `${roleChangeUser.profile?.full_name || roleChangeUser.email} এখন ${newRole === 'admin' ? 'অ্যাডমিন' : 'কাস্টমার'}`
+          : `${roleChangeUser.profile?.full_name || roleChangeUser.email} is now ${newRole === 'admin' ? 'Admin' : 'Customer'}`,
+      });
+
+      setIsRoleDialogOpen(false);
+      setRoleChangeUser(null);
+    } catch (error) {
+      console.error('Error updating role:', error);
+      toast({
+        title: language === 'bn' ? 'ত্রুটি হয়েছে' : 'Error occurred',
+        description: language === 'bn' 
+          ? 'রোল পরিবর্তন করা যায়নি' 
+          : 'Could not update role',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUpdatingRole(false);
     }
   };
 
@@ -442,8 +507,16 @@ const UsersManagement: React.FC = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                              {user.role === 'admin' ? 'Admin' : 'Customer'}
+                            <Badge 
+                              variant={user.role === 'admin' ? 'default' : 'secondary'}
+                              className="cursor-pointer hover:opacity-80"
+                              onClick={() => openRoleChangeDialog(user)}
+                            >
+                              {user.role === 'admin' ? (
+                                <><Shield className="h-3 w-3 mr-1" /> Admin</>
+                              ) : (
+                                'Customer'
+                              )}
                             </Badge>
                           </TableCell>
                           <TableCell>{user.orders_count}</TableCell>
@@ -452,10 +525,15 @@ const UsersManagement: React.FC = () => {
                             {format(new Date(user.created_at), 'dd MMM yyyy')}
                           </TableCell>
                           <TableCell className="text-right">
-                            <Button variant="ghost" size="sm" onClick={() => viewUserOrders(user)}>
-                              <Package className="h-4 w-4 mr-1" />
-                              {language === 'bn' ? 'অর্ডার' : 'Orders'}
-                            </Button>
+                            <div className="flex items-center justify-end gap-1">
+                              <Button variant="ghost" size="sm" onClick={() => openRoleChangeDialog(user)}>
+                                <UserCog className="h-4 w-4" />
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => viewUserOrders(user)}>
+                                <Package className="h-4 w-4 mr-1" />
+                                {language === 'bn' ? 'অর্ডার' : 'Orders'}
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
@@ -506,6 +584,77 @@ const UsersManagement: React.FC = () => {
               {language === 'bn' ? 'কোন অর্ডার নেই' : 'No orders found'}
             </p>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Role Change Dialog */}
+      <Dialog open={isRoleDialogOpen} onOpenChange={setIsRoleDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5 text-primary" />
+              {language === 'bn' ? 'রোল পরিবর্তন করুন' : 'Change User Role'}
+            </DialogTitle>
+            <DialogDescription>
+              {roleChangeUser?.profile?.full_name || roleChangeUser?.email}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">
+              {language === 'bn' ? 'নতুন রোল নির্বাচন করুন' : 'Select New Role'}
+            </label>
+            <Select value={newRole} onValueChange={(v) => setNewRole(v as 'customer' | 'admin')}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="customer">
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" />
+                    {language === 'bn' ? 'কাস্টমার' : 'Customer'}
+                  </div>
+                </SelectItem>
+                <SelectItem value="admin">
+                  <div className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    {language === 'bn' ? 'অ্যাডমিন' : 'Admin'}
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+
+            {roleChangeUser?.id === currentUser?.id && newRole === 'customer' && (
+              <p className="text-sm text-destructive mt-2">
+                {language === 'bn' 
+                  ? '⚠️ আপনি নিজের রোল পরিবর্তন করতে পারবেন না' 
+                  : '⚠️ You cannot demote yourself'}
+              </p>
+            )}
+
+            {newRole === 'admin' && roleChangeUser?.role !== 'admin' && (
+              <p className="text-sm text-muted-foreground mt-2">
+                {language === 'bn' 
+                  ? '⚠️ অ্যাডমিন ব্যবহারকারীরা সকল ডেটা অ্যাক্সেস করতে পারবে' 
+                  : '⚠️ Admin users will have access to all data'}
+              </p>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsRoleDialogOpen(false)}>
+              {language === 'bn' ? 'বাতিল' : 'Cancel'}
+            </Button>
+            <Button 
+              onClick={handleRoleChange} 
+              disabled={isUpdatingRole || (roleChangeUser?.id === currentUser?.id && newRole === 'customer')}
+            >
+              {isUpdatingRole 
+                ? (language === 'bn' ? 'আপডেট হচ্ছে...' : 'Updating...') 
+                : (language === 'bn' ? 'রোল পরিবর্তন করুন' : 'Change Role')
+              }
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </Layout>
