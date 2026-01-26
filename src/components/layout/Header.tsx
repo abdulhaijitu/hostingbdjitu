@@ -4,6 +4,7 @@ import { ChevronDown, Menu, X, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import chostLogo from '@/assets/chost-logo.png';
 
 interface MenuItem {
   label: string;
@@ -75,14 +76,12 @@ const Header: React.FC = () => {
       <div className="container-wide">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-primary">
-              <span className="text-xl font-bold text-primary-foreground">C</span>
-            </div>
-            <div className="flex flex-col">
-              <span className="text-xl font-bold font-display text-foreground">CHost</span>
-              <span className="text-[10px] text-muted-foreground tracking-wider uppercase">Secure.Fast.Online</span>
-            </div>
+          <Link to="/" className="flex items-center">
+            <img 
+              src={chostLogo} 
+              alt="CHost - Secure.Fast.Online" 
+              className="h-10 sm:h-12 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
