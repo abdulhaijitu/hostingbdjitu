@@ -66,13 +66,8 @@ const Login: React.FC = () => {
       return;
     }
     
-    // Ensure role is actually resolved (not null when it shouldn't be)
-    if (role === null) {
-      console.log('[Login] Role is null, waiting...');
-      return;
-    }
-    
-    // Role is resolved, determine redirect path
+    // Role is resolved (role can be null if user has no role, treated as customer)
+    // Determine redirect path
     let redirectPath: string;
     
     if (isAdmin) {
