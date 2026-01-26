@@ -63,10 +63,11 @@ const Signup: React.FC = () => {
       
       toast({
         title: language === 'bn' ? 'সফল!' : 'Success!',
-        description: language === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে। লগইন করুন।' : 'Account created successfully. Please login.',
+        description: language === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!' : 'Account created successfully!',
       });
       
-      navigate('/login');
+      // Auto-login: Navigate directly to dashboard
+      navigate('/client');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
