@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { 
   MessageSquare, Plus, Clock, CheckCircle, Send, Paperclip, X, 
   File, MessageCircle, Headphones, Bot, User as UserIcon,
-  AlertCircle, Loader2
+  AlertCircle, Loader2, Wifi, WifiOff, RefreshCw
 } from 'lucide-react';
 import DashboardLayout from '@/components/client-dashboard/DashboardLayout';
 import StatusBadge from '@/components/client-dashboard/StatusBadge';
@@ -14,6 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import { 
   Dialog, 
   DialogContent, 
@@ -29,6 +30,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -42,7 +48,15 @@ import {
   TicketMessage 
 } from '@/hooks/useSupportTickets';
 import { useTicketAttachments, UploadedAttachment } from '@/hooks/useTicketAttachments';
-import { Progress } from '@/components/ui/progress';
+import { supabase } from '@/integrations/supabase/client';
+import { formatDistanceToNow } from 'date-fns';
+import { bn } from 'date-fns/locale';
+import ImagePreview from '@/components/support/ImagePreview';
+
+interface PendingFile {
+  file: File;
+  preview?: string;
+}
 
 const SupportPage: React.FC = () => {
   const { language } = useLanguage();
@@ -51,6 +65,7 @@ const SupportPage: React.FC = () => {
   const [showNewTicketDialog, setShowNewTicketDialog] = useState(false);
   const [showLiveChat, setShowLiveChat] = useState(false);
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Fetch tickets from database
   const { data: tickets, isLoading: ticketsLoading, isError: ticketsError, refetch: refetchTickets } = useSupportTickets();
@@ -59,6 +74,9 @@ const SupportPage: React.FC = () => {
   const createMessageMutation = useCreateMessage();
   const { uploadFiles, isUploading, uploadProgress } = useTicketAttachments();
   
+  // Connection status
+  const [isConnected, setIsConnected] = useState(true);
+  
   // New Ticket Form State
   const [newTicket, setNewTicket] = useState({
     subject: '',
@@ -66,7 +84,7 @@ const SupportPage: React.FC = () => {
     priority: 'medium',
     message: '',
   });
-  const [attachments, setAttachments] = useState<File[]>([]);
+  const [attachments, setAttachments] = useState<PendingFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Live Chat State
@@ -86,12 +104,51 @@ const SupportPage: React.FC = () => {
 
   // Ticket Reply State
   const [replyMessage, setReplyMessage] = useState('');
-  const [replyAttachments, setReplyAttachments] = useState<File[]>([]);
+  const [replyAttachments, setReplyAttachments] = useState<PendingFile[]>([]);
   const replyFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Auto-scroll to bottom
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages, scrollToBottom]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages]);
+
+  // Monitor realtime connection status
+  useEffect(() => {
+    if (!selectedTicket) return;
+
+    const channel = supabase
+      .channel(`client-presence-${selectedTicket.id}`)
+      .on('presence', { event: 'sync' }, () => {
+        setIsConnected(true);
+      })
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTicket]);
+
+  // Cleanup file previews
+  useEffect(() => {
+    return () => {
+      attachments.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+      replyAttachments.forEach(f => { if (f.preview) URL.revokeObjectURL(f.preview); });
+    };
+  }, [attachments, replyAttachments]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>, isReply = false) => {
     const files = Array.from(e.target.files || []);
@@ -105,20 +162,36 @@ const SupportPage: React.FC = () => {
         return false;
       }
       return true;
-    });
+    }).slice(0, 5);
+
+    const newPendingFiles: PendingFile[] = validFiles.map(file => ({
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+    }));
 
     if (isReply) {
-      setReplyAttachments(prev => [...prev, ...validFiles]);
+      setReplyAttachments(prev => [...prev, ...newPendingFiles].slice(0, 5));
     } else {
-      setAttachments(prev => [...prev, ...validFiles]);
+      setAttachments(prev => [...prev, ...newPendingFiles].slice(0, 5));
     }
+    
+    // Reset input
+    if (e.target) e.target.value = '';
   };
 
   const removeAttachment = (index: number, isReply = false) => {
     if (isReply) {
-      setReplyAttachments(prev => prev.filter((_, i) => i !== index));
+      setReplyAttachments(prev => {
+        const file = prev[index];
+        if (file.preview) URL.revokeObjectURL(file.preview);
+        return prev.filter((_, i) => i !== index);
+      });
     } else {
-      setAttachments(prev => prev.filter((_, i) => i !== index));
+      setAttachments(prev => {
+        const file = prev[index];
+        if (file.preview) URL.revokeObjectURL(file.preview);
+        return prev.filter((_, i) => i !== index);
+      });
     }
   };
 
@@ -143,14 +216,21 @@ const SupportPage: React.FC = () => {
       // Upload attachments if any
       let uploadedAttachments: UploadedAttachment[] = [];
       if (attachments.length > 0) {
-        uploadedAttachments = await uploadFiles(attachments, ticket.id);
+        const filesToUpload = attachments.map(f => f.file);
+        uploadedAttachments = await uploadFiles(filesToUpload, ticket.id);
       }
 
       // Add initial message with attachments
       await createMessageMutation.mutateAsync({
         ticket_id: ticket.id,
         message: newTicket.message,
-        attachments: uploadedAttachments,
+        attachments: uploadedAttachments.map(att => ({
+          name: att.name,
+          size: att.size,
+          type: att.type,
+          url: att.url,
+          path: att.path,
+        })),
       });
 
       toast({
@@ -205,13 +285,20 @@ const SupportPage: React.FC = () => {
       // Upload attachments if any
       let uploadedAttachments: UploadedAttachment[] = [];
       if (replyAttachments.length > 0) {
-        uploadedAttachments = await uploadFiles(replyAttachments, selectedTicket.id);
+        const filesToUpload = replyAttachments.map(f => f.file);
+        uploadedAttachments = await uploadFiles(filesToUpload, selectedTicket.id);
       }
 
       await createMessageMutation.mutateAsync({
         ticket_id: selectedTicket.id,
         message: replyMessage,
-        attachments: uploadedAttachments,
+        attachments: uploadedAttachments.map(att => ({
+          name: att.name,
+          size: att.size,
+          type: att.type,
+          url: att.url,
+          path: att.path,
+        })),
       });
 
       toast({
@@ -314,10 +401,11 @@ const SupportPage: React.FC = () => {
         </Card>
       </div>
 
-      {/* Tickets List or Ticket View */}
+      {/* Ticket Detail View with Real-Time Chat */}
       {selectedTicket ? (
         <Card>
-          <CardHeader className="border-b">
+          {/* Chat Header */}
+          <CardHeader className="border-b bg-gradient-to-r from-primary/5 to-transparent">
             <div className="flex items-start justify-between">
               <div>
                 <Button 
@@ -329,26 +417,49 @@ const SupportPage: React.FC = () => {
                   ← {language === 'bn' ? 'ফিরে যান' : 'Back'}
                 </Button>
                 <CardTitle className="flex items-center gap-3 flex-wrap">
-                  {selectedTicket.subject}
+                  <span className="font-mono text-muted-foreground text-sm">#{selectedTicket.ticket_number}</span>
                   <StatusBadge status={selectedTicket.status} />
                   <Badge className={getPriorityColor(selectedTicket.priority)}>
                     {selectedTicket.priority}
                   </Badge>
                 </CardTitle>
+                <h3 className="text-lg font-semibold mt-2">{selectedTicket.subject}</h3>
                 <p className="text-sm text-muted-foreground mt-1">
-                  #{selectedTicket.ticket_number} • {selectedTicket.category} • {new Date(selectedTicket.created_at).toLocaleDateString()}
+                  {selectedTicket.category} • {formatDistanceToNow(new Date(selectedTicket.created_at), { addSuffix: true, locale: bn })}
                 </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {/* Connection Status */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className={cn(
+                      "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs",
+                      isConnected ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                    )}>
+                      {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                      <span className="hidden sm:inline">{isConnected ? (language === 'bn' ? 'লাইভ' : 'Live') : (language === 'bn' ? 'অফলাইন' : 'Offline')}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {isConnected 
+                      ? (language === 'bn' ? 'রিয়েল-টাইম সংযুক্ত' : 'Real-time connected')
+                      : (language === 'bn' ? 'সংযোগ বিচ্ছিন্ন' : 'Disconnected')
+                    }
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </CardHeader>
+          
+          {/* Messages Area */}
           <CardContent className="p-0">
             <ScrollArea className="h-[400px] p-6">
               {messagesLoading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map(i => (
-                    <div key={i} className="flex gap-3">
-                      <Skeleton className="w-8 h-8 rounded-full" />
-                      <Skeleton className="h-20 flex-1 rounded-2xl" />
+                    <div key={i} className={cn("flex gap-3", i % 2 === 0 && "flex-row-reverse")}>
+                      <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                      <Skeleton className="h-24 flex-1 max-w-[70%] rounded-2xl" />
                     </div>
                   ))}
                 </div>
@@ -358,65 +469,83 @@ const SupportPage: React.FC = () => {
                   <p className="text-muted-foreground">
                     {language === 'bn' ? 'মেসেজ লোড করতে সমস্যা হয়েছে' : 'Failed to load messages'}
                   </p>
+                  <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchTickets()}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+                  </Button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages?.map((msg) => (
-                    <div
-                      key={msg.id}
-                      className={cn(
-                        'flex gap-3',
-                        !msg.is_staff_reply && 'flex-row-reverse'
-                      )}
-                    >
-                      <div className={cn(
-                        'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                        !msg.is_staff_reply ? 'bg-primary/10' : 'bg-success/10'
-                      )}>
-                        {!msg.is_staff_reply ? (
-                          <UserIcon className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Headphones className="h-4 w-4 text-success" />
-                        )}
-                      </div>
-                      <div className={cn(
-                        'max-w-[70%] rounded-2xl p-4',
-                        !msg.is_staff_reply 
-                          ? 'bg-primary text-primary-foreground rounded-tr-sm' 
-                          : 'bg-muted rounded-tl-sm'
-                      )}>
-                        <p className="text-sm">{msg.message}</p>
-                        {/* Display attachments */}
-                        {msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {(msg.attachments as any[]).map((att: any, idx: number) => (
-                              <a
-                                key={idx}
-                                href={att.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={cn(
-                                  "flex items-center gap-1.5 text-xs px-2 py-1 rounded",
-                                  !msg.is_staff_reply 
-                                    ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30" 
-                                    : "bg-background hover:bg-accent"
-                                )}
-                              >
-                                <File className="h-3 w-3" />
-                                {att.name}
-                              </a>
-                            ))}
+                  {messages?.map((msg, index) => {
+                    const isStaff = msg.is_staff_reply;
+                    const showDate = index === 0 || 
+                      new Date(messages[index - 1].created_at).toDateString() !== new Date(msg.created_at).toDateString();
+                    
+                    return (
+                      <React.Fragment key={msg.id}>
+                        {showDate && (
+                          <div className="flex items-center gap-3 my-4">
+                            <div className="flex-1 h-px bg-border" />
+                            <span className="text-xs text-muted-foreground px-2 py-1 rounded-full bg-muted">
+                              {new Date(msg.created_at).toLocaleDateString('bn-BD', { weekday: 'long', day: 'numeric', month: 'long' })}
+                            </span>
+                            <div className="flex-1 h-px bg-border" />
                           </div>
                         )}
-                        <p className={cn(
-                          'text-xs mt-2',
-                          !msg.is_staff_reply ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        <div className={cn(
+                          'flex gap-3 group animate-in fade-in-0 slide-in-from-bottom-2 duration-300',
+                          !isStaff && 'flex-row-reverse'
                         )}>
-                          {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                          <div className={cn(
+                            'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm',
+                            !isStaff 
+                              ? 'bg-gradient-to-br from-primary to-primary/80' 
+                              : 'bg-gradient-to-br from-emerald-500 to-emerald-600'
+                          )}>
+                            {!isStaff ? (
+                              <UserIcon className="h-4 w-4 text-white" />
+                            ) : (
+                              <Headphones className="h-4 w-4 text-white" />
+                            )}
+                          </div>
+                          <div className={cn(
+                            'max-w-[70%] rounded-2xl p-4 shadow-sm transition-all duration-200',
+                            !isStaff 
+                              ? 'bg-primary text-primary-foreground rounded-tr-sm' 
+                              : 'bg-muted rounded-tl-sm border border-border'
+                          )}>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className={cn("text-xs font-medium", !isStaff && "text-primary-foreground/80")}>
+                                {!isStaff 
+                                  ? (language === 'bn' ? 'আপনি' : 'You')
+                                  : (language === 'bn' ? 'সাপোর্ট টিম' : 'Support Team')
+                                }
+                              </span>
+                            </div>
+                            <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                            
+                            {/* Attachments with Image Preview */}
+                            {msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
+                              <div className={cn("mt-3 pt-3 border-t", !isStaff ? "border-primary-foreground/20" : "border-border/50")}>
+                                <ImagePreview 
+                                  attachments={msg.attachments as any[]}
+                                />
+                              </div>
+                            )}
+                            
+                            <p className={cn(
+                              'text-[10px] mt-2 flex items-center gap-1',
+                              !isStaff ? 'text-primary-foreground/70' : 'text-muted-foreground/70'
+                            )}>
+                              {new Date(msg.created_at).toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })}
+                              {!isStaff && <CheckCircle className="h-2.5 w-2.5" />}
+                            </p>
+                          </div>
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                  <div ref={messagesEndRef} />
                 </div>
               )}
             </ScrollArea>
@@ -426,9 +555,10 @@ const SupportPage: React.FC = () => {
               <div className="p-4 border-t bg-muted/30">
                 {/* Upload progress */}
                 {isUploading && (
-                  <div className="mb-3">
+                  <div className="mb-3 bg-muted/50 rounded-lg p-3">
                     <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground flex items-center gap-2">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
                         {language === 'bn' ? 'আপলোড হচ্ছে...' : 'Uploading...'}
                       </span>
                       <span className="text-primary">{Math.round(uploadProgress)}%</span>
@@ -437,16 +567,41 @@ const SupportPage: React.FC = () => {
                   </div>
                 )}
                 
-                {replyAttachments.length > 0 && (
+                {/* Pending Files Preview */}
+                {replyAttachments.length > 0 && !isUploading && (
                   <div className="flex flex-wrap gap-2 mb-3">
-                    {replyAttachments.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 bg-background rounded-lg px-3 py-2 text-sm">
-                        <File className="h-4 w-4 text-muted-foreground" />
-                        <span className="max-w-[150px] truncate">{file.name}</span>
-                        <span className="text-muted-foreground">({formatFileSize(file.size)})</span>
-                        <button onClick={() => removeAttachment(index, true)}>
-                          <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                        </button>
+                    {replyAttachments.map((item, index) => (
+                      <div 
+                        key={index} 
+                        className={cn(
+                          "relative group rounded-lg overflow-hidden",
+                          item.preview ? "w-16 h-16" : "flex items-center gap-2 bg-background rounded-lg px-3 py-2"
+                        )}
+                      >
+                        {item.preview ? (
+                          <>
+                            <img
+                              src={item.preview}
+                              alt={item.file.name}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              onClick={() => removeAttachment(index, true)}
+                              className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X className="h-4 w-4 text-white" />
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <File className="h-4 w-4 text-muted-foreground" />
+                            <span className="max-w-[150px] truncate text-sm">{item.file.name}</span>
+                            <span className="text-muted-foreground text-xs">({formatFileSize(item.file.size)})</span>
+                            <button onClick={() => removeAttachment(index, true)}>
+                              <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                            </button>
+                          </>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -458,15 +613,27 @@ const SupportPage: React.FC = () => {
                     ref={replyFileInputRef}
                     className="hidden"
                     multiple
+                    accept="image/*,.pdf,.doc,.docx,.txt,.zip"
                     onChange={(e) => handleFileSelect(e, true)}
                   />
-                  <Button 
-                    variant="ghost" 
-                    size="icon"
-                    onClick={() => replyFileInputRef.current?.click()}
-                  >
-                    <Paperclip className="h-4 w-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => replyFileInputRef.current?.click()}
+                        disabled={replyAttachments.length >= 5}
+                      >
+                        <Paperclip className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {replyAttachments.length >= 5 
+                        ? (language === 'bn' ? 'সর্বোচ্চ ৫টি ফাইল' : 'Max 5 files')
+                        : (language === 'bn' ? 'ফাইল সংযুক্ত করুন' : 'Attach files')
+                      }
+                    </TooltipContent>
+                  </Tooltip>
                   <Input
                     value={replyMessage}
                     onChange={(e) => setReplyMessage(e.target.value)}
@@ -477,7 +644,7 @@ const SupportPage: React.FC = () => {
                   <Button 
                     onClick={handleSendReply} 
                     className="gap-2"
-                    disabled={createMessageMutation.isPending || isUploading}
+                    disabled={createMessageMutation.isPending || isUploading || !replyMessage.trim()}
                   >
                     {(createMessageMutation.isPending || isUploading) ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -487,6 +654,18 @@ const SupportPage: React.FC = () => {
                     {language === 'bn' ? 'পাঠান' : 'Send'}
                   </Button>
                 </div>
+                <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                  {language === 'bn' ? 'Enter চাপুন পাঠাতে' : 'Press Enter to send'}
+                </p>
+              </div>
+            )}
+            
+            {/* Closed Ticket Footer */}
+            {selectedTicket.status === 'closed' && (
+              <div className="p-4 border-t bg-muted/30 text-center">
+                <p className="text-sm text-muted-foreground">
+                  {language === 'bn' ? 'এই টিকেট বন্ধ করা হয়েছে' : 'This ticket is closed'}
+                </p>
               </div>
             )}
           </CardContent>
@@ -551,7 +730,7 @@ const SupportPage: React.FC = () => {
                           </Badge>
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                          #{ticket.ticket_number} • {ticket.category} • {new Date(ticket.created_at).toLocaleDateString()}
+                          #{ticket.ticket_number} • {ticket.category} • {formatDistanceToNow(new Date(ticket.created_at), { addSuffix: true, locale: bn })}
                         </p>
                       </div>
                     </div>
@@ -660,25 +839,52 @@ const SupportPage: React.FC = () => {
                 ref={fileInputRef}
                 className="hidden"
                 multiple
+                accept="image/*,.pdf,.doc,.docx,.txt,.zip"
                 onChange={(e) => handleFileSelect(e)}
               />
               <Button 
                 variant="outline" 
                 className="w-full gap-2"
                 onClick={() => fileInputRef.current?.click()}
+                disabled={attachments.length >= 5}
               >
                 <Paperclip className="h-4 w-4" />
                 {language === 'bn' ? 'ফাইল যোগ করুন' : 'Add Files'}
+                {attachments.length > 0 && ` (${attachments.length}/5)`}
               </Button>
               {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-2">
-                  {attachments.map((file, index) => (
-                    <div key={index} className="flex items-center gap-2 bg-muted rounded-lg px-3 py-2 text-sm">
-                      <File className="h-4 w-4 text-muted-foreground" />
-                      <span className="max-w-[150px] truncate">{file.name}</span>
-                      <button onClick={() => removeAttachment(index)}>
-                        <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                      </button>
+                  {attachments.map((item, index) => (
+                    <div 
+                      key={index} 
+                      className={cn(
+                        "relative group rounded-lg overflow-hidden",
+                        item.preview ? "w-16 h-16" : "flex items-center gap-2 bg-muted rounded-lg px-3 py-2"
+                      )}
+                    >
+                      {item.preview ? (
+                        <>
+                          <img
+                            src={item.preview}
+                            alt={item.file.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => removeAttachment(index)}
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <File className="h-4 w-4 text-muted-foreground" />
+                          <span className="max-w-[150px] truncate text-sm">{item.file.name}</span>
+                          <button onClick={() => removeAttachment(index)}>
+                            <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -692,9 +898,9 @@ const SupportPage: React.FC = () => {
             </Button>
             <Button 
               onClick={handleCreateTicket}
-              disabled={createTicketMutation.isPending}
+              disabled={createTicketMutation.isPending || isUploading}
             >
-              {createTicketMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {(createTicketMutation.isPending || isUploading) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               {language === 'bn' ? 'টিকেট তৈরি করুন' : 'Create Ticket'}
             </Button>
           </DialogFooter>
