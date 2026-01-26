@@ -53,8 +53,8 @@ const SupportPage: React.FC = () => {
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   
   // Fetch tickets from database
-  const { data: tickets, isLoading: ticketsLoading } = useSupportTickets();
-  const { data: messages, isLoading: messagesLoading } = useTicketMessages(selectedTicket?.id || null);
+  const { data: tickets, isLoading: ticketsLoading, isError: ticketsError, refetch: refetchTickets } = useSupportTickets();
+  const { data: messages, isLoading: messagesLoading, isError: messagesError } = useTicketMessages(selectedTicket?.id || null);
   const createTicketMutation = useCreateTicket();
   const createMessageMutation = useCreateMessage();
   const { uploadFiles, isUploading, uploadProgress } = useTicketAttachments();
@@ -352,6 +352,13 @@ const SupportPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
+              ) : messagesError ? (
+                <div className="text-center py-8">
+                  <AlertCircle className="h-10 w-10 text-destructive mx-auto mb-3" />
+                  <p className="text-muted-foreground">
+                    {language === 'bn' ? 'মেসেজ লোড করতে সমস্যা হয়েছে' : 'Failed to load messages'}
+                  </p>
+                </div>
               ) : (
                 <div className="space-y-4">
                   {messages?.map((msg) => (
@@ -500,6 +507,23 @@ const SupportPage: React.FC = () => {
                 </CardContent>
               </Card>
             ))
+          ) : ticketsError ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <div className="p-4 rounded-2xl bg-destructive/10 inline-block mb-4">
+                  <AlertCircle className="h-12 w-12 text-destructive" />
+                </div>
+                <h3 className="text-lg font-semibold mb-2">
+                  {language === 'bn' ? 'টিকেট লোড করতে সমস্যা' : 'Failed to Load Tickets'}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {language === 'bn' ? 'দয়া করে আবার চেষ্টা করুন' : 'Please try again'}
+                </p>
+                <Button onClick={() => refetchTickets()}>
+                  {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+                </Button>
+              </CardContent>
+            </Card>
           ) : tickets && tickets.length > 0 ? (
             tickets.map(ticket => (
               <Card 

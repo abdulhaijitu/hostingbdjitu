@@ -44,6 +44,20 @@ export interface HostingServer {
   location: string;
   nameservers: string[];
 }
+// Cache durations for optimized performance
+const QUERY_CONFIG = {
+  staleTime: 30 * 1000, // Data is fresh for 30 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false,
+  retry: 2,
+};
+
+const CPANEL_QUERY_CONFIG = {
+  staleTime: 60 * 1000, // cPanel data is fresh for 60 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false,
+  retry: 1,
+};
 
 // Fetch all hosting accounts for current user
 export const useHostingAccounts = () => {
@@ -61,6 +75,7 @@ export const useHostingAccounts = () => {
       return data as HostingAccount[];
     },
     enabled: !!user,
+    ...QUERY_CONFIG,
   });
 };
 
@@ -77,12 +92,13 @@ export const useHostingAccount = (accountId: string | undefined) => {
         .from('hosting_accounts')
         .select('*, hosting_servers(*)')
         .eq('id', accountId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as HostingAccount;
+      return data as HostingAccount | null;
     },
     enabled: !!user && !!accountId,
+    ...QUERY_CONFIG,
   });
 };
 
@@ -153,7 +169,7 @@ export const useHostingEmails = (hostingAccountId: string | undefined) => {
       return result.data?.result?.data || [];
     },
     enabled: !!hostingAccountId,
-    staleTime: 30000, // Cache for 30 seconds
+    ...CPANEL_QUERY_CONFIG,
   });
 };
 
@@ -174,7 +190,7 @@ export const useHostingDatabases = (hostingAccountId: string | undefined) => {
       return result.data?.result?.data || [];
     },
     enabled: !!hostingAccountId,
-    staleTime: 30000,
+    ...CPANEL_QUERY_CONFIG,
   });
 };
 
@@ -195,7 +211,10 @@ export const useHostingUsage = (hostingAccountId: string | undefined) => {
       return result.data;
     },
     enabled: !!hostingAccountId,
-    staleTime: 60000, // Cache for 1 minute
+    staleTime: 2 * 60 * 1000, // Usage data is fresh for 2 minutes
+    gcTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
 };
 

@@ -69,6 +69,10 @@ export const useSupportTickets = () => {
       return data as SupportTicket[];
     },
     enabled: !!user,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 };
 
@@ -116,6 +120,10 @@ export const useTicketMessages = (ticketId: string | null) => {
       return data as TicketMessage[];
     },
     enabled: !!user && !!ticketId,
+    staleTime: 15 * 1000, // 15 seconds - messages refresh more often
+    gcTime: 3 * 60 * 1000, // 3 minutes
+    refetchOnWindowFocus: false,
+    retry: 2,
   });
 };
 

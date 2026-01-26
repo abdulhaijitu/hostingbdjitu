@@ -19,7 +19,7 @@ import {
 
 const BillingPage: React.FC = () => {
   const { language } = useLanguage();
-  const { data: invoices, isLoading } = useInvoices();
+  const { data: invoices, isLoading, isError, refetch } = useInvoices();
   const { toast } = useToast();
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
@@ -133,6 +133,21 @@ const BillingPage: React.FC = () => {
         <CardContent>
           {isLoading ? (
             <div className="space-y-3">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full" />)}</div>
+          ) : isError ? (
+            <div className="text-center py-12">
+              <div className="p-4 rounded-2xl bg-destructive/10 inline-block mb-4">
+                <FileText className="h-12 w-12 text-destructive" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">
+                {language === 'bn' ? 'ইনভয়েস লোড করতে সমস্যা' : 'Failed to Load Invoices'}
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                {language === 'bn' ? 'দয়া করে আবার চেষ্টা করুন' : 'Please try again'}
+              </p>
+              <Button onClick={() => refetch()}>
+                {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+              </Button>
+            </div>
           ) : invoices && invoices.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>

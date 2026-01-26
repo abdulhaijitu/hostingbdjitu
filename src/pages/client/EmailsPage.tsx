@@ -80,7 +80,8 @@ const EmailsPage: React.FC = () => {
   
   const { 
     data: emails, 
-    isLoading: emailsLoading, 
+    isLoading: emailsLoading,
+    isError: emailsError,
     refetch: refetchEmails 
   } = useCPanelEmails(selectedAccountId || undefined);
   
@@ -348,6 +349,18 @@ const EmailsPage: React.FC = () => {
               {[1, 2, 3].map(i => (
                 <Skeleton key={i} className="h-12 w-full" />
               ))}
+            </div>
+          ) : emailsError ? (
+            <div className="text-center py-12">
+              <div className="p-4 rounded-2xl bg-destructive/10 inline-block mb-4">
+                <AlertCircle className="h-10 w-10 text-destructive" />
+              </div>
+              <p className="text-muted-foreground mb-4">
+                {language === 'bn' ? 'ইমেইল লোড করতে সমস্যা হয়েছে' : 'Failed to load emails'}
+              </p>
+              <Button onClick={() => refetchEmails()}>
+                {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+              </Button>
             </div>
           ) : filteredEmails.length > 0 ? (
             <Table>

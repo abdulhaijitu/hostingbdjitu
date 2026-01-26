@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 
 const HostingList: React.FC = () => {
   const { language } = useLanguage();
-  const { data: hostingAccounts, isLoading } = useHostingAccounts();
+  const { data: hostingAccounts, isLoading, isError, refetch } = useHostingAccounts();
   const { data: orders } = useOrders();
   
   // Combine hosting accounts with legacy order-based display
@@ -90,6 +90,24 @@ const HostingList: React.FC = () => {
             <Skeleton key={i} className="h-32 w-full" />
           ))}
         </div>
+      ) : isError ? (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <div className="p-4 rounded-2xl bg-destructive/10 inline-block mb-4">
+              <Server className="h-12 w-12 text-destructive" />
+            </div>
+            <h3 className="font-semibold text-lg mb-2">
+              {language === 'bn' ? 'হোস্টিং লোড করতে সমস্যা' : 'Failed to Load Hosting'}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {language === 'bn' ? 'দয়া করে আবার চেষ্টা করুন' : 'Please try again'}
+            </p>
+            <Button onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+            </Button>
+          </CardContent>
+        </Card>
       ) : hostingItems.length > 0 ? (
         <div className="grid gap-4">
           {hostingItems.map(item => (

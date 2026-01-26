@@ -32,7 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 const DomainsPage: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const { data: orders, isLoading } = useOrders();
+  const { data: orders, isLoading, isError, refetch } = useOrders();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<any>(null);
   const [showNameserverDialog, setShowNameserverDialog] = useState(false);
@@ -130,6 +130,24 @@ const DomainsPage: React.FC = () => {
                 <Skeleton key={i} className="h-28 w-full" />
               ))}
             </div>
+          ) : isError ? (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <div className="p-4 rounded-2xl bg-destructive/10 inline-block mb-4">
+                  <Globe className="h-12 w-12 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-2">
+                  {language === 'bn' ? 'ডোমেইন লোড করতে সমস্যা' : 'Failed to Load Domains'}
+                </h3>
+                <p className="text-muted-foreground mb-4">
+                  {language === 'bn' ? 'দয়া করে আবার চেষ্টা করুন' : 'Please try again'}
+                </p>
+                <Button onClick={() => refetch()}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+                </Button>
+              </CardContent>
+            </Card>
           ) : filteredDomains.length > 0 ? (
             <div className="space-y-4">
               {filteredDomains.map(domain => (
