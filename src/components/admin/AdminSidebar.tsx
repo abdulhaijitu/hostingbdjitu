@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/tooltip';
 import AdminSidebarNav, { NavSection } from './AdminSidebarNav';
 import AdminSidebarProfile from './AdminSidebarProfile';
+import AdminNotificationBell from './AdminNotificationBell';
 import chostLogo from '@/assets/chost-logo.png';
 import {
   LayoutDashboard,
@@ -74,6 +75,7 @@ const navSections: NavSection[] = [
       { label: 'Support Tickets', href: '/admin/tickets', icon: MessageSquare },
       { label: 'Announcements', href: '/admin/announcements', icon: Megaphone },
       { label: 'Reports & Logs', href: '/admin/webhooks', icon: FileBarChart },
+      { label: 'API Credentials', href: '/admin/server-credentials', icon: Settings },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
@@ -123,14 +125,17 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
         )}
 
         {!collapsed && (
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 hover:bg-sidebar-accent rounded-lg shrink-0"
-            onClick={onToggle}
-          >
-            <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
-          </Button>
+          <div className="flex items-center gap-1">
+            <AdminNotificationBell collapsed={collapsed} />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 hover:bg-sidebar-accent rounded-lg shrink-0"
+              onClick={onToggle}
+            >
+              <PanelLeftClose className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
         )}
       </div>
 
