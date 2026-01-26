@@ -3,11 +3,12 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Zap, Headphones, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Zap, Headphones, AlertCircle, Clock } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useRateLimit } from '@/hooks/useRateLimit';
 import { supabase } from '@/integrations/supabase/client';
 
 const loginSchema = z.object({
@@ -24,6 +25,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { checkRateLimit, recordFailure, recordSuccess, rateLimitStatus } = useRateLimit();
   
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
@@ -32,6 +34,7 @@ const Login: React.FC = () => {
   // Separate loading states
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [lockoutMessage, setLockoutMessage] = useState<string | null>(null);
   
   // Refs for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -54,41 +57,45 @@ const Login: React.FC = () => {
 
   // Redirect if already authenticated - WAIT for role to be resolved
   useEffect(() => {
-    console.log('[Login] Auth state:', { authReady, user: !!user, role, roleLoading, isAdmin, hasRedirected: hasRedirected.current });
-    
     // Don't redirect if not ready or already redirected
     if (!authReady || !user || hasRedirected.current) return;
     
     // CRITICAL: Wait for role to be resolved before redirecting
-    // This prevents admin users from being sent to /client
     if (roleLoading) {
-      console.log('[Login] Waiting for role to resolve...');
       return;
     }
     
-    // Role is resolved (role can be null if user has no role, treated as customer)
-    // Determine redirect path
+    // Role is resolved - Determine redirect path
     let redirectPath: string;
     
     if (isAdmin) {
-      // Admin users go to admin dashboard (unless they came from a specific page)
       redirectPath = fromPath?.startsWith('/admin') ? fromPath : '/admin';
-      console.log('[Login] Admin user, redirecting to:', redirectPath);
     } else {
-      // Regular users go to client dashboard or their original destination
       redirectPath = fromPath && !fromPath.startsWith('/admin') ? fromPath : '/client';
-      console.log('[Login] Regular user, redirecting to:', redirectPath);
     }
     
     hasRedirected.current = true;
     navigate(redirectPath, { replace: true });
   }, [authReady, user, isAdmin, role, roleLoading, navigate, fromPath]);
 
+  // Format lockout time remaining
+  const formatLockoutTime = (lockedUntil: Date): string => {
+    const now = new Date();
+    const diff = lockedUntil.getTime() - now.getTime();
+    const minutes = Math.ceil(diff / 60000);
+    
+    if (language === 'bn') {
+      return `${minutes} মিনিট পরে আবার চেষ্টা করুন`;
+    }
+    return `Please try again in ${minutes} minute${minutes > 1 ? 's' : ''}`;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Clear previous errors
     setLoginError(null);
+    setLockoutMessage(null);
     setErrors({});
     
     // Validate form
@@ -103,6 +110,21 @@ const Login: React.FC = () => {
         setErrors(newErrors);
         return;
       }
+    }
+
+    // Check rate limit before attempting login
+    const rateLimitCheck = await checkRateLimit(formData.email);
+    
+    if (rateLimitCheck.isLocked && rateLimitCheck.lockedUntil) {
+      setLockoutMessage(formatLockoutTime(rateLimitCheck.lockedUntil));
+      toast({
+        title: language === 'bn' ? 'অ্যাকাউন্ট লক করা হয়েছে' : 'Account Locked',
+        description: language === 'bn' 
+          ? 'অনেক বেশি ব্যর্থ চেষ্টার কারণে সাময়িকভাবে লক করা হয়েছে' 
+          : 'Temporarily locked due to too many failed attempts',
+        variant: 'destructive',
+      });
+      return;
     }
 
     // Start submission
@@ -143,7 +165,21 @@ const Login: React.FC = () => {
       if (!mountedRef.current) return;
 
       if (error) {
-        setLoginError(getErrorMessage(error.message, language));
+        // Record failed attempt
+        const failResult = await recordFailure(formData.email);
+        
+        if (failResult.isLocked && failResult.lockedUntil) {
+          setLockoutMessage(formatLockoutTime(failResult.lockedUntil));
+        } else if (failResult.attemptsRemaining <= 2) {
+          // Warn user when they're close to being locked out
+          const warningMsg = language === 'bn' 
+            ? `সতর্কতা: ${failResult.attemptsRemaining}টি চেষ্টা বাকি আছে`
+            : `Warning: ${failResult.attemptsRemaining} attempts remaining`;
+          setLoginError(`${getErrorMessage(error.message, language)}. ${warningMsg}`);
+        } else {
+          setLoginError(getErrorMessage(error.message, language));
+        }
+        
         toast({
           title: language === 'bn' ? 'লগইন ব্যর্থ' : 'Login Failed',
           description: getErrorMessage(error.message, language),
@@ -162,7 +198,9 @@ const Login: React.FC = () => {
         return;
       }
 
-      // Success - show toast
+      // Success - clear rate limit and show toast
+      await recordSuccess(formData.email);
+      
       // DON'T navigate here - let the useEffect handle redirect after role is resolved
       toast({
         title: language === 'bn' ? 'সফল!' : 'Success!',
@@ -275,8 +313,21 @@ const Login: React.FC = () => {
                   </p>
                 </div>
 
+                {/* Lockout Alert */}
+                {lockoutMessage && (
+                  <div className="mb-6 p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-start gap-3">
+                    <Clock className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-amber-600 dark:text-amber-400 font-medium">
+                        {language === 'bn' ? 'অ্যাকাউন্ট সাময়িকভাবে লক' : 'Account Temporarily Locked'}
+                      </p>
+                      <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-1">{lockoutMessage}</p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Error Alert */}
-                {loginError && (
+                {loginError && !lockoutMessage && (
                   <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
                     <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
                     <div>
@@ -302,6 +353,7 @@ const Login: React.FC = () => {
                           setFormData({ ...formData, email: e.target.value });
                           if (errors.email) setErrors({ ...errors, email: '' });
                           if (loginError) setLoginError(null);
+                          if (lockoutMessage) setLockoutMessage(null);
                         }}
                         placeholder="you@example.com"
                         disabled={isSubmitting}
@@ -329,6 +381,7 @@ const Login: React.FC = () => {
                           setFormData({ ...formData, password: e.target.value });
                           if (errors.password) setErrors({ ...errors, password: '' });
                           if (loginError) setLoginError(null);
+                          if (lockoutMessage) setLockoutMessage(null);
                         }}
                         placeholder="••••••••"
                         disabled={isSubmitting}
@@ -363,7 +416,7 @@ const Login: React.FC = () => {
                     variant="hero" 
                     size="xl" 
                     className="w-full" 
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || !!lockoutMessage}
                   >
                     {isSubmitting ? (
                       <span className="flex items-center gap-2">
