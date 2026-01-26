@@ -11,6 +11,7 @@ import FAQSection from '@/components/home/FAQSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import CTASection from '@/components/home/CTASection';
 import SEOHead from '@/components/common/SEOHead';
+import { OrganizationSchema, WebSiteSchema, LocalBusinessSchema } from '@/components/common/SchemaMarkup';
 import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index: React.FC = () => {
@@ -26,6 +27,11 @@ const Index: React.FC = () => {
         keywords="web hosting, domain registration, VPS, dedicated server, cloud hosting, Bangladesh hosting, cPanel hosting, WordPress hosting, cheap hosting"
         canonicalUrl="/"
       />
+      {/* JSON-LD Schema Markup */}
+      <OrganizationSchema />
+      <WebSiteSchema />
+      <LocalBusinessSchema />
+      
       <HeroSection />
       <DomainSearch />
       <PricingSection />
