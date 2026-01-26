@@ -10,7 +10,6 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
-import { NotificationBell } from '@/components/client-dashboard/NotificationSystem';
 import ServerHealthMonitor from '@/components/admin/ServerHealthMonitor';
 import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
@@ -101,15 +100,12 @@ const AdminDashboard: React.FC = () => {
               {language === 'bn' ? 'আপনার সাইট ওভারভিউ' : 'Your site overview'}
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            {hasError && (
-              <Button variant="outline" size="sm" onClick={handleRetry}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry
-              </Button>
-            )}
-            <NotificationBell />
-          </div>
+          {hasError && (
+            <Button variant="outline" size="sm" onClick={handleRetry}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Retry
+            </Button>
+          )}
         </div>
 
         {/* Stats Cards - Show skeletons while loading */}
