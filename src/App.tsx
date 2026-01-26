@@ -54,6 +54,8 @@ import TermsOfService from "./pages/legal/TermsOfService";
 // Auth Pages
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 
 // Dashboard Pages (Legacy)
 import Dashboard from "./pages/dashboard/Dashboard";
@@ -147,6 +149,8 @@ const App = () => (
                   <Route path="/auth/signup" element={<Signup />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                   
                   {/* Checkout Routes */}
                   <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
