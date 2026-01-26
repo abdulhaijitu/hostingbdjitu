@@ -29,8 +29,8 @@ const PricingSection: React.FC = () => {
   const plans: Plan[] = [
     {
       name: t('pricing.starter'),
-      monthlyPrice: '$2.99',
-      yearlyPrice: '$1.99',
+      monthlyPrice: '৳299',
+      yearlyPrice: '৳199',
       period: isYearly ? (language === 'bn' ? '/মাস' : '/mo') : t('pricing.perMonth'),
       description: language === 'bn' ? 'ব্যক্তিগত ওয়েবসাইট ও ব্লগের জন্য' : 'Perfect for personal websites and blogs',
       savings: language === 'bn' ? '৩৩% সেভ করুন' : 'Save 33%',
@@ -47,8 +47,8 @@ const PricingSection: React.FC = () => {
     },
     {
       name: t('pricing.professional'),
-      monthlyPrice: '$7.99',
-      yearlyPrice: '$5.99',
+      monthlyPrice: '৳799',
+      yearlyPrice: '৳599',
       period: isYearly ? (language === 'bn' ? '/মাস' : '/mo') : t('pricing.perMonth'),
       description: language === 'bn' ? 'ক্রমবর্ধমান ব্যবসার জন্য আদর্শ' : 'Ideal for growing businesses',
       savings: language === 'bn' ? '২৫% সেভ করুন' : 'Save 25%',
@@ -66,8 +66,8 @@ const PricingSection: React.FC = () => {
     },
     {
       name: t('pricing.business'),
-      monthlyPrice: '$14.99',
-      yearlyPrice: '$11.99',
+      monthlyPrice: '৳1,499',
+      yearlyPrice: '৳1,199',
       period: isYearly ? (language === 'bn' ? '/মাস' : '/mo') : t('pricing.perMonth'),
       description: language === 'bn' ? 'হাই-ট্রাফিক এন্টারপ্রাইজ সাইটের জন্য' : 'For high-traffic enterprise sites',
       savings: language === 'bn' ? '২০% সেভ করুন' : 'Save 20%',

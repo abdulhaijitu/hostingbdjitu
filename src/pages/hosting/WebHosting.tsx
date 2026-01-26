@@ -13,8 +13,8 @@ const WebHosting: React.FC = () => {
   const plans = [
     {
       name: language === 'bn' ? 'স্টার্টার' : 'Starter',
-      monthlyPrice: '$2.99',
-      yearlyPrice: '$1.99',
+      monthlyPrice: '৳299',
+      yearlyPrice: '৳199',
       storage: language === 'bn' ? '১০ GB NVMe SSD' : '10 GB NVMe SSD',
       websites: language === 'bn' ? '১টি ওয়েবসাইট' : '1 Website',
       bandwidth: '100 GB',
@@ -34,8 +34,8 @@ const WebHosting: React.FC = () => {
     },
     {
       name: language === 'bn' ? 'প্রফেশনাল' : 'Professional',
-      monthlyPrice: '$7.99',
-      yearlyPrice: '$5.99',
+      monthlyPrice: '৳799',
+      yearlyPrice: '৳599',
       storage: language === 'bn' ? '৫০ GB NVMe SSD' : '50 GB NVMe SSD',
       websites: language === 'bn' ? 'আনলিমিটেড' : 'Unlimited',
       bandwidth: language === 'bn' ? 'আনলিমিটেড' : 'Unlimited',
@@ -56,8 +56,8 @@ const WebHosting: React.FC = () => {
     },
     {
       name: language === 'bn' ? 'বিজনেস' : 'Business',
-      monthlyPrice: '$14.99',
-      yearlyPrice: '$11.99',
+      monthlyPrice: '৳1,499',
+      yearlyPrice: '৳1,199',
       storage: language === 'bn' ? '১০০ GB NVMe SSD' : '100 GB NVMe SSD',
       websites: language === 'bn' ? 'আনলিমিটেড' : 'Unlimited',
       bandwidth: language === 'bn' ? 'আনলিমিটেড' : 'Unlimited',
@@ -117,7 +117,7 @@ const WebHosting: React.FC = () => {
         <div className="container-wide text-center relative">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent/10 text-accent text-sm font-medium mb-6 animate-fade-in">
             <Zap className="h-4 w-4" />
-            <span>{language === 'bn' ? 'মাত্র $1.99/মাস থেকে শুরু' : 'Starting from $1.99/month'}</span>
+            <span>{language === 'bn' ? 'মাত্র ৳১৯৯/মাস থেকে শুরু' : 'Starting from ৳199/month'}</span>
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold font-display mb-6 animate-fade-in-up">
             {language === 'bn' ? 'দ্রুত ও নির্ভরযোগ্য' : 'Fast & Reliable'}{' '}
