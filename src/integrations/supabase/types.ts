@@ -381,6 +381,39 @@ export type Database = {
           },
         ]
       }
+      login_attempts: {
+        Row: {
+          attempt_type: string
+          attempts_count: number
+          created_at: string
+          first_attempt_at: string
+          id: string
+          identifier: string
+          last_attempt_at: string
+          locked_until: string | null
+        }
+        Insert: {
+          attempt_type?: string
+          attempts_count?: number
+          created_at?: string
+          first_attempt_at?: string
+          id?: string
+          identifier: string
+          last_attempt_at?: string
+          locked_until?: string | null
+        }
+        Update: {
+          attempt_type?: string
+          attempts_count?: number
+          created_at?: string
+          first_attempt_at?: string
+          id?: string
+          identifier?: string
+          last_attempt_at?: string
+          locked_until?: string | null
+        }
+        Relationships: []
+      }
       orders: {
         Row: {
           amount: number
@@ -794,6 +827,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_rate_limit: {
+        Args: {
+          p_identifier: string
+          p_lockout_minutes?: number
+          p_max_attempts?: number
+          p_window_minutes?: number
+        }
+        Returns: {
+          attempts_remaining: number
+          is_locked: boolean
+          locked_until: string
+          message: string
+        }[]
+      }
+      cleanup_old_login_attempts: { Args: never; Returns: number }
       generate_cpanel_username: {
         Args: { domain_name: string }
         Returns: string
@@ -811,6 +859,15 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      record_login_attempt: {
+        Args: {
+          p_identifier: string
+          p_lockout_minutes?: number
+          p_max_attempts?: number
+          p_success?: boolean
+        }
+        Returns: undefined
       }
     }
     Enums: {
