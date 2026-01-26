@@ -57,7 +57,19 @@ import Signup from "./pages/auth/Signup";
 
 // Dashboard Pages
 import Dashboard from "./pages/dashboard/Dashboard";
+import ProfilePage from "./pages/dashboard/ProfilePage";
+import OrdersPage from "./pages/dashboard/OrdersPage";
+import InvoicesPage from "./pages/dashboard/InvoicesPage";
+
+// Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import HostingPlansManagement from "./pages/admin/HostingPlansManagement";
+import DomainPricingManagement from "./pages/admin/DomainPricingManagement";
+
+// Checkout Pages
+import Checkout from "./pages/checkout/Checkout";
+import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
+import CheckoutCancel from "./pages/checkout/CheckoutCancel";
 
 const queryClient = new QueryClient();
 
@@ -122,13 +134,21 @@ const App = () => (
                   <Route path="/login" element={<Login />} />
                   <Route path="/signup" element={<Signup />} />
                   
+                  {/* Checkout Routes */}
+                  <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                  <Route path="/checkout/success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
+                  <Route path="/checkout/cancel" element={<CheckoutCancel />} />
+                  
                   {/* Customer Dashboard Routes */}
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+                  <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                  <Route path="/dashboard/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
+                  <Route path="/dashboard/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
                   
                   {/* Admin Routes */}
                   <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
-                  <Route path="/admin/*" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
+                  <Route path="/admin/hosting-plans" element={<ProtectedRoute requireAdmin><HostingPlansManagement /></ProtectedRoute>} />
+                  <Route path="/admin/domain-pricing" element={<ProtectedRoute requireAdmin><DomainPricingManagement /></ProtectedRoute>} />
                   
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
