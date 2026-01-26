@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, 
-  Package, Users, Calendar, ArrowLeft, UserCheck, UserX, Heart
+  Package, Users, Calendar, ArrowLeft, UserCheck, UserX, Heart, RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import AdminLayout from '@/components/admin/AdminLayout';
@@ -17,16 +17,23 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
+import { ErrorState } from '@/components/common/DashboardSkeletons';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, differenceInDays, differenceInMonths } from 'date-fns';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
 const AnalyticsDashboard: React.FC = () => {
   const { language } = useLanguage();
-  const { data: orders, isLoading: ordersLoading } = useOrders();
-  const { data: payments, isLoading: paymentsLoading } = usePayments();
+  const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders();
+  const { data: payments, isLoading: paymentsLoading, isError: paymentsError, refetch: refetchPayments } = usePayments();
 
   const isLoading = ordersLoading || paymentsLoading;
+  const hasError = ordersError || paymentsError;
+
+  const handleRetry = () => {
+    refetchOrders();
+    refetchPayments();
+  };
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -245,6 +252,12 @@ const AnalyticsDashboard: React.FC = () => {
                 {language === 'bn' ? 'সেলস এবং অর্ডার ট্র্যাক করুন' : 'Track sales and orders'}
               </p>
             </div>
+            {hasError && (
+              <Button variant="outline" onClick={handleRetry}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {language === 'bn' ? 'পুনরায় চেষ্টা' : 'Retry'}
+              </Button>
+            )}
           </div>
 
           {/* Stats Cards */}

@@ -43,6 +43,8 @@ export const useAllHostingAccounts = () => {
         profiles: profileMap.get(account.user_id) || null
       })) as HostingAccountWithDetails[];
     },
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

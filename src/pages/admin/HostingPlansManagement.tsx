@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Star, Package } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Star, Package, RefreshCw } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { useHostingPlans, useCreateHostingPlan, useUpdateHostingPlan, useDeleteH
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
+import { ErrorState } from '@/components/common/DashboardSkeletons';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +32,7 @@ import {
 const HostingPlansManagement: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const { data: plans, isLoading } = useHostingPlans();
+  const { data: plans, isLoading, isError, refetch } = useHostingPlans();
   const createPlan = useCreateHostingPlan();
   const updatePlan = useUpdateHostingPlan();
   const deletePlan = useDeleteHostingPlan();
@@ -175,6 +176,9 @@ const HostingPlansManagement: React.FC = () => {
               <Plus className="h-4 w-4 mr-2" />
               {language === 'bn' ? 'নতুন প্ল্যান' : 'New Plan'}
             </Button>
+            <Button variant="outline" size="icon" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
 
           <Card>
@@ -182,7 +186,12 @@ const HostingPlansManagement: React.FC = () => {
               <CardTitle>{language === 'bn' ? 'সকল প্ল্যান' : 'All Plans'}</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isError ? (
+                <ErrorState 
+                  title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
+                  onRetry={() => refetch()}
+                />
+              ) : isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
                 </div>

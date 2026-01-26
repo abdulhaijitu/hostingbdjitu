@@ -23,6 +23,8 @@ export const useHostingPlans = (activeOnly = false) => {
       if (error) throw error;
       return data as HostingPlan[];
     },
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

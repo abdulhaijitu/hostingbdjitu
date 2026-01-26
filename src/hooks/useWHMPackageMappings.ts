@@ -22,6 +22,8 @@ export const useWHMPackageMappings = () => {
       if (error) throw error;
       return data;
     },
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

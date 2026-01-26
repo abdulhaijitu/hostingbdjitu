@@ -55,6 +55,7 @@ import {
   useSyncAccountUsage
 } from '@/hooks/useAllHostingAccounts';
 import SEOHead from '@/components/common/SEOHead';
+import { ErrorState } from '@/components/common/DashboardSkeletons';
 
 const HostingAccountsManagement: React.FC = () => {
   const { language } = useLanguage();
@@ -66,7 +67,7 @@ const HostingAccountsManagement: React.FC = () => {
   const [suspendReason, setSuspendReason] = useState('');
   const [terminateId, setTerminateId] = useState<string | null>(null);
 
-  const { data: accounts, isLoading, refetch } = useAllHostingAccounts();
+  const { data: accounts, isLoading, isError, refetch } = useAllHostingAccounts();
   const suspendMutation = useSuspendAccount();
   const unsuspendMutation = useUnsuspendAccount();
   const terminateMutation = useTerminateAccount();
@@ -244,7 +245,12 @@ const HostingAccountsManagement: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isError ? (
+                <ErrorState 
+                  title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
+                  onRetry={() => refetch()}
+                />
+              ) : isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-20 w-full" />)}
                 </div>

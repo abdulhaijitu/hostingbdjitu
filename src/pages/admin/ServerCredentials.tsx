@@ -41,6 +41,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import SEOHead from '@/components/common/SEOHead';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/common/DashboardSkeletons';
 import { useHostingServers } from '@/hooks/useWHMAdmin';
 
 interface ServerCredential {
@@ -58,7 +59,7 @@ interface ServerCredential {
 const ServerCredentials: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const { data: servers, isLoading: serversLoading } = useHostingServers();
+  const { data: servers, isLoading: serversLoading, isError: serversError, refetch: refetchServers } = useHostingServers();
   
   const [credentials, setCredentials] = useState<ServerCredential[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
@@ -215,7 +216,12 @@ const ServerCredentials: React.FC = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {serversLoading ? (
+            {serversError ? (
+              <ErrorState 
+                title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
+                onRetry={() => refetchServers()}
+              />
+            ) : serversLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
                   <Skeleton key={i} className="h-16 w-full" />
