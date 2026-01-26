@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building } from 'lucide-react';
+import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -38,6 +40,9 @@ const UsersManagement: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<UserWithProfile | null>(null);
   const [userOrders, setUserOrders] = useState<any[]>([]);
   const [isOrdersDialogOpen, setIsOrdersDialogOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set());
+  const [isBulkActionDialogOpen, setIsBulkActionDialogOpen] = useState(false);
+  const [bulkAction, setBulkAction] = useState<'delete' | 'export' | null>(null);
 
   useEffect(() => {
     fetchUsers();
@@ -127,6 +132,128 @@ const UsersManagement: React.FC = () => {
     );
   });
 
+  // Toggle single user selection
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUsers);
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId);
+    } else {
+      newSelection.add(userId);
+    }
+    setSelectedUsers(newSelection);
+  };
+
+  // Toggle all users selection
+  const toggleAllSelection = () => {
+    if (selectedUsers.size === filteredUsers.length) {
+      setSelectedUsers(new Set());
+    } else {
+      setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
+    }
+  };
+
+  // Export to CSV
+  const exportToCSV = (usersToExport: UserWithProfile[]) => {
+    const headers = ['Name', 'Email', 'Phone', 'Company', 'Role', 'Orders', 'Total Spent', 'Joined Date'];
+    const rows = usersToExport.map(user => [
+      user.profile?.full_name || '',
+      user.email,
+      user.profile?.phone || '',
+      user.profile?.company_name || '',
+      user.role,
+      user.orders_count.toString(),
+      user.total_spent.toString(),
+      format(new Date(user.created_at), 'yyyy-MM-dd'),
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(',')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `customers_${format(new Date(), 'yyyyMMdd_HHmmss')}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: language === 'bn' ? 'এক্সপোর্ট সম্পন্ন' : 'Export Complete',
+      description: language === 'bn' 
+        ? `${usersToExport.length} জন গ্রাহক এক্সপোর্ট করা হয়েছে` 
+        : `${usersToExport.length} customers exported`,
+    });
+  };
+
+  // Export to Excel (XLSX-like format using CSV with Excel compatibility)
+  const exportToExcel = (usersToExport: UserWithProfile[]) => {
+    const headers = ['Name', 'Email', 'Phone', 'Company', 'Role', 'Orders', 'Total Spent (BDT)', 'Joined Date'];
+    const rows = usersToExport.map(user => [
+      user.profile?.full_name || '',
+      user.email,
+      user.profile?.phone || '',
+      user.profile?.company_name || '',
+      user.role,
+      user.orders_count,
+      user.total_spent,
+      format(new Date(user.created_at), 'yyyy-MM-dd'),
+    ]);
+
+    // Create Excel-compatible CSV with BOM for proper UTF-8 encoding
+    const BOM = '\uFEFF';
+    const csvContent = BOM + [
+      headers.join('\t'),
+      ...rows.map(row => row.map(cell => `${cell}`).join('\t')),
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `customers_${format(new Date(), 'yyyyMMdd_HHmmss')}.xls`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast({
+      title: language === 'bn' ? 'এক্সপোর্ট সম্পন্ন' : 'Export Complete',
+      description: language === 'bn' 
+        ? `${usersToExport.length} জন গ্রাহক এক্সপোর্ট করা হয়েছে` 
+        : `${usersToExport.length} customers exported`,
+    });
+  };
+
+  // Export selected users
+  const exportSelectedUsers = (format: 'csv' | 'excel') => {
+    const usersToExport = users.filter(u => selectedUsers.has(u.id));
+    if (usersToExport.length === 0) {
+      toast({
+        title: language === 'bn' ? 'কোন গ্রাহক নির্বাচন করা হয়নি' : 'No customers selected',
+        variant: 'destructive',
+      });
+      return;
+    }
+    if (format === 'csv') {
+      exportToCSV(usersToExport);
+    } else {
+      exportToExcel(usersToExport);
+    }
+  };
+
+  // Export all users
+  const exportAllUsers = (format: 'csv' | 'excel') => {
+    if (format === 'csv') {
+      exportToCSV(filteredUsers);
+    } else {
+      exportToExcel(filteredUsers);
+    }
+  };
+
   return (
     <Layout>
       <SEOHead 
@@ -192,15 +319,69 @@ const UsersManagement: React.FC = () => {
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <CardTitle>{language === 'bn' ? 'সকল ইউজার' : 'All Users'}</CardTitle>
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder={language === 'bn' ? 'সার্চ করুন...' : 'Search users...'} 
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+                <div className="flex-1">
+                  <CardTitle>{language === 'bn' ? 'সকল ইউজার' : 'All Users'}</CardTitle>
+                  {selectedUsers.size > 0 && (
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {language === 'bn' 
+                        ? `${selectedUsers.size} জন নির্বাচিত`
+                        : `${selectedUsers.size} selected`
+                      }
+                    </p>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  {/* Bulk Actions */}
+                  {selectedUsers.size > 0 && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="sm">
+                          <CheckSquare className="h-4 w-4 mr-2" />
+                          {language === 'bn' ? 'বাল্ক অ্যাকশন' : 'Bulk Actions'}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => exportSelectedUsers('csv')}>
+                          <Download className="h-4 w-4 mr-2" />
+                          {language === 'bn' ? 'CSV এক্সপোর্ট' : 'Export CSV'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => exportSelectedUsers('excel')}>
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          {language === 'bn' ? 'Excel এক্সপোর্ট' : 'Export Excel'}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+
+                  {/* Export All */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <Download className="h-4 w-4 mr-2" />
+                        {language === 'bn' ? 'এক্সপোর্ট' : 'Export'}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => exportAllUsers('csv')}>
+                        <Download className="h-4 w-4 mr-2" />
+                        {language === 'bn' ? 'সব CSV এক্সপোর্ট' : 'Export All CSV'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => exportAllUsers('excel')}>
+                        <FileSpreadsheet className="h-4 w-4 mr-2" />
+                        {language === 'bn' ? 'সব Excel এক্সপোর্ট' : 'Export All Excel'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <div className="relative w-full sm:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder={language === 'bn' ? 'সার্চ করুন...' : 'Search users...'} 
+                      value={searchQuery}
+                      onChange={e => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
                 </div>
               </div>
             </CardHeader>
@@ -214,6 +395,12 @@ const UsersManagement: React.FC = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-12">
+                          <Checkbox 
+                            checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                            onCheckedChange={toggleAllSelection}
+                          />
+                        </TableHead>
                         <TableHead>{language === 'bn' ? 'ইউজার' : 'User'}</TableHead>
                         <TableHead>{language === 'bn' ? 'যোগাযোগ' : 'Contact'}</TableHead>
                         <TableHead>{language === 'bn' ? 'রোল' : 'Role'}</TableHead>
@@ -225,7 +412,13 @@ const UsersManagement: React.FC = () => {
                     </TableHeader>
                     <TableBody>
                       {filteredUsers.map(user => (
-                        <TableRow key={user.id}>
+                        <TableRow key={user.id} className={selectedUsers.has(user.id) ? 'bg-primary/5' : ''}>
+                          <TableCell>
+                            <Checkbox 
+                              checked={selectedUsers.has(user.id)}
+                              onCheckedChange={() => toggleUserSelection(user.id)}
+                            />
+                          </TableCell>
                           <TableCell>
                             <div>
                               <p className="font-medium">{user.profile?.full_name || '-'}</p>
