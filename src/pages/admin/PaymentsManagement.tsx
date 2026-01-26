@@ -149,8 +149,17 @@ const PaymentsManagement: React.FC = () => {
                     <CreditCard className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{totalPayments}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট পেমেন্ট' : 'Total Payments'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-16" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{totalPayments}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট পেমেন্ট' : 'Total Payments'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -162,8 +171,17 @@ const PaymentsManagement: React.FC = () => {
                     <DollarSign className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট আয়' : 'Total Revenue'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-24 mb-1" />
+                        <Skeleton className="h-3 w-12" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট আয়' : 'Total Revenue'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -175,8 +193,17 @@ const PaymentsManagement: React.FC = () => {
                     <Clock className="h-5 w-5 text-warning" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{pendingPayments.length}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-12" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{pendingPayments.length}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -188,8 +215,17 @@ const PaymentsManagement: React.FC = () => {
                     <CheckCircle className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{completedPayments.length}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-12" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{completedPayments.length}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>

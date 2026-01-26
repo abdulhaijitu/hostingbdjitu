@@ -153,8 +153,17 @@ const OrdersManagement: React.FC = () => {
                   <Package className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{totalOrders}</p>
-                  <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট অর্ডার' : 'Total Orders'}</p>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-7 w-16 mb-1" />
+                      <Skeleton className="h-3 w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold">{totalOrders}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট অর্ডার' : 'Total Orders'}</p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -166,8 +175,17 @@ const OrdersManagement: React.FC = () => {
                   <Clock className="h-5 w-5 text-warning" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{pendingOrders}</p>
-                  <p className="text-xs text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-7 w-12 mb-1" />
+                      <Skeleton className="h-3 w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold">{pendingOrders}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -179,8 +197,17 @@ const OrdersManagement: React.FC = () => {
                   <ShoppingCart className="h-5 w-5 text-success" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">{completedOrders}</p>
-                  <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</p>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-7 w-12 mb-1" />
+                      <Skeleton className="h-3 w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold">{completedOrders}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>
@@ -192,8 +219,17 @@ const OrdersManagement: React.FC = () => {
                   <CreditCard className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
-                  <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট মূল্য' : 'Total Value'}</p>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-7 w-24 mb-1" />
+                      <Skeleton className="h-3 w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট মূল্য' : 'Total Value'}</p>
+                    </>
+                  )}
                 </div>
               </div>
             </CardContent>

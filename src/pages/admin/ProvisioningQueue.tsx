@@ -116,7 +116,11 @@ const ProvisioningQueue: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'মোট কিউ' : 'Total Queue'}
                     </p>
-                    <p className="text-3xl font-bold">{queue?.length || 0}</p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-12" />
+                    ) : (
+                      <p className="text-3xl font-bold">{queue?.length || 0}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -131,7 +135,11 @@ const ProvisioningQueue: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'পেন্ডিং' : 'Pending'}
                     </p>
-                    <p className="text-3xl font-bold">{pendingCount}</p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-12" />
+                    ) : (
+                      <p className="text-3xl font-bold">{pendingCount}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -146,7 +154,11 @@ const ProvisioningQueue: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'ব্যর্থ' : 'Failed'}
                     </p>
-                    <p className="text-3xl font-bold">{failedCount}</p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-12" />
+                    ) : (
+                      <p className="text-3xl font-bold">{failedCount}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -161,7 +173,11 @@ const ProvisioningQueue: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'সম্পন্ন' : 'Completed'}
                     </p>
-                    <p className="text-3xl font-bold">{completedCount}</p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-12" />
+                    ) : (
+                      <p className="text-3xl font-bold">{completedCount}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
