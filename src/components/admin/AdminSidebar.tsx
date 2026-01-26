@@ -1,8 +1,10 @@
 import React from 'react';
-import { PanelLeftClose, PanelLeft, Crown, Sparkles, Zap } from 'lucide-react';
+import { PanelLeftClose, PanelLeft, Crown, Sparkles, Zap, Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import {
   Tooltip,
   TooltipContent,
@@ -194,9 +196,66 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ collapsed, onToggle }) => {
       {/* Navigation */}
       <AdminSidebarNav sections={navSections} collapsed={collapsed} />
 
+      {/* Theme Toggle */}
+      <ThemeToggle collapsed={collapsed} />
+
       {/* Profile Section */}
       <AdminSidebarProfile collapsed={collapsed} />
     </aside>
+  );
+};
+
+// Theme Toggle Component
+const ThemeToggle: React.FC<{ collapsed: boolean }> = ({ collapsed }) => {
+  const { theme, setTheme } = useTheme();
+  const isDark = theme === 'dark';
+
+  const toggleTheme = () => {
+    setTheme(isDark ? 'light' : 'dark');
+  };
+
+  if (collapsed) {
+    return (
+      <div className="px-3 py-2 border-t border-slate-800/50">
+        <Tooltip delayDuration={0}>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="w-full h-10 hover:bg-slate-800/60 rounded-xl text-slate-400 hover:text-white transition-all duration-200"
+              onClick={toggleTheme}
+            >
+              {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="right" className="bg-slate-900 border-slate-700/50 font-medium">
+            {isDark ? 'Light Mode' : 'Dark Mode'}
+          </TooltipContent>
+        </Tooltip>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-3 px-4 py-3 border-t border-slate-800/50">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {isDark ? (
+            <Moon className="h-4 w-4 text-slate-400" />
+          ) : (
+            <Sun className="h-4 w-4 text-amber-400" />
+          )}
+          <span className="text-sm text-slate-300 font-medium">
+            {isDark ? 'Dark Mode' : 'Light Mode'}
+          </span>
+        </div>
+        <Switch
+          checked={isDark}
+          onCheckedChange={() => toggleTheme()}
+          className="data-[state=checked]:bg-primary"
+        />
+      </div>
+    </div>
   );
 };
 
