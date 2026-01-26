@@ -55,11 +55,24 @@ import TermsOfService from "./pages/legal/TermsOfService";
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 
-// Dashboard Pages
+// Dashboard Pages (Legacy)
 import Dashboard from "./pages/dashboard/Dashboard";
 import ProfilePage from "./pages/dashboard/ProfilePage";
 import OrdersPage from "./pages/dashboard/OrdersPage";
 import InvoicesPage from "./pages/dashboard/InvoicesPage";
+
+// Client Dashboard Pages (New cPanel-style)
+import ClientDashboard from "./pages/client/ClientDashboard";
+import { HostingList, HostingDetails } from "./pages/client/HostingManagement";
+import DomainsPage from "./pages/client/DomainsPage";
+import EmailsPage from "./pages/client/EmailsPage";
+import DatabasesPage from "./pages/client/DatabasesPage";
+import FilesPage from "./pages/client/FilesPage";
+import SecurityPage from "./pages/client/SecurityPage";
+import BackupsPage from "./pages/client/BackupsPage";
+import BillingPage from "./pages/client/BillingPage";
+import SupportPage from "./pages/client/SupportPage";
+import ProfileSettingsPage from "./pages/client/ProfileSettingsPage";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -140,11 +153,25 @@ const App = () => (
                   <Route path="/checkout/success" element={<ProtectedRoute><CheckoutSuccess /></ProtectedRoute>} />
                   <Route path="/checkout/cancel" element={<CheckoutCancel />} />
                   
-                  {/* Customer Dashboard Routes */}
+                  {/* Customer Dashboard Routes (Legacy) */}
                   <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                   <Route path="/dashboard/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                   <Route path="/dashboard/orders" element={<ProtectedRoute><OrdersPage /></ProtectedRoute>} />
                   <Route path="/dashboard/invoices" element={<ProtectedRoute><InvoicesPage /></ProtectedRoute>} />
+                  
+                  {/* Client Dashboard Routes (New cPanel-style) */}
+                  <Route path="/client" element={<ProtectedRoute><ClientDashboard /></ProtectedRoute>} />
+                  <Route path="/client/hosting" element={<ProtectedRoute><HostingList /></ProtectedRoute>} />
+                  <Route path="/client/hosting/:id" element={<ProtectedRoute><HostingDetails /></ProtectedRoute>} />
+                  <Route path="/client/domains" element={<ProtectedRoute><DomainsPage /></ProtectedRoute>} />
+                  <Route path="/client/emails" element={<ProtectedRoute><EmailsPage /></ProtectedRoute>} />
+                  <Route path="/client/databases" element={<ProtectedRoute><DatabasesPage /></ProtectedRoute>} />
+                  <Route path="/client/files" element={<ProtectedRoute><FilesPage /></ProtectedRoute>} />
+                  <Route path="/client/security" element={<ProtectedRoute><SecurityPage /></ProtectedRoute>} />
+                  <Route path="/client/backups" element={<ProtectedRoute><BackupsPage /></ProtectedRoute>} />
+                  <Route path="/client/billing" element={<ProtectedRoute><BillingPage /></ProtectedRoute>} />
+                  <Route path="/client/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
+                  <Route path="/client/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
                   
                   {/* Admin Routes */}
                   <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
