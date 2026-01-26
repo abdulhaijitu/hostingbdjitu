@@ -41,6 +41,8 @@ import {
   SupportTicket,
   TicketMessage 
 } from '@/hooks/useSupportTickets';
+import { useTicketAttachments, UploadedAttachment } from '@/hooks/useTicketAttachments';
+import { Progress } from '@/components/ui/progress';
 
 const SupportPage: React.FC = () => {
   const { language } = useLanguage();
@@ -55,6 +57,7 @@ const SupportPage: React.FC = () => {
   const { data: messages, isLoading: messagesLoading } = useTicketMessages(selectedTicket?.id || null);
   const createTicketMutation = useCreateTicket();
   const createMessageMutation = useCreateMessage();
+  const { uploadFiles, isUploading, uploadProgress } = useTicketAttachments();
   
   // New Ticket Form State
   const [newTicket, setNewTicket] = useState({
@@ -137,10 +140,17 @@ const SupportPage: React.FC = () => {
         category: newTicket.category,
       });
 
-      // Add initial message
+      // Upload attachments if any
+      let uploadedAttachments: UploadedAttachment[] = [];
+      if (attachments.length > 0) {
+        uploadedAttachments = await uploadFiles(attachments, ticket.id);
+      }
+
+      // Add initial message with attachments
       await createMessageMutation.mutateAsync({
         ticket_id: ticket.id,
         message: newTicket.message,
+        attachments: uploadedAttachments,
       });
 
       toast({
@@ -192,10 +202,16 @@ const SupportPage: React.FC = () => {
     if (!replyMessage.trim() || !selectedTicket) return;
 
     try {
+      // Upload attachments if any
+      let uploadedAttachments: UploadedAttachment[] = [];
+      if (replyAttachments.length > 0) {
+        uploadedAttachments = await uploadFiles(replyAttachments, selectedTicket.id);
+      }
+
       await createMessageMutation.mutateAsync({
         ticket_id: selectedTicket.id,
         message: replyMessage,
-        attachments: replyAttachments.map(f => ({ name: f.name, size: f.size, type: f.type })),
+        attachments: uploadedAttachments,
       });
 
       toast({
@@ -363,6 +379,28 @@ const SupportPage: React.FC = () => {
                           : 'bg-muted rounded-tl-sm'
                       )}>
                         <p className="text-sm">{msg.message}</p>
+                        {/* Display attachments */}
+                        {msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-2">
+                            {(msg.attachments as any[]).map((att: any, idx: number) => (
+                              <a
+                                key={idx}
+                                href={att.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={cn(
+                                  "flex items-center gap-1.5 text-xs px-2 py-1 rounded",
+                                  !msg.is_staff_reply 
+                                    ? "bg-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/30" 
+                                    : "bg-background hover:bg-accent"
+                                )}
+                              >
+                                <File className="h-3 w-3" />
+                                {att.name}
+                              </a>
+                            ))}
+                          </div>
+                        )}
                         <p className={cn(
                           'text-xs mt-2',
                           !msg.is_staff_reply ? 'text-primary-foreground/70' : 'text-muted-foreground'
@@ -379,6 +417,19 @@ const SupportPage: React.FC = () => {
             {/* Reply Section */}
             {selectedTicket.status !== 'closed' && (
               <div className="p-4 border-t bg-muted/30">
+                {/* Upload progress */}
+                {isUploading && (
+                  <div className="mb-3">
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="text-muted-foreground">
+                        {language === 'bn' ? 'আপলোড হচ্ছে...' : 'Uploading...'}
+                      </span>
+                      <span className="text-primary">{Math.round(uploadProgress)}%</span>
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
+                )}
+                
                 {replyAttachments.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {replyAttachments.map((file, index) => (
@@ -419,9 +470,9 @@ const SupportPage: React.FC = () => {
                   <Button 
                     onClick={handleSendReply} 
                     className="gap-2"
-                    disabled={createMessageMutation.isPending}
+                    disabled={createMessageMutation.isPending || isUploading}
                   >
-                    {createMessageMutation.isPending ? (
+                    {(createMessageMutation.isPending || isUploading) ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
                       <Send className="h-4 w-4" />

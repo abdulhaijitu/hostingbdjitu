@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Package, CreditCard, Globe, Server, 
   FileText, Settings, LogOut, TrendingUp, DollarSign, ShoppingCart,
-  Webhook, MessageSquare
+  Webhook, MessageSquare, BarChart3
 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -34,6 +34,7 @@ const AdminDashboard: React.FC = () => {
   const totalOrders = orders?.length || 0;
 
   const adminLinks = [
+    { icon: BarChart3, label: language === 'bn' ? 'অ্যানালিটিক্স' : 'Analytics', href: '/admin/analytics', highlight: true },
     { icon: Package, label: language === 'bn' ? 'হোস্টিং প্ল্যান' : 'Hosting Plans', href: '/admin/hosting-plans' },
     { icon: Globe, label: language === 'bn' ? 'ডোমেইন প্রাইসিং' : 'Domain Pricing', href: '/admin/domain-pricing' },
     { icon: ShoppingCart, label: language === 'bn' ? 'অর্ডার' : 'Orders', href: '/admin/orders' },
@@ -140,11 +141,16 @@ const AdminDashboard: React.FC = () => {
           {/* Admin Links Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {adminLinks.map((link) => (
-              <Card key={link.href} className="hover:border-primary/50 transition-colors cursor-pointer">
+              <Card 
+                key={link.href} 
+                className={`hover:border-primary/50 transition-colors cursor-pointer ${
+                  (link as any).highlight ? 'bg-gradient-to-br from-primary/10 to-accent/10 border-primary/30' : ''
+                }`}
+              >
                 <Link to={link.href}>
                   <CardHeader>
                     <div className="flex items-center gap-4">
-                      <div className="p-3 rounded-xl bg-primary/10">
+                      <div className={`p-3 rounded-xl ${(link as any).highlight ? 'bg-primary/20' : 'bg-primary/10'}`}>
                         <link.icon className="h-6 w-6 text-primary" />
                       </div>
                       <CardTitle className="text-lg">{link.label}</CardTitle>
