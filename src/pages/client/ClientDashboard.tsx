@@ -9,6 +9,8 @@ import StatCard from '@/components/client-dashboard/StatCard';
 import UsageProgress from '@/components/client-dashboard/UsageProgress';
 import StatusBadge from '@/components/client-dashboard/StatusBadge';
 import QuickActions from '@/components/client-dashboard/QuickActions';
+import ResourceMonitor from '@/components/client-dashboard/ResourceMonitor';
+import SSLInstaller from '@/components/client-dashboard/SSLInstaller';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -17,6 +19,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { useHostingAccounts } from '@/hooks/useHostingAccounts';
 
 const ClientDashboard: React.FC = () => {
   const { language } = useLanguage();
@@ -24,6 +27,7 @@ const ClientDashboard: React.FC = () => {
   const { data: profile, isLoading: profileLoading } = useProfile();
   const { data: orders, isLoading: ordersLoading } = useOrders();
   const { data: invoices, isLoading: invoicesLoading } = useInvoices();
+  const { data: hostingAccounts } = useHostingAccounts();
 
   // Calculate stats from orders
   const hostingOrders = orders?.filter(o => 
@@ -283,6 +287,24 @@ const ClientDashboard: React.FC = () => {
               )}
             </CardContent>
           </Card>
+
+          {/* Resource Monitor */}
+          {hostingAccounts && hostingAccounts.length > 0 && (
+            <ResourceMonitor 
+              accountId={hostingAccounts[0].id}
+              serverId={hostingAccounts[0].server_id}
+              cpanelUsername={hostingAccounts[0].cpanel_username}
+            />
+          )}
+
+          {/* SSL Installer */}
+          {hostingAccounts && hostingAccounts.length > 0 && (
+            <SSLInstaller
+              domain={hostingAccounts[0].domain}
+              serverId={hostingAccounts[0].server_id}
+              cpanelUsername={hostingAccounts[0].cpanel_username}
+            />
+          )}
 
           {/* System Status */}
           <Card>

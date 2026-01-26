@@ -90,7 +90,7 @@ import ServerManagement from "./pages/admin/ServerManagement";
 import ProvisioningQueue from "./pages/admin/ProvisioningQueue";
 import WHMPackageMapping from "./pages/admin/WHMPackageMapping";
 import HostingAccountsManagement from "./pages/admin/HostingAccountsManagement";
-
+import ServerCredentials from "./pages/admin/ServerCredentials";
 // Checkout Pages
 import Checkout from "./pages/checkout/Checkout";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
@@ -200,6 +200,7 @@ const App = () => (
                   <Route path="/admin/provisioning" element={<ProtectedRoute requireAdmin><ProvisioningQueue /></ProtectedRoute>} />
                   <Route path="/admin/package-mapping" element={<ProtectedRoute requireAdmin><WHMPackageMapping /></ProtectedRoute>} />
                   <Route path="/admin/hosting-accounts" element={<ProtectedRoute requireAdmin><HostingAccountsManagement /></ProtectedRoute>} />
+                  <Route path="/admin/server-credentials" element={<ProtectedRoute requireAdmin><ServerCredentials /></ProtectedRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
