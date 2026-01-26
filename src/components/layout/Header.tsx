@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Menu, X, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,8 +16,14 @@ interface MenuItem {
 const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+
+  // Prevent hydration mismatch
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const menuItems: MenuItem[] = [
     {
@@ -73,6 +79,12 @@ const Header: React.FC = () => {
     setLanguage(language === 'en' ? 'bn' : 'en');
   };
 
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
+  const isDark = resolvedTheme === 'dark';
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container-wide">
@@ -113,7 +125,7 @@ const Header: React.FC = () => {
 
                 {/* Dropdown */}
                 {item.children && activeMenu === item.label && (
-                  <div className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-card border border-border shadow-lg animate-fade-in">
+                  <div className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-card border border-border shadow-lg animate-fade-in z-50">
                     <div className="p-2">
                       {item.children.map((child) => (
                         <Link
@@ -132,24 +144,36 @@ const Header: React.FC = () => {
           </nav>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-3">
-            {/* Theme Toggle */}
-            <button
-              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-              className="flex items-center justify-center w-9 h-9 text-foreground/80 hover:text-foreground transition-colors rounded-lg hover:bg-muted/50"
-              aria-label="Toggle theme"
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-            </button>
+          <div className="flex items-center gap-2">
+            {/* Theme Toggle - Improved */}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                aria-label="Toggle theme"
+              >
+                <Sun 
+                  className={cn(
+                    "h-5 w-5 text-yellow-500 transition-all duration-300",
+                    isDark ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"
+                  )} 
+                />
+                <Moon 
+                  className={cn(
+                    "absolute h-5 w-5 text-blue-400 transition-all duration-300",
+                    isDark ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0"
+                  )} 
+                />
+              </button>
+            )}
 
             {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
-              className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-lg hover:bg-muted/50"
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-lg bg-muted/50 hover:bg-muted"
             >
               <Globe className="h-4 w-4" />
-              <span>{language === 'en' ? 'EN' : 'বাং'}</span>
+              <span className="font-semibold">{language === 'en' ? 'EN' : 'বাং'}</span>
             </button>
 
             <div className="hidden sm:flex items-center gap-2">
@@ -202,6 +226,27 @@ const Header: React.FC = () => {
                 )}
               </div>
             ))}
+            
+            {/* Mobile Theme Toggle */}
+            <div className="px-4 py-3 border-t border-border mt-4">
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-3 w-full text-sm font-medium text-foreground/80 hover:text-foreground"
+              >
+                {mounted && isDark ? (
+                  <>
+                    <Moon className="h-5 w-5 text-blue-400" />
+                    <span>{language === 'bn' ? 'ডার্ক মোড' : 'Dark Mode'}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sun className="h-5 w-5 text-yellow-500" />
+                    <span>{language === 'bn' ? 'লাইট মোড' : 'Light Mode'}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             <div className="flex gap-2 pt-4 border-t border-border">
               <Button variant="outline" className="flex-1" asChild>
                 <Link to="/login" onClick={() => setIsOpen(false)}>{t('nav.login')}</Link>
