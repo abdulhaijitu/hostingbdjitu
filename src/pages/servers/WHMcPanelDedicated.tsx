@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const WHMcPanelDedicated: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -82,6 +83,18 @@ const WHMcPanelDedicated: React.FC = () => {
         keywords="WHM dedicated, cPanel dedicated, managed server, Bangladesh"
         canonicalUrl="/servers/whm-cpanel"
       />
+      <ProductSchema 
+        name="WHM/cPanel Dedicated Server"
+        description="Fully managed dedicated servers with WHM and cPanel for hosting agencies."
+        price="14999"
+        url="/servers/whm-cpanel"
+        category="Dedicated Servers"
+      />
+      <FAQSchema faqs={[
+        { question: "Is the server fully managed?", answer: "Yes, we handle all server management including updates, security patches, and monitoring." },
+        { question: "How many websites can I host?", answer: "You can host unlimited websites with our WHM Dedicated servers." },
+        { question: "Is IPMI access included?", answer: "Yes, IPMI access is included for remote server management." }
+      ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

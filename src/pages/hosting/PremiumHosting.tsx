@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const PremiumHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -129,6 +130,18 @@ const PremiumHosting: React.FC = () => {
         keywords="premium hosting, LiteSpeed hosting, enterprise hosting, Bangladesh hosting"
         canonicalUrl="/hosting/premium"
       />
+      <ProductSchema 
+        name="Premium Hosting"
+        description="Premium web hosting with LiteSpeed servers, advanced security, and priority support."
+        price="799"
+        url="/hosting/premium"
+        category="Premium Hosting"
+      />
+      <FAQSchema faqs={[
+        { question: "What makes Premium Hosting different?", answer: "Premium hosting includes LiteSpeed web server, Imunify360 security, real-time backups, and priority support with 5-minute response time." },
+        { question: "Is LiteSpeed faster than Apache?", answer: "Yes, LiteSpeed is up to 10x faster than Apache for serving web content." },
+        { question: "Do I get a dedicated IP?", answer: "Dedicated IP is included in the Premium Pro plan." }
+      ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

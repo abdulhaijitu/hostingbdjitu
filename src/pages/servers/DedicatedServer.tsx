@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const DedicatedServer: React.FC = () => {
   const { language } = useLanguage();
@@ -99,6 +100,18 @@ const DedicatedServer: React.FC = () => {
         keywords="dedicated server, bare metal server, enterprise server, Bangladesh"
         canonicalUrl="/servers/dedicated"
       />
+      <ProductSchema 
+        name="Dedicated Server"
+        description="Powerful bare-metal servers with Intel Xeon processors, enterprise SSDs, and DDoS protection."
+        price="9999"
+        url="/servers/dedicated"
+        category="Dedicated Servers"
+      />
+      <FAQSchema faqs={[
+        { question: "What is a dedicated server?", answer: "A dedicated server is a physical server exclusively allocated to you with full hardware access." },
+        { question: "What processors are available?", answer: "We offer Intel Xeon E3, E5, and Silver series processors for various performance needs." },
+        { question: "Is DDoS protection included?", answer: "Yes, all dedicated servers include up to 1Tbps DDoS protection." }
+      ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

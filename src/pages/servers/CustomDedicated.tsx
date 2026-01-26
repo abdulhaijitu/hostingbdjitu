@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const CustomDedicated: React.FC = () => {
   const { language } = useLanguage();
@@ -76,6 +77,18 @@ const CustomDedicated: React.FC = () => {
         keywords="custom dedicated server, enterprise server, server configuration, Bangladesh"
         canonicalUrl="/servers/custom"
       />
+      <ProductSchema 
+        name="Custom Dedicated Server"
+        description="Custom hardware configurations with dual CPU support, up to 2TB RAM, and enterprise NVMe storage."
+        price="20000"
+        url="/servers/custom"
+        category="Dedicated Servers"
+      />
+      <FAQSchema faqs={[
+        { question: "Can I choose my own hardware?", answer: "Yes, you can select processor, RAM, storage, RAID configuration, and network options." },
+        { question: "What processors are available?", answer: "We offer Intel Xeon and AMD EPYC processors up to 32 cores/64 threads." },
+        { question: "How long does provisioning take?", answer: "Custom servers are typically provisioned within 48-72 hours after order confirmation." }
+      ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

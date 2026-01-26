@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const EmailHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -89,6 +90,18 @@ const EmailHosting: React.FC = () => {
         keywords="email hosting, business email, professional email, Bangladesh"
         canonicalUrl="/email"
       />
+      <ProductSchema 
+        name="Email Hosting"
+        description="Professional email hosting with your own domain, spam protection, and SSL encryption."
+        price="199"
+        url="/email"
+        category="Email Services"
+      />
+      <FAQSchema faqs={[
+        { question: "Can I use my own domain?", answer: "Yes, you can use your own domain name for professional email addresses like name@yourdomain.com." },
+        { question: "Is spam protection included?", answer: "Yes, all plans include advanced spam filtering that blocks 99.9% of spam." },
+        { question: "Can I access email on mobile?", answer: "Yes, email syncs across all your devices including mobile phones and tablets." }
+      ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

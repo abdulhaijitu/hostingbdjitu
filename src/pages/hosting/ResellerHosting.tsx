@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const ResellerHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -185,6 +186,18 @@ const ResellerHosting: React.FC = () => {
         keywords="reseller hosting, WHM hosting, start hosting business, Bangladesh"
         canonicalUrl="/hosting/reseller"
       />
+      <ProductSchema 
+        name="Reseller Hosting"
+        description="White-label reseller hosting with WHM access to start your own hosting business."
+        price="1999"
+        url="/hosting/reseller"
+        category="Reseller Hosting"
+      />
+      <FAQSchema faqs={[
+        { question: "What is reseller hosting?", answer: "Reseller hosting allows you to sell web hosting services under your own brand using our infrastructure." },
+        { question: "Do I get WHM access?", answer: "Yes, all reseller plans include full WHM access to manage your client accounts." },
+        { question: "Is WHMCS included?", answer: "WHMCS license is included in Reseller Pro and Business plans for automated billing." }
+      ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">
