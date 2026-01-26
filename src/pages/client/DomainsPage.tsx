@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Globe, Calendar, RefreshCw, Lock, Unlock, Settings,
-  ExternalLink, Search, Plus
+  ExternalLink, Search, Plus, Network
 } from 'lucide-react';
 import DashboardLayout from '@/components/client-dashboard/DashboardLayout';
 import StatusBadge from '@/components/client-dashboard/StatusBadge';
+import DNSManagementModal from '@/components/client-dashboard/DNSManagementModal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,8 @@ const DomainsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDomain, setSelectedDomain] = useState<any>(null);
   const [showNameserverDialog, setShowNameserverDialog] = useState(false);
+  const [showDNSDialog, setShowDNSDialog] = useState(false);
+  const [dnsDomain, setDnsDomain] = useState('');
 
   const domainOrders = orders?.filter(o => 
     o.order_type === 'domain' && o.status === 'completed'
@@ -157,6 +160,17 @@ const DomainsPage: React.FC = () => {
                       variant="outline" 
                       size="sm"
                       onClick={() => {
+                        setDnsDomain(domain.domain_name || domain.item_name);
+                        setShowDNSDialog(true);
+                      }}
+                    >
+                      <Network className="h-4 w-4 mr-2" />
+                      {language === 'bn' ? 'DNS' : 'DNS'}
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
                         setSelectedDomain(domain);
                         setShowNameserverDialog(true);
                       }}
@@ -263,6 +277,13 @@ const DomainsPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* DNS Management Modal */}
+      <DNSManagementModal
+        open={showDNSDialog}
+        onOpenChange={setShowDNSDialog}
+        domainName={dnsDomain}
+      />
     </DashboardLayout>
   );
 };

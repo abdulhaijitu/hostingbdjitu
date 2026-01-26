@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Package, CreditCard, Globe, Server, 
   FileText, Settings, LogOut, TrendingUp, DollarSign, ShoppingCart,
-  Webhook
+  Webhook, MessageSquare
 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -38,6 +38,7 @@ const AdminDashboard: React.FC = () => {
     { icon: Globe, label: language === 'bn' ? 'ডোমেইন প্রাইসিং' : 'Domain Pricing', href: '/admin/domain-pricing' },
     { icon: ShoppingCart, label: language === 'bn' ? 'অর্ডার' : 'Orders', href: '/admin/orders' },
     { icon: CreditCard, label: language === 'bn' ? 'পেমেন্ট' : 'Payments', href: '/admin/payments' },
+    { icon: MessageSquare, label: language === 'bn' ? 'সাপোর্ট টিকেট' : 'Support Tickets', href: '/admin/tickets' },
     { icon: Users, label: language === 'bn' ? 'ইউজার' : 'Users', href: '/admin/users' },
     { icon: Webhook, label: language === 'bn' ? 'ওয়েবহুক লগ' : 'Webhook Logs', href: '/admin/webhooks' },
   ];
