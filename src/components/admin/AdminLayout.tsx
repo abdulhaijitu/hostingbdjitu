@@ -1,10 +1,14 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from '@/components/ui/sheet';
-import AdminSidebar from './AdminSidebar';
+
+// Navigation components
+import MobileTopBar from './navigation/MobileTopBar';
+import MobileBottomNav from './navigation/MobileBottomNav';
+import MobileMoreSheet from './navigation/MobileMoreSheet';
+import TabletSidebar from './navigation/TabletSidebar';
+
+// Hooks
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface AdminLayoutProps {
@@ -12,23 +16,63 @@ interface AdminLayoutProps {
 }
 
 const SIDEBAR_STATE_KEY = 'admin-sidebar-collapsed';
+const TABLET_BREAKPOINT = 768;
+const DESKTOP_BREAKPOINT = 1024;
+
+// Custom hook for responsive breakpoints
+const useResponsiveBreakpoint = () => {
+  const [breakpoint, setBreakpoint] = useState<'mobile' | 'tablet' | 'desktop'>('desktop');
+  
+  useEffect(() => {
+    const checkBreakpoint = () => {
+      const width = window.innerWidth;
+      if (width < TABLET_BREAKPOINT) {
+        setBreakpoint('mobile');
+      } else if (width < DESKTOP_BREAKPOINT) {
+        setBreakpoint('tablet');
+      } else {
+        setBreakpoint('desktop');
+      }
+    };
+    
+    checkBreakpoint();
+    window.addEventListener('resize', checkBreakpoint);
+    return () => window.removeEventListener('resize', checkBreakpoint);
+  }, []);
+  
+  return breakpoint;
+};
 
 const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
-  const isMobile = useIsMobile();
+  const breakpoint = useResponsiveBreakpoint();
+  const isMobile = breakpoint === 'mobile';
+  const isTablet = breakpoint === 'tablet';
+  
+  // Sidebar state - collapsed by default on tablet
   const [collapsed, setCollapsed] = useState(() => {
-    // Initialize from localStorage synchronously
     if (typeof window !== 'undefined') {
-      return localStorage.getItem(SIDEBAR_STATE_KEY) === 'true';
+      const saved = localStorage.getItem(SIDEBAR_STATE_KEY);
+      if (saved !== null) return saved === 'true';
+      // Default: collapsed on tablet, expanded on desktop
+      return window.innerWidth < DESKTOP_BREAKPOINT;
     }
     return false;
   });
-  const [mobileOpen, setMobileOpen] = useState(false);
+  
+  // Mobile "More" sheet state
+  const [moreSheetOpen, setMoreSheetOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
 
-  // Mark as mounted after first render
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Auto-collapse on tablet, expand on desktop
+  useEffect(() => {
+    if (isTablet && !collapsed) {
+      setCollapsed(true);
+    }
+  }, [isTablet]);
 
   const handleToggle = useCallback(() => {
     setCollapsed(prev => {
@@ -38,85 +82,61 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
     });
   }, []);
 
-  const handleMobileClose = useCallback(() => {
-    setMobileOpen(false);
+  const handleMoreClick = useCallback(() => {
+    setMoreSheetOpen(true);
   }, []);
 
   // Prevent layout shift before hydration
   if (!mounted) {
     return (
       <TooltipProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-          <div className="min-h-screen ml-64 transition-all duration-300" />
+        <div className="min-h-screen bg-background">
+          <div className="min-h-screen animate-pulse" />
         </div>
       </TooltipProvider>
     );
   }
 
-  // Desktop Layout
-  if (!isMobile) {
+  // Mobile Layout
+  if (isMobile) {
     return (
       <TooltipProvider>
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-          <AdminSidebar collapsed={collapsed} onToggle={handleToggle} />
-          <main
-            className={cn(
-              'min-h-screen transition-all duration-200 ease-out',
-              collapsed ? 'ml-[72px]' : 'ml-[280px]'
-            )}
-          >
-            <div className="animate-slide-in-up">
+        <div className="min-h-screen bg-background flex flex-col">
+          {/* Mobile Top Bar */}
+          <MobileTopBar />
+          
+          {/* Main Content */}
+          <main className="flex-1 pb-20 overflow-x-hidden">
+            <div className="animate-fade-in">
               {children}
             </div>
           </main>
+          
+          {/* Mobile Bottom Navigation */}
+          <MobileBottomNav onMoreClick={handleMoreClick} />
+          
+          {/* More Sheet */}
+          <MobileMoreSheet open={moreSheetOpen} onOpenChange={setMoreSheetOpen} />
         </div>
       </TooltipProvider>
     );
   }
 
-  // Mobile Layout with Sheet
+  // Tablet/Desktop Layout
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-muted/30 dark:bg-slate-950">
-        {/* Mobile Header */}
-        <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b border-border bg-background/95 backdrop-blur-xl px-4 safe-area-top">
-          <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-            <SheetTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-10 w-10 touch-target"
-                aria-label="Toggle menu"
-              >
-                <Menu className="h-5 w-5" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent
-              side="left"
-              className="w-[280px] p-0 bg-sidebar border-sidebar-border"
-            >
-              <SheetClose className="absolute right-4 top-4 rounded-lg opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 z-50">
-                <X className="h-5 w-5" />
-                <span className="sr-only">Close</span>
-              </SheetClose>
-              <div className="h-full flex flex-col overflow-hidden">
-                <AdminSidebar collapsed={false} onToggle={handleMobileClose} />
-              </div>
-            </SheetContent>
-          </Sheet>
-          
-          {/* Mobile Brand */}
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <span className="text-white font-bold text-sm">C</span>
-            </div>
-            <span className="font-semibold text-lg">CHost Admin</span>
-          </div>
-        </header>
-
-        {/* Mobile Content */}
-        <main className="min-h-[calc(100vh-3.5rem)] p-4 pb-20 safe-area-bottom">
-          <div className="animate-slide-in-up">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-slate-100 to-slate-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        {/* Sidebar - visible on tablet and desktop */}
+        <TabletSidebar collapsed={collapsed} onToggle={handleToggle} />
+        
+        {/* Main Content */}
+        <main
+          className={cn(
+            'min-h-screen transition-all duration-300 ease-out overflow-x-hidden',
+            collapsed ? 'md:ml-[72px]' : 'md:ml-[280px]'
+          )}
+        >
+          <div className="animate-fade-in">
             {children}
           </div>
         </main>

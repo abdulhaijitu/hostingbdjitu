@@ -13,42 +13,19 @@ import SEOHead from '@/components/common/SEOHead';
 import ServerHealthMonitor from '@/components/admin/ServerHealthMonitor';
 import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
+import { useIsMobile } from '@/hooks/use-mobile';
+import MobileStatCard from '@/components/admin/MobileStatCard';
+import MobileAdminHeader from '@/components/admin/MobileAdminHeader';
 import { 
   StatCardSkeleton, 
-  TableSkeleton, 
   EmptyState, 
   ErrorState 
 } from '@/components/common/DashboardSkeletons';
-
-// Stat Card with loading state
-const StatCard: React.FC<{
-  title: string;
-  value: string | number;
-  icon: React.ReactNode;
-  isLoading?: boolean;
-  variant?: 'default' | 'primary';
-}> = ({ title, value, icon, isLoading, variant = 'default' }) => {
-  if (isLoading) {
-    return <StatCardSkeleton />;
-  }
-
-  return (
-    <Card className={variant === 'primary' ? 'bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20' : ''}>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
-          {title}
-        </CardTitle>
-        {icon}
-      </CardHeader>
-      <CardContent>
-        <div className="text-3xl font-bold">{value}</div>
-      </CardContent>
-    </Card>
-  );
-};
+import { cn } from '@/lib/utils';
 
 const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
+  const isMobile = useIsMobile();
   const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders();
   const { data: payments, isLoading: paymentsLoading, isError: paymentsError, refetch: refetchPayments } = usePayments();
   
@@ -89,83 +66,125 @@ const AdminDashboard: React.FC = () => {
         canonicalUrl="/admin"
       />
       
-      <div className="p-6 lg:p-8">
-        {/* Header - Always visible immediately */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-2xl lg:text-3xl font-bold font-display flex items-center gap-3">
-              {language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {language === 'bn' ? 'আপনার সাইট ওভারভিউ' : 'Your site overview'}
-            </p>
-          </div>
-          {hasError && (
-            <Button variant="outline" size="sm" onClick={handleRetry}>
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Retry
-            </Button>
-          )}
-        </div>
+      <div className={cn(isMobile ? "pb-4" : "p-6 lg:p-8")}>
+        {/* Header - Mobile uses MobileTopBar, desktop shows inline header */}
+        {!isMobile && (
+          <MobileAdminHeader
+            title="Dashboard"
+            titleBn="ড্যাশবোর্ড"
+            description="Your site overview"
+            descriptionBn="আপনার সাইট ওভারভিউ"
+            language={language as 'en' | 'bn'}
+            actions={hasError && (
+              <Button variant="outline" size="sm" onClick={handleRetry}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Retry
+              </Button>
+            )}
+            className="px-0 pt-0"
+          />
+        )}
 
-        {/* Stats Cards - Show skeletons while loading */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <StatCard
-            title={language === 'bn' ? 'মোট রেভিনিউ' : 'Total Revenue'}
+        {/* Mobile retry button */}
+        {isMobile && hasError && (
+          <div className="px-4 py-2">
+            <Button variant="outline" size="sm" onClick={handleRetry} className="w-full">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {language === 'bn' ? 'পুনরায় চেষ্টা করুন' : 'Retry'}
+            </Button>
+          </div>
+        )}
+
+        {/* Stats Cards - Responsive grid */}
+        <div className={cn(
+          "grid gap-3",
+          isMobile ? "grid-cols-2 px-4 mb-4" : "grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+        )}>
+          <MobileStatCard
+            title="Total Revenue"
+            titleBn="মোট রেভিনিউ"
             value={`৳${stats.totalRevenue.toLocaleString()}`}
-            icon={<DollarSign className="h-5 w-5 text-primary" />}
+            icon={<DollarSign className="h-5 w-5" />}
             isLoading={paymentsLoading}
             variant="primary"
+            language={language as 'en' | 'bn'}
           />
-          <StatCard
-            title={language === 'bn' ? 'মোট অর্ডার' : 'Total Orders'}
+          <MobileStatCard
+            title="Total Orders"
+            titleBn="মোট অর্ডার"
             value={stats.totalOrders}
-            icon={<ShoppingCart className="h-5 w-5 text-accent" />}
+            icon={<ShoppingCart className="h-5 w-5" />}
             isLoading={ordersLoading}
+            language={language as 'en' | 'bn'}
           />
-          <StatCard
-            title={language === 'bn' ? 'পেন্ডিং অর্ডার' : 'Pending Orders'}
+          <MobileStatCard
+            title="Pending"
+            titleBn="পেন্ডিং"
             value={stats.pendingOrders}
-            icon={<Package className="h-5 w-5 text-warning" />}
+            icon={<Package className="h-5 w-5" />}
             isLoading={ordersLoading}
+            variant="warning"
+            language={language as 'en' | 'bn'}
           />
-          <StatCard
-            title={language === 'bn' ? 'সম্পন্ন অর্ডার' : 'Completed Orders'}
+          <MobileStatCard
+            title="Completed"
+            titleBn="সম্পন্ন"
             value={stats.completedOrders}
-            icon={<TrendingUp className="h-5 w-5 text-success" />}
+            icon={<TrendingUp className="h-5 w-5" />}
             isLoading={ordersLoading}
+            variant="success"
+            language={language as 'en' | 'bn'}
           />
         </div>
 
         {/* Quick Access Cards - Static, no loading needed */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className={cn(
+          "grid gap-3",
+          isMobile ? "grid-cols-4 px-4 mb-4" : "grid-cols-4 gap-4 mb-8"
+        )}>
           {quickAccessCards.map((card) => (
             <Link key={card.href} to={card.href}>
-              <Card className={`bg-gradient-to-br ${card.color} hover:shadow-md transition-all duration-200 cursor-pointer group`}>
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center">
-                  <div className="p-3 rounded-xl bg-background/50 mb-2 group-hover:scale-110 transition-transform duration-200">
-                    <card.icon className="h-5 w-5 text-foreground/80" />
+              <Card className={cn(
+                `bg-gradient-to-br ${card.color} hover:shadow-md transition-all duration-200 cursor-pointer group active:scale-95`,
+                isMobile ? "border-0" : ""
+              )}>
+                <CardContent className={cn(
+                  "flex flex-col items-center justify-center text-center",
+                  isMobile ? "p-3" : "p-4"
+                )}>
+                  <div className={cn(
+                    "rounded-xl bg-background/50 group-hover:scale-110 transition-transform duration-200",
+                    isMobile ? "p-2 mb-1" : "p-3 mb-2"
+                  )}>
+                    <card.icon className={cn(isMobile ? "h-4 w-4" : "h-5 w-5", "text-foreground/80")} />
                   </div>
-                  <span className="text-sm font-medium text-foreground/90">{card.label}</span>
+                  <span className={cn(
+                    "font-medium text-foreground/90",
+                    isMobile ? "text-[10px] leading-tight" : "text-sm"
+                  )}>{card.label}</span>
                 </CardContent>
               </Card>
             </Link>
           ))}
         </div>
 
-        {/* Server Health Monitoring */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
-            <ServerHealthMonitor />
-          </Suspense>
-          <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
-            <PerformanceMonitor />
-          </Suspense>
-        </div>
+        {/* Server Health Monitoring - Hide on mobile for performance */}
+        {!isMobile && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
+              <ServerHealthMonitor />
+            </Suspense>
+            <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
+              <PerformanceMonitor />
+            </Suspense>
+          </div>
+        )}
 
         {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Orders */}
+        <div className={cn(
+          "grid gap-4",
+          isMobile ? "grid-cols-1 px-4" : "grid-cols-1 lg:grid-cols-2 gap-6"
+        )}>
           <Card>
             <CardHeader>
               <CardTitle>{language === 'bn' ? 'সাম্প্রতিক অর্ডার' : 'Recent Orders'}</CardTitle>

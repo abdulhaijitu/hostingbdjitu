@@ -658,6 +658,94 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3E%3Cg fill='%23fff' fill-opacity='0.05'%3E%3Cpath d='M0 0h1v30H0zM29 0h1v30h-1z'/%3E%3Cpath d='M0 0h30v1H0zM0 29h30v1H0z'/%3E%3C/g%3E%3C/svg%3E");
 }
 
+/* Mobile Admin Specific Styles */
+@layer utilities {
+  /* Mobile bottom nav height compensation */
+  .pb-mobile-nav {
+    padding-bottom: 5rem;
+  }
+
+  /* Touch-friendly minimum sizes */
+  .min-touch {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Fluid text scaling for mobile */
+  .text-fluid-sm {
+    font-size: clamp(0.75rem, 2vw, 0.875rem);
+  }
+
+  .text-fluid-base {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  .text-fluid-lg {
+    font-size: clamp(1rem, 3vw, 1.25rem);
+  }
+
+  .text-fluid-xl {
+    font-size: clamp(1.25rem, 4vw, 1.5rem);
+  }
+
+  /* Mobile-optimized spacing */
+  .gap-mobile {
+    @apply gap-3 md:gap-4 lg:gap-6;
+  }
+
+  .p-mobile {
+    @apply p-3 md:p-4 lg:p-6;
+  }
+
+  /* No horizontal scroll prevention */
+  .overflow-x-clip {
+    overflow-x: clip;
+  }
+
+  /* Keyboard-safe input positioning */
+  .keyboard-safe {
+    @apply pb-safe-area-inset-bottom;
+  }
+
+  /* Bottom sheet safe area */
+  .safe-sheet {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  /* Mobile card touch feedback */
+  .touch-feedback {
+    @apply transition-transform duration-150 active:scale-[0.98];
+  }
+
+  /* Fast 200ms transitions for mobile */
+  .transition-fast {
+    @apply transition-all duration-200 ease-out;
+  }
+
+  /* Prevent text selection on interactive elements */
+  .no-select {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Bottom navigation fixed positioning */
+.bottom-nav-fixed {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Mobile drawer overrides for full-screen on small screens */
+@media (max-width: 767px) {
+  [role="dialog"][data-state="open"] {
+    max-height: 90vh !important;
+  }
+}
+
 /* Disable animations for users who prefer reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
