@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const DomainRegistration: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -120,6 +120,11 @@ const DomainRegistration: React.FC = () => {
         { question: "Is WHOIS privacy free?", answer: "Yes, WHOIS privacy protection is included free with all domain registrations." },
         { question: "How long does domain activation take?", answer: "Domains are activated instantly after successful payment." },
         { question: "Can I transfer my domain later?", answer: "Yes, you can transfer your domain to another registrar anytime after 60 days of registration." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Domain', url: '/domain' },
+        { name: 'Domain Registration', url: '/domain/register' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

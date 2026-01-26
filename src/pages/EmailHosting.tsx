@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const EmailHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -101,6 +101,10 @@ const EmailHosting: React.FC = () => {
         { question: "Can I use my own domain?", answer: "Yes, you can use your own domain name for professional email addresses like name@yourdomain.com." },
         { question: "Is spam protection included?", answer: "Yes, all plans include advanced spam filtering that blocks 99.9% of spam." },
         { question: "Can I access email on mobile?", answer: "Yes, email syncs across all your devices including mobile phones and tablets." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Email Hosting', url: '/email' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

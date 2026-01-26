@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const ResellerHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -197,6 +197,11 @@ const ResellerHosting: React.FC = () => {
         { question: "What is reseller hosting?", answer: "Reseller hosting allows you to sell web hosting services under your own brand using our infrastructure." },
         { question: "Do I get WHM access?", answer: "Yes, all reseller plans include full WHM access to manage your client accounts." },
         { question: "Is WHMCS included?", answer: "WHMCS license is included in Reseller Pro and Business plans for automated billing." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Hosting', url: '/hosting' },
+        { name: 'Reseller Hosting', url: '/hosting/reseller' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

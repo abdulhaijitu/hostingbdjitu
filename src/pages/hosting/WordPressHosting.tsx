@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WordPressHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -123,6 +123,11 @@ const WordPressHosting: React.FC = () => {
         { question: "Is WordPress pre-installed?", answer: "Yes, WordPress is automatically installed with 1-click. You can start building your site immediately." },
         { question: "Are updates automatic?", answer: "Yes, WordPress core, themes, and plugins can be set to update automatically." },
         { question: "Is WooCommerce supported?", answer: "Yes, WooCommerce is fully supported on our WP Pro and WP Business plans." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Hosting', url: '/hosting' },
+        { name: 'WordPress Hosting', url: '/hosting/wordpress' }
       ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">

@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const CustomDedicated: React.FC = () => {
   const { language } = useLanguage();
@@ -88,6 +88,11 @@ const CustomDedicated: React.FC = () => {
         { question: "Can I choose my own hardware?", answer: "Yes, you can select processor, RAM, storage, RAID configuration, and network options." },
         { question: "What processors are available?", answer: "We offer Intel Xeon and AMD EPYC processors up to 32 cores/64 threads." },
         { question: "How long does provisioning take?", answer: "Custom servers are typically provisioned within 48-72 hours after order confirmation." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Servers', url: '/servers' },
+        { name: 'Custom Dedicated', url: '/servers/custom' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
