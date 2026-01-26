@@ -34,6 +34,8 @@ export const useHostingServers = () => {
       return data;
     },
     enabled: isAdmin,
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 
@@ -53,6 +55,8 @@ export const useProvisioningQueue = () => {
       return data as ProvisioningQueueItem[];
     },
     enabled: isAdmin,
+    staleTime: 30 * 1000, // 30 seconds
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 };
 

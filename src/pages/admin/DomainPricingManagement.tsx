@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, Globe, Star } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Globe, Star, RefreshCw } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { useDomainPricing, useCreateDomainPrice, useUpdateDomainPrice, useDelete
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
+import { ErrorState } from '@/components/common/DashboardSkeletons';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +30,7 @@ import {
 const DomainPricingManagement: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
-  const { data: prices, isLoading } = useDomainPricing();
+  const { data: prices, isLoading, isError, refetch } = useDomainPricing();
   const createPrice = useCreateDomainPrice();
   const updatePrice = useUpdateDomainPrice();
   const deletePrice = useDeleteDomainPrice();
@@ -138,6 +139,9 @@ const DomainPricingManagement: React.FC = () => {
               <Plus className="h-4 w-4 mr-2" />
               {language === 'bn' ? 'নতুন এক্সটেনশন' : 'New Extension'}
             </Button>
+            <Button variant="outline" size="icon" onClick={() => refetch()}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
           </div>
 
           <Card>
@@ -145,7 +149,12 @@ const DomainPricingManagement: React.FC = () => {
               <CardTitle>{language === 'bn' ? 'সকল ডোমেইন এক্সটেনশন' : 'All Domain Extensions'}</CardTitle>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isError ? (
+                <ErrorState 
+                  title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
+                  onRetry={() => refetch()}
+                />
+              ) : isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
                 </div>

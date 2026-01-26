@@ -55,6 +55,7 @@ import { useHostingPlans } from '@/hooks/useHostingPlans';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import SEOHead from '@/components/common/SEOHead';
+import { ErrorState } from '@/components/common/DashboardSkeletons';
 
 const WHMPackageMapping: React.FC = () => {
   const { language } = useLanguage();
@@ -71,7 +72,7 @@ const WHMPackageMapping: React.FC = () => {
     is_active: true
   });
 
-  const { data: mappings, isLoading } = useWHMPackageMappings();
+  const { data: mappings, isLoading, isError, refetch } = useWHMPackageMappings();
   const { data: hostingPlans } = useHostingPlans();
   const { data: servers } = useQuery({
     queryKey: ['hosting_servers'],
@@ -201,7 +202,12 @@ const WHMPackageMapping: React.FC = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isError ? (
+                <ErrorState 
+                  title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
+                  onRetry={() => refetch()}
+                />
+              ) : isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
                 </div>
