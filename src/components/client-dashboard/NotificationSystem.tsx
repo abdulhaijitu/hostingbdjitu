@@ -1,5 +1,5 @@
-import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
-import { Bell, Check, X, AlertCircle, Info, CheckCircle, Package, CreditCard, MessageSquare, ShoppingCart, Ticket } from 'lucide-react';
+import React, { useState, useEffect, createContext, useContext, useCallback, useRef } from 'react';
+import { Bell, Check, X, AlertCircle, Info, CheckCircle, Package, CreditCard, MessageSquare, ShoppingCart, Ticket, Volume2, VolumeX } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { toast as sonnerToast } from 'sonner';
+import { Switch } from '@/components/ui/switch';
 
 export interface Notification {
   id: string;
@@ -31,6 +32,10 @@ interface NotificationContextType {
   markAllAsRead: () => void;
   removeNotification: (id: string) => void;
   addNotification: (notification: Omit<Notification, 'id' | 'read' | 'created_at'>) => void;
+  soundEnabled: boolean;
+  setSoundEnabled: (enabled: boolean) => void;
+  pushEnabled: boolean;
+  requestPushPermission: () => Promise<void>;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
@@ -43,9 +48,79 @@ export const useNotifications = () => {
   return context;
 };
 
+// Notification sound using Web Audio API
+const playNotificationSound = () => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+    oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.1);
+    
+    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + 0.3);
+  } catch (error) {
+    console.log('Audio playback failed:', error);
+  }
+};
+
+// Request browser push notification permission
+const requestBrowserPushPermission = async (): Promise<boolean> => {
+  if (!('Notification' in window)) {
+    console.log('This browser does not support notifications');
+    return false;
+  }
+  
+  if (Notification.permission === 'granted') {
+    return true;
+  }
+  
+  if (Notification.permission !== 'denied') {
+    const permission = await Notification.requestPermission();
+    return permission === 'granted';
+  }
+  
+  return false;
+};
+
+// Show browser push notification
+const showBrowserNotification = (title: string, body: string, link?: string) => {
+  if (Notification.permission === 'granted') {
+    const notification = new Notification(title, {
+      body,
+      icon: '/favicon.png',
+      badge: '/favicon.png',
+      tag: 'chost-notification',
+      requireInteraction: false,
+    });
+    
+    if (link) {
+      notification.onclick = () => {
+        window.focus();
+        window.location.href = link;
+        notification.close();
+      };
+    }
+    
+    setTimeout(() => notification.close(), 5000);
+  }
+};
+
 export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isAdmin } = useAuth();
   const { language } = useLanguage();
+  const [soundEnabled, setSoundEnabled] = useState(() => {
+    const saved = localStorage.getItem('notification-sound');
+    return saved !== 'false';
+  });
+  const [pushEnabled, setPushEnabled] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([
     {
       id: '1',
@@ -58,6 +133,26 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     },
   ]);
 
+  // Check push permission on mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      setPushEnabled(Notification.permission === 'granted');
+    }
+  }, []);
+
+  // Save sound preference
+  useEffect(() => {
+    localStorage.setItem('notification-sound', soundEnabled.toString());
+  }, [soundEnabled]);
+
+  const requestPushPermission = async () => {
+    const granted = await requestBrowserPushPermission();
+    setPushEnabled(granted);
+    if (granted) {
+      sonnerToast.success(language === 'bn' ? 'পুশ নোটিফিকেশন সক্রিয়!' : 'Push notifications enabled!');
+    }
+  };
+
   const addNotification = useCallback((notification: Omit<Notification, 'id' | 'read' | 'created_at'>) => {
     const newNotification: Notification = {
       ...notification,
@@ -67,6 +162,16 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
     setNotifications(prev => [newNotification, ...prev]);
     
+    // Play sound if enabled
+    if (soundEnabled) {
+      playNotificationSound();
+    }
+    
+    // Show browser push notification if enabled
+    if (pushEnabled) {
+      showBrowserNotification(notification.title, notification.message, notification.link);
+    }
+    
     // Show toast notification
     sonnerToast(notification.title, {
       description: notification.message,
@@ -75,7 +180,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         onClick: () => window.location.href = notification.link!,
       } : undefined,
     });
-  }, [language]);
+  }, [language, soundEnabled, pushEnabled]);
 
   // Subscribe to realtime updates
   useEffect(() => {
@@ -293,6 +398,10 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
         markAllAsRead,
         removeNotification,
         addNotification,
+        soundEnabled,
+        setSoundEnabled,
+        pushEnabled,
+        requestPushPermission,
       }}
     >
       {children}
@@ -302,7 +411,7 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
 // Notification Bell Component
 export const NotificationBell: React.FC<{ className?: string }> = ({ className }) => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification } = useNotifications();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, removeNotification, soundEnabled, setSoundEnabled, pushEnabled, requestPushPermission } = useNotifications();
   const { language } = useLanguage();
 
   const getIcon = (type: Notification['type']) => {
@@ -357,17 +466,61 @@ export const NotificationBell: React.FC<{ className?: string }> = ({ className }
           <h3 className="font-semibold">
             {language === 'bn' ? 'নোটিফিকেশন' : 'Notifications'}
           </h3>
-          {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="text-xs h-7"
-              onClick={markAllAsRead}
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-xs h-7"
+                onClick={markAllAsRead}
+              >
+                <Check className="h-3 w-3 mr-1" />
+                {language === 'bn' ? 'সব পড়া হয়েছে' : 'Mark all read'}
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {/* Sound & Push Settings */}
+        <div className="px-4 py-2 border-b bg-muted/30 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2"
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              title={language === 'bn' ? 'সাউন্ড টগল করুন' : 'Toggle sound'}
             >
-              <Check className="h-3 w-3 mr-1" />
-              {language === 'bn' ? 'সব পড়া হয়েছে' : 'Mark all read'}
+              {soundEnabled ? (
+                <Volume2 className="h-4 w-4 text-primary" />
+              ) : (
+                <VolumeX className="h-4 w-4 text-muted-foreground" />
+              )}
             </Button>
-          )}
+            <span className="text-xs text-muted-foreground">
+              {language === 'bn' ? 'সাউন্ড' : 'Sound'}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground">
+              {language === 'bn' ? 'পুশ' : 'Push'}
+            </span>
+            {pushEnabled ? (
+              <Badge variant="secondary" className="text-xs h-5">
+                <Bell className="h-3 w-3 mr-1" />
+                {language === 'bn' ? 'সক্রিয়' : 'On'}
+              </Badge>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 text-xs px-2"
+                onClick={requestPushPermission}
+              >
+                {language === 'bn' ? 'সক্রিয় করুন' : 'Enable'}
+              </Button>
+            )}
+          </div>
         </div>
         
         <ScrollArea className="h-80">
