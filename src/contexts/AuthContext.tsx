@@ -61,25 +61,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     // Prevent concurrent fetches for the same user
     if (currentFetchRef.current === userId) {
-      console.log('[AuthContext] Role fetch already in progress for:', userId);
       return null;
     }
     
     currentFetchRef.current = userId;
     setRoleState({ status: 'loading' });
     
-    console.log('[AuthContext] Starting role fetch for user:', userId);
-    
     // Check cache first
     if (roleCache.has(userId)) {
       const cachedRole = roleCache.get(userId)!;
-      console.log('[AuthContext] Role from cache:', cachedRole);
       setRoleState({ status: 'resolved', role: cachedRole });
       currentFetchRef.current = null;
       return cachedRole;
     }
-
-    console.log('[AuthContext] Fetching role from database...');
 
     try {
       const { data, error } = await supabase
@@ -94,7 +88,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (error) {
-        console.error('[AuthContext] Database error fetching role:', error);
         setRoleState({ status: 'error', error: error.message });
         currentFetchRef.current = null;
         return null;
@@ -102,7 +95,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Default to customer if no role record found
       const userRole: AppRole = (data?.role as AppRole) || 'customer';
-      console.log('[AuthContext] Role fetched successfully:', userRole);
       
       // Cache the result
       roleCache.set(userId, userRole);
@@ -110,7 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentFetchRef.current = null;
       return userRole;
     } catch (error) {
-      console.error('[AuthContext] Exception fetching role:', error);
       if (mountedRef.current) {
         setRoleState({ 
           status: 'error', 
@@ -145,7 +136,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!mountedRef.current) return;
       
       if (error) {
-        console.error('[AuthContext] Session refresh error:', error);
         if (error.message.includes('refresh_token_not_found') || 
             error.message.includes('Invalid Refresh Token')) {
           await supabase.auth.signOut();
@@ -161,7 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setUser(newSession.user);
       }
     } catch (error) {
-      console.error('[AuthContext] Session refresh failed:', error);
+      // Silent fail for session refresh
     } finally {
       isRefreshingRef.current = false;
     }
@@ -183,8 +173,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Handle auth state changes
   const handleAuthChange = useCallback(async (event: AuthChangeEvent, newSession: Session | null) => {
     if (!mountedRef.current) return;
-    
-    console.log('[AuthContext] Auth state changed:', event, !!newSession?.user);
     
     // Update session and user
     setSession(newSession);
@@ -214,14 +202,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mountedRef.current = true;
 
     const initializeAuth = async () => {
-      console.log('[AuthContext] Initializing auth...');
-      
       try {
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         
         if (!mountedRef.current) return;
-
-        console.log('[AuthContext] Existing session:', !!existingSession?.user);
 
         if (existingSession?.user) {
           setSession(existingSession);
@@ -234,13 +218,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setRoleState({ status: 'idle' });
         }
       } catch (error) {
-        console.error('[AuthContext] Error initializing auth:', error);
         setRoleState({ status: 'idle' });
       } finally {
         if (mountedRef.current) {
           setLoading(false);
           setAuthReady(true);
-          console.log('[AuthContext] Auth ready');
         }
       }
     };
@@ -254,7 +236,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Failsafe timeout
     initTimeoutRef.current = setTimeout(() => {
       if (mountedRef.current && !authReady) {
-        console.log('[AuthContext] Auth timeout reached, forcing ready state');
         setLoading(false);
         setAuthReady(true);
       }

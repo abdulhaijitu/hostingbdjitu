@@ -118,29 +118,13 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // Determine route type for loader styling
   const routeType = location.pathname.startsWith('/admin') ? 'admin' : 'client';
 
-  // Debug logging (safe, never throws)
-  console.log('[AuthGate] State:', { 
-    loading, 
-    authReady, 
-    hasUser: !!user, 
-    role, 
-    roleLoading, 
-    roleError,
-    isAdmin, 
-    requireAdmin,
-    path: location.pathname 
-  });
-
   // PHASE 1: Wait for authentication to resolve
-  // Never throw here - just show loader
   if (loading || !authReady) {
-    console.log('[AuthGate] Phase 1: Auth loading...');
     return fallback || <MinimalLoader type={routeType} />;
   }
 
   // PHASE 2: Check authentication (is user logged in?)
   if (!user) {
-    console.log('[AuthGate] Phase 2: No user, redirecting to login');
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
@@ -148,29 +132,21 @@ const AuthGate: React.FC<AuthGateProps> = ({
   if (requireAdmin) {
     // 3a: Role is still loading - show loader (NEVER error boundary)
     if (roleLoading) {
-      console.log('[AuthGate] Phase 3a: Role loading...');
       return fallback || <MinimalLoader type="admin" />;
     }
 
     // 3b: Role fetch had an error - show retry UI (not error boundary)
     if (roleError) {
-      console.log('[AuthGate] Phase 3b: Role error:', roleError);
       return <RoleErrorState onRetry={retryRoleFetch} error={roleError} />;
     }
 
     // 3c: Role is resolved - check if admin
-    console.log('[AuthGate] Phase 3c: Role resolved:', { role, isAdmin });
-
     if (!isAdmin) {
-      console.log('[AuthGate] Phase 3c: Not admin, showing access denied');
       return <AccessDeniedState />;
     }
-    
-    console.log('[AuthGate] Phase 3c: Admin access granted');
   }
 
   // All checks passed - render children
-  console.log('[AuthGate] Access granted, rendering children');
   return <>{children}</>;
 };
 
