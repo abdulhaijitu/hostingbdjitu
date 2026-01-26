@@ -13,6 +13,14 @@ interface DatabaseUser {
   databases: string[];
 }
 
+// Cache config for cPanel API calls
+const CPANEL_QUERY_CONFIG = {
+  staleTime: 60 * 1000, // Data is fresh for 60 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false,
+  retry: 1, // cPanel can be slow, limit retries
+};
+
 export const useCPanelDatabases = (accountId: string | undefined) => {
   const { toast } = useToast();
 
@@ -29,6 +37,7 @@ export const useCPanelDatabases = (accountId: string | undefined) => {
       return data as { databases: Database[]; users: DatabaseUser[] };
     },
     enabled: !!accountId,
+    ...CPANEL_QUERY_CONFIG,
   });
 };
 

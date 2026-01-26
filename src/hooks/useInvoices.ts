@@ -18,6 +18,14 @@ export interface Invoice {
   updated_at: string;
 }
 
+// Cache durations for optimized performance
+const QUERY_CONFIG = {
+  staleTime: 30 * 1000, // Data is fresh for 30 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false,
+  retry: 2,
+};
+
 export const useInvoices = () => {
   const { user, isAdmin } = useAuth();
 
@@ -33,5 +41,6 @@ export const useInvoices = () => {
       return data;
     },
     enabled: !!user,
+    ...QUERY_CONFIG,
   });
 };

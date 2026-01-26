@@ -6,6 +6,14 @@ import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 export type Order = Tables<'orders'>;
 export type OrderInsert = TablesInsert<'orders'>;
 
+// Cache durations for optimized performance
+const QUERY_CONFIG = {
+  staleTime: 30 * 1000, // Data is fresh for 30 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false,
+  retry: 2,
+};
+
 export const useOrders = () => {
   const { user, isAdmin } = useAuth();
 
@@ -21,6 +29,7 @@ export const useOrders = () => {
       return data as Order[];
     },
     enabled: !!user,
+    ...QUERY_CONFIG,
   });
 };
 

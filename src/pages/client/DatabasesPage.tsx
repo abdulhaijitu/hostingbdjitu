@@ -78,7 +78,7 @@ const DatabasesPage: React.FC = () => {
   }, [hostingAccounts, selectedAccountId]);
 
   // Fetch databases for selected account
-  const { data: dbData, isLoading: dbLoading, refetch: refetchDatabases } = useCPanelDatabases(selectedAccountId);
+  const { data: dbData, isLoading: dbLoading, isError: dbError, refetch: refetchDatabases } = useCPanelDatabases(selectedAccountId);
   
   const createDbMutation = useCreateDatabase();
   const deleteDbMutation = useDeleteDatabase();
@@ -286,6 +286,19 @@ const DatabasesPage: React.FC = () => {
               {dbLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
+                </div>
+              ) : dbError ? (
+                <div className="text-center py-8">
+                  <div className="p-4 rounded-2xl bg-destructive/10 inline-block mb-4">
+                    <Database className="h-10 w-10 text-destructive" />
+                  </div>
+                  <p className="text-muted-foreground mb-4">
+                    {language === 'bn' ? 'ডাটাবেস লোড করতে সমস্যা হয়েছে' : 'Failed to load databases'}
+                  </p>
+                  <Button onClick={() => refetchDatabases()}>
+                    <RefreshCw className="h-4 w-4 mr-2" />
+                    {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Try Again'}
+                  </Button>
                 </div>
               ) : activeTab === 'databases' ? (
                 filteredDatabases.length > 0 ? (

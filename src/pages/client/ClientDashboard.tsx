@@ -29,9 +29,12 @@ const ClientDashboard: React.FC = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const { data: profile, isLoading: profileLoading } = useProfile();
-  const { data: orders, isLoading: ordersLoading } = useOrders();
-  const { data: invoices, isLoading: invoicesLoading } = useInvoices();
-  const { data: hostingAccounts } = useHostingAccounts();
+  const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders();
+  const { data: invoices, isLoading: invoicesLoading, isError: invoicesError, refetch: refetchInvoices } = useInvoices();
+  const { data: hostingAccounts, isError: hostingError, refetch: refetchHosting } = useHostingAccounts();
+
+  // Error state
+  const hasError = ordersError || invoicesError || hostingError;
 
   // Calculate stats from orders
   const hostingOrders = orders?.filter(o => 
@@ -79,6 +82,37 @@ const ClientDashboard: React.FC = () => {
       title={language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}
       description={language === 'bn' ? 'আপনার হোস্টিং সার্ভিস পরিচালনা করুন' : 'Manage your hosting services'}
     >
+      {/* Error Banner */}
+      {hasError && (
+        <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-destructive/10">
+              <Activity className="h-5 w-5 text-destructive" />
+            </div>
+            <div>
+              <p className="font-medium text-destructive">
+                {language === 'bn' ? 'ডাটা লোড করতে সমস্যা হয়েছে' : 'Failed to load some data'}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {language === 'bn' ? 'কিছু তথ্য দেখাতে সমস্যা হচ্ছে' : 'Some information may not be displayed correctly'}
+              </p>
+            </div>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => {
+              refetchOrders();
+              refetchInvoices();
+              refetchHosting();
+            }}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Retry'}
+          </Button>
+        </div>
+      )}
+
       {/* Welcome Section */}
       <div className="mb-6">
         <h1 className="text-2xl lg:text-3xl font-bold font-display">

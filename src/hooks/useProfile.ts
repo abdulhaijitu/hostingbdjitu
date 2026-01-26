@@ -14,6 +14,14 @@ export interface Profile {
   updated_at: string;
 }
 
+// Cache durations for optimized performance
+const QUERY_CONFIG = {
+  staleTime: 2 * 60 * 1000, // Profile data is fresh for 2 minutes
+  gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+  refetchOnWindowFocus: false,
+  retry: 2,
+};
+
 export const useProfile = () => {
   const { user } = useAuth();
 
@@ -24,12 +32,13 @@ export const useProfile = () => {
         .from('profiles')
         .select('*')
         .eq('user_id', user!.id)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
-      return data as Profile;
+      return data as Profile | null;
     },
     enabled: !!user,
+    ...QUERY_CONFIG,
   });
 };
 

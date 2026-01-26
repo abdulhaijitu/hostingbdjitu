@@ -31,6 +31,14 @@ interface ChangePasswordParams {
   password: string;
 }
 
+// Cache config for cPanel API calls
+const CPANEL_QUERY_CONFIG = {
+  staleTime: 60 * 1000, // Data is fresh for 60 seconds
+  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  refetchOnWindowFocus: false,
+  retry: 1, // cPanel can be slow, limit retries
+};
+
 // Fetch email accounts from cPanel
 export const useCPanelEmails = (accountId: string | undefined) => {
   const { user } = useAuth();
@@ -67,6 +75,7 @@ export const useCPanelEmails = (accountId: string | undefined) => {
       return result.data as EmailAccount[];
     },
     enabled: !!accountId && !!user,
+    ...CPANEL_QUERY_CONFIG,
   });
 };
 
