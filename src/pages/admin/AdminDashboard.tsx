@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, Package, CreditCard, Globe, Server, 
   FileText, Settings, LogOut, TrendingUp, DollarSign, ShoppingCart,
-  Webhook, MessageSquare, BarChart3
+  Webhook, MessageSquare, BarChart3, ListTodo
 } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,8 @@ const AdminDashboard: React.FC = () => {
 
   const adminLinks = [
     { icon: BarChart3, label: language === 'bn' ? 'অ্যানালিটিক্স' : 'Analytics', href: '/admin/analytics', highlight: true },
+    { icon: Server, label: language === 'bn' ? 'সার্ভার ম্যানেজমেন্ট' : 'Server Management', href: '/admin/servers' },
+    { icon: ListTodo, label: language === 'bn' ? 'প্রভিশনিং কিউ' : 'Provisioning Queue', href: '/admin/provisioning' },
     { icon: Package, label: language === 'bn' ? 'হোস্টিং প্ল্যান' : 'Hosting Plans', href: '/admin/hosting-plans' },
     { icon: Globe, label: language === 'bn' ? 'ডোমেইন প্রাইসিং' : 'Domain Pricing', href: '/admin/domain-pricing' },
     { icon: ShoppingCart, label: language === 'bn' ? 'অর্ডার' : 'Orders', href: '/admin/orders' },
