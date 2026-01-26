@@ -162,8 +162,17 @@ const WebhookLogs: React.FC = () => {
                     <Webhook className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{totalLogs}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট লগ' : 'Total Logs'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-14" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{totalLogs}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট লগ' : 'Total Logs'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -175,8 +184,17 @@ const WebhookLogs: React.FC = () => {
                     <CheckCircle className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{processedLogs}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'প্রসেসড' : 'Processed'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-14" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{processedLogs}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'প্রসেসড' : 'Processed'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -188,8 +206,17 @@ const WebhookLogs: React.FC = () => {
                     <XCircle className="h-5 w-5 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{failedLogs}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'ব্যর্থ' : 'Failed'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-10" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{failedLogs}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'ব্যর্থ' : 'Failed'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -201,8 +228,17 @@ const WebhookLogs: React.FC = () => {
                     <Clock className="h-5 w-5 text-accent" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{recentLogs}</p>
-                    <p className="text-xs text-muted-foreground">{language === 'bn' ? 'গত ২৪ ঘন্টা' : 'Last 24h'}</p>
+                    {isLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-3 w-14" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{recentLogs}</p>
+                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'গত ২৪ ঘন্টা' : 'Last 24h'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>

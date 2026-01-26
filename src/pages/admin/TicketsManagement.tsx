@@ -177,8 +177,17 @@ const TicketsManagement: React.FC = () => {
                     <MessageSquare className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{openCount}</p>
-                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'ওপেন' : 'Open'}</p>
+                    {ticketsLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-4 w-10" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{openCount}</p>
+                        <p className="text-sm text-muted-foreground">{language === 'bn' ? 'ওপেন' : 'Open'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -190,8 +199,17 @@ const TicketsManagement: React.FC = () => {
                     <Clock className="h-5 w-5 text-warning" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{pendingCount}</p>
-                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                    {ticketsLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-4 w-12" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{pendingCount}</p>
+                        <p className="text-sm text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -203,8 +221,17 @@ const TicketsManagement: React.FC = () => {
                     <CheckCircle className="h-5 w-5 text-success" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{resolvedCount}</p>
-                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'সমাধান' : 'Resolved'}</p>
+                    {ticketsLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-4 w-14" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{resolvedCount}</p>
+                        <p className="text-sm text-muted-foreground">{language === 'bn' ? 'সমাধান' : 'Resolved'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -216,8 +243,17 @@ const TicketsManagement: React.FC = () => {
                     <AlertCircle className="h-5 w-5 text-destructive" />
                   </div>
                   <div>
-                    <p className="text-2xl font-bold">{urgentCount}</p>
-                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'জরুরি' : 'Urgent'}</p>
+                    {ticketsLoading ? (
+                      <>
+                        <Skeleton className="h-7 w-12 mb-1" />
+                        <Skeleton className="h-4 w-12" />
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-2xl font-bold">{urgentCount}</p>
+                        <p className="text-sm text-muted-foreground">{language === 'bn' ? 'জরুরি' : 'Urgent'}</p>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>

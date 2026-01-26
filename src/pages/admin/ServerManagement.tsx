@@ -219,7 +219,11 @@ const ServerManagement: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'মোট সার্ভার' : 'Total Servers'}
                     </p>
-                    <p className="text-3xl font-bold">{servers?.length || 0}</p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-12" />
+                    ) : (
+                      <p className="text-3xl font-bold">{servers?.length || 0}</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -234,9 +238,13 @@ const ServerManagement: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'সক্রিয় সার্ভার' : 'Active Servers'}
                     </p>
-                    <p className="text-3xl font-bold">
-                      {servers?.filter(s => s.is_active).length || 0}
-                    </p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-12" />
+                    ) : (
+                      <p className="text-3xl font-bold">
+                        {servers?.filter(s => s.is_active).length || 0}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -251,9 +259,13 @@ const ServerManagement: React.FC = () => {
                     <p className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'মোট অ্যাকাউন্ট' : 'Total Accounts'}
                     </p>
-                    <p className="text-3xl font-bold">
-                      {servers?.reduce((sum, s) => sum + (s.current_accounts || 0), 0) || 0}
-                    </p>
+                    {isLoading ? (
+                      <Skeleton className="h-9 w-16" />
+                    ) : (
+                      <p className="text-3xl font-bold">
+                        {servers?.reduce((sum, s) => sum + (s.current_accounts || 0), 0) || 0}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
