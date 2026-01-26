@@ -12,22 +12,24 @@ interface AuthGateProps {
 }
 
 // Minimal loading indicator - never throws errors
-const MinimalLoader: React.FC<{ type?: 'admin' | 'client' }> = ({ type = 'client' }) => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="flex flex-col items-center gap-3">
-      <div className="relative">
-        <div className={cn(
-          "h-10 w-10 rounded-xl animate-pulse",
-          type === 'admin' ? 'bg-primary/20' : 'bg-primary/20'
-        )} />
-        <div className="absolute inset-0 h-10 w-10 rounded-xl border-2 border-primary border-t-transparent animate-spin" />
+const MinimalLoader = ({ type = 'client' }: { type?: 'admin' | 'client' }) => {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative">
+          <div className={cn(
+            "h-10 w-10 rounded-xl animate-pulse",
+            type === 'admin' ? 'bg-primary/20' : 'bg-primary/20'
+          )} />
+          <div className="absolute inset-0 h-10 w-10 rounded-xl border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+        <span className="text-sm text-muted-foreground animate-pulse">
+          {type === 'admin' ? 'অনুমতি যাচাই করা হচ্ছে...' : 'লোড হচ্ছে...'}
+        </span>
       </div>
-      <span className="text-sm text-muted-foreground animate-pulse">
-        {type === 'admin' ? 'অনুমতি যাচাই করা হচ্ছে...' : 'লোড হচ্ছে...'}
-      </span>
     </div>
-  </div>
-);
+  );
+};
 
 // Role error state - shown when role fetch fails
 const RoleErrorState: React.FC<{ onRetry: () => void; error?: string }> = ({ onRetry, error }) => (
@@ -131,7 +133,8 @@ const AuthGate: React.FC<AuthGateProps> = ({
   // PHASE 3: For admin routes, check authorization
   if (requireAdmin) {
     // 3a: Role is still loading - show loader (NEVER error boundary)
-    if (roleLoading) {
+    // Also check if role is null but no error (still resolving)
+    if (roleLoading || (role === null && !roleError)) {
       return fallback || <MinimalLoader type="admin" />;
     }
 
