@@ -47,7 +47,9 @@ const TabletSidebar: React.FC<TabletSidebarProps> = ({ collapsed, onToggle }) =>
         "border-r border-slate-800/50",
         "transition-all duration-300 ease-out",
         "backdrop-blur-xl",
-        "hidden md:flex", // Only show on tablet+
+        // Hidden on mobile (≤768px), visible on tablet+ (>768px)
+        "hidden",
+        "md:flex", // md = 768px+
         collapsed ? "w-[72px]" : "w-[280px]"
       )}
     >
