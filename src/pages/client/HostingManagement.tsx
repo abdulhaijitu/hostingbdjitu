@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { 
   Server, Globe, MapPin, Calendar, ExternalLink, RefreshCw,
-  FolderOpen, Database, Mail, Key, Settings, ArrowLeft, Copy, Check
+  FolderOpen, Database, Mail, Key, Settings, ArrowLeft, Copy, Check,
+  ArrowUpRight, Rocket
 } from 'lucide-react';
 import DashboardLayout from '@/components/client-dashboard/DashboardLayout';
 import StatusBadge from '@/components/client-dashboard/StatusBadge';
 import UsageProgress from '@/components/client-dashboard/UsageProgress';
 import QuickActions from '@/components/client-dashboard/QuickActions';
+import PlanUpgradeModal from '@/components/client-dashboard/PlanUpgradeModal';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -119,6 +121,7 @@ const HostingDetails: React.FC = () => {
   const { toast } = useToast();
   const { data: orders, isLoading } = useOrders();
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const order = orders?.find(o => o.id === id);
 
@@ -231,8 +234,32 @@ const HostingDetails: React.FC = () => {
               {order.domain_name || order.order_number}
             </p>
           </div>
+          <Button 
+            variant="outline" 
+            className="gap-2"
+            onClick={() => setShowUpgradeModal(true)}
+          >
+            <ArrowUpRight className="h-4 w-4" />
+            {language === 'bn' ? 'আপগ্রেড' : 'Upgrade Plan'}
+          </Button>
         </div>
       </div>
+
+      {/* Upgrade Modal */}
+      <PlanUpgradeModal
+        open={showUpgradeModal}
+        onOpenChange={setShowUpgradeModal}
+        currentPlanName={order.item_name}
+        onUpgrade={(planId, planName) => {
+          toast({
+            title: language === 'bn' ? 'আপগ্রেড অনুরোধ পাঠানো হয়েছে' : 'Upgrade Request Sent',
+            description: language === 'bn' 
+              ? `${planName} প্ল্যানে আপগ্রেড করার অনুরোধ পাঠানো হয়েছে`
+              : `Your request to upgrade to ${planName} has been submitted`,
+          });
+          setShowUpgradeModal(false);
+        }}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column */}
