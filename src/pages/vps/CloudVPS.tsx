@@ -19,8 +19,8 @@ const CloudVPS: React.FC = () => {
   const plans = [
     {
       name: 'VPS 1',
-      monthlyPrice: '$9.99',
-      yearlyPrice: '$7.99',
+      monthlyPrice: '৳999',
+      yearlyPrice: '৳799',
       cpu: language === 'bn' ? '১ vCPU' : '1 vCPU',
       ram: language === 'bn' ? '২ GB RAM' : '2 GB RAM',
       storage: language === 'bn' ? '৪০ GB NVMe' : '40 GB NVMe',
@@ -31,8 +31,8 @@ const CloudVPS: React.FC = () => {
     },
     {
       name: 'VPS 2',
-      monthlyPrice: '$19.99',
-      yearlyPrice: '$15.99',
+      monthlyPrice: '৳1,999',
+      yearlyPrice: '৳1,599',
       cpu: language === 'bn' ? '২ vCPU' : '2 vCPU',
       ram: language === 'bn' ? '৪ GB RAM' : '4 GB RAM',
       storage: language === 'bn' ? '৮০ GB NVMe' : '80 GB NVMe',
@@ -44,8 +44,8 @@ const CloudVPS: React.FC = () => {
     },
     {
       name: 'VPS 4',
-      monthlyPrice: '$39.99',
-      yearlyPrice: '$31.99',
+      monthlyPrice: '৳3,999',
+      yearlyPrice: '৳3,199',
       cpu: language === 'bn' ? '৪ vCPU' : '4 vCPU',
       ram: language === 'bn' ? '৮ GB RAM' : '8 GB RAM',
       storage: language === 'bn' ? '১৬০ GB NVMe' : '160 GB NVMe',
@@ -56,8 +56,8 @@ const CloudVPS: React.FC = () => {
     },
     {
       name: 'VPS 8',
-      monthlyPrice: '$79.99',
-      yearlyPrice: '$63.99',
+      monthlyPrice: '৳7,999',
+      yearlyPrice: '৳6,399',
       cpu: language === 'bn' ? '৮ vCPU' : '8 vCPU',
       ram: language === 'bn' ? '১৬ GB RAM' : '16 GB RAM',
       storage: language === 'bn' ? '৩২০ GB NVMe' : '320 GB NVMe',

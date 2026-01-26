@@ -19,8 +19,8 @@ const DedicatedServer: React.FC = () => {
   const plans = [
     {
       name: 'DS-1',
-      monthlyPrice: '$99.99',
-      yearlyPrice: '$79.99',
+      monthlyPrice: '৳9,999',
+      yearlyPrice: '৳7,999',
       cpu: 'Intel Xeon E3-1230',
       cores: language === 'bn' ? '৪ কোর / ৮ থ্রেড' : '4 Cores / 8 Threads',
       ram: language === 'bn' ? '১৬ GB DDR4' : '16 GB DDR4',
@@ -32,8 +32,8 @@ const DedicatedServer: React.FC = () => {
     },
     {
       name: 'DS-2',
-      monthlyPrice: '$149.99',
-      yearlyPrice: '$119.99',
+      monthlyPrice: '৳14,999',
+      yearlyPrice: '৳11,999',
       cpu: 'Intel Xeon E5-2620',
       cores: language === 'bn' ? '৬ কোর / ১২ থ্রেড' : '6 Cores / 12 Threads',
       ram: language === 'bn' ? '৩২ GB DDR4' : '32 GB DDR4',
@@ -46,8 +46,8 @@ const DedicatedServer: React.FC = () => {
     },
     {
       name: 'DS-4',
-      monthlyPrice: '$249.99',
-      yearlyPrice: '$199.99',
+      monthlyPrice: '৳24,999',
+      yearlyPrice: '৳19,999',
       cpu: 'Intel Xeon Silver 4110',
       cores: language === 'bn' ? '৮ কোর / ১৬ থ্রেড' : '8 Cores / 16 Threads',
       ram: language === 'bn' ? '৬৪ GB DDR4' : '64 GB DDR4',
