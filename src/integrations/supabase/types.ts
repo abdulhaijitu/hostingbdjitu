@@ -14,6 +14,62 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_activity_logs: {
+        Row: {
+          action: string
+          created_at: string
+          duration_ms: number | null
+          endpoint: string
+          error_message: string | null
+          id: string
+          ip_address: string | null
+          request_data: Json | null
+          response_data: Json | null
+          response_status: number | null
+          server_id: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          duration_ms?: number | null
+          endpoint: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          request_data?: Json | null
+          response_data?: Json | null
+          response_status?: number | null
+          server_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          duration_ms?: number | null
+          endpoint?: string
+          error_message?: string | null
+          id?: string
+          ip_address?: string | null
+          request_data?: Json | null
+          response_data?: Json | null
+          response_status?: number | null
+          server_id?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_activity_logs_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "hosting_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_pricing: {
         Row: {
           created_at: string
@@ -52,6 +108,105 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      hosting_accounts: {
+        Row: {
+          bandwidth_limit_mb: number | null
+          bandwidth_used_mb: number | null
+          cpanel_username: string
+          created_at: string
+          databases_limit: number | null
+          databases_used: number | null
+          disk_limit_mb: number | null
+          disk_used_mb: number | null
+          domain: string
+          email_accounts_limit: number | null
+          email_accounts_used: number | null
+          id: string
+          ip_address: string | null
+          last_synced_at: string | null
+          order_id: string
+          php_version: string | null
+          provisioned_at: string | null
+          server_id: string
+          ssl_status: string | null
+          status: string
+          suspended_at: string | null
+          suspension_reason: string | null
+          updated_at: string
+          user_id: string
+          whm_package: string | null
+        }
+        Insert: {
+          bandwidth_limit_mb?: number | null
+          bandwidth_used_mb?: number | null
+          cpanel_username: string
+          created_at?: string
+          databases_limit?: number | null
+          databases_used?: number | null
+          disk_limit_mb?: number | null
+          disk_used_mb?: number | null
+          domain: string
+          email_accounts_limit?: number | null
+          email_accounts_used?: number | null
+          id?: string
+          ip_address?: string | null
+          last_synced_at?: string | null
+          order_id: string
+          php_version?: string | null
+          provisioned_at?: string | null
+          server_id: string
+          ssl_status?: string | null
+          status?: string
+          suspended_at?: string | null
+          suspension_reason?: string | null
+          updated_at?: string
+          user_id: string
+          whm_package?: string | null
+        }
+        Update: {
+          bandwidth_limit_mb?: number | null
+          bandwidth_used_mb?: number | null
+          cpanel_username?: string
+          created_at?: string
+          databases_limit?: number | null
+          databases_used?: number | null
+          disk_limit_mb?: number | null
+          disk_used_mb?: number | null
+          domain?: string
+          email_accounts_limit?: number | null
+          email_accounts_used?: number | null
+          id?: string
+          ip_address?: string | null
+          last_synced_at?: string | null
+          order_id?: string
+          php_version?: string | null
+          provisioned_at?: string | null
+          server_id?: string
+          ssl_status?: string | null
+          status?: string
+          suspended_at?: string | null
+          suspension_reason?: string | null
+          updated_at?: string
+          user_id?: string
+          whm_package?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hosting_accounts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hosting_accounts_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "hosting_servers"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       hosting_plans: {
         Row: {
@@ -119,6 +274,54 @@ export type Database = {
           updated_at?: string
           websites?: string | null
           yearly_price?: number
+        }
+        Relationships: []
+      }
+      hosting_servers: {
+        Row: {
+          api_type: string
+          created_at: string
+          current_accounts: number | null
+          hostname: string
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          location: string | null
+          max_accounts: number | null
+          name: string
+          nameservers: Json | null
+          server_type: string
+          updated_at: string
+        }
+        Insert: {
+          api_type: string
+          created_at?: string
+          current_accounts?: number | null
+          hostname: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          location?: string | null
+          max_accounts?: number | null
+          name: string
+          nameservers?: Json | null
+          server_type: string
+          updated_at?: string
+        }
+        Update: {
+          api_type?: string
+          created_at?: string
+          current_accounts?: number | null
+          hostname?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          location?: string | null
+          max_accounts?: number | null
+          name?: string
+          nameservers?: Json | null
+          server_type?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -338,6 +541,66 @@ export type Database = {
         }
         Relationships: []
       }
+      provisioning_queue: {
+        Row: {
+          attempts: number | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_error: string | null
+          max_attempts: number | null
+          order_id: string
+          scheduled_at: string
+          server_id: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          order_id: string
+          scheduled_at?: string
+          server_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_error?: string | null
+          max_attempts?: number | null
+          order_id?: string
+          scheduled_at?: string
+          server_id?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provisioning_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "provisioning_queue_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "hosting_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
@@ -481,11 +744,60 @@ export type Database = {
         }
         Relationships: []
       }
+      whm_package_mappings: {
+        Row: {
+          created_at: string
+          hosting_plan_id: string
+          id: string
+          is_active: boolean | null
+          server_id: string
+          updated_at: string
+          whm_package_name: string
+        }
+        Insert: {
+          created_at?: string
+          hosting_plan_id: string
+          id?: string
+          is_active?: boolean | null
+          server_id: string
+          updated_at?: string
+          whm_package_name: string
+        }
+        Update: {
+          created_at?: string
+          hosting_plan_id?: string
+          id?: string
+          is_active?: boolean | null
+          server_id?: string
+          updated_at?: string
+          whm_package_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whm_package_mappings_hosting_plan_id_fkey"
+            columns: ["hosting_plan_id"]
+            isOneToOne: false
+            referencedRelation: "hosting_plans"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whm_package_mappings_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "hosting_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      generate_cpanel_username: {
+        Args: { domain_name: string }
+        Returns: string
+      }
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
