@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Menu, X, Globe } from 'lucide-react';
+import { ChevronDown, Menu, X, Globe, Sun, Moon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import chostLogo from '@/assets/chost-logo.png';
 
@@ -16,6 +17,7 @@ const Header: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const { language, setLanguage, t } = useLanguage();
+  const { theme, setTheme } = useTheme();
 
   const menuItems: MenuItem[] = [
     {
@@ -131,6 +133,16 @@ const Header: React.FC = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+              className="flex items-center justify-center w-9 h-9 text-foreground/80 hover:text-foreground transition-colors rounded-lg hover:bg-muted/50"
+              aria-label="Toggle theme"
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            </button>
+
             {/* Language Toggle */}
             <button
               onClick={toggleLanguage}
