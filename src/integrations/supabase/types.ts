@@ -338,6 +338,92 @@ export type Database = {
         }
         Relationships: []
       }
+      support_tickets: {
+        Row: {
+          assigned_to: string | null
+          category: string | null
+          closed_at: string | null
+          created_at: string
+          description: string | null
+          id: string
+          priority: string
+          resolved_at: string | null
+          status: string
+          subject: string
+          ticket_number: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject: string
+          ticket_number: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          assigned_to?: string | null
+          category?: string | null
+          closed_at?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          priority?: string
+          resolved_at?: string | null
+          status?: string
+          subject?: string
+          ticket_number?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ticket_messages: {
+        Row: {
+          attachments: Json | null
+          created_at: string
+          id: string
+          is_staff_reply: boolean
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Insert: {
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          is_staff_reply?: boolean
+          message: string
+          ticket_id: string
+          user_id: string
+        }
+        Update: {
+          attachments?: Json | null
+          created_at?: string
+          id?: string
+          is_staff_reply?: boolean
+          message?: string
+          ticket_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ticket_messages_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "support_tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -402,6 +488,7 @@ export type Database = {
     Functions: {
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
+      generate_ticket_number: { Args: never; Returns: string }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]

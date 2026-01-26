@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.send-order-email]
 verify_jwt = false
+
+[functions.generate-invoice-pdf]
+verify_jwt = false
