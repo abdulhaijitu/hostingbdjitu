@@ -1,44 +1,106 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Mail, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, ArrowRight, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const emailSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  email: z.string().trim().email('Invalid email address').max(255, 'Email too long'),
 });
+
+// Failsafe timeout constant
+const REQUEST_TIMEOUT_MS = 6000;
 
 const ForgotPassword: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  
+  // Separate loading states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  
+  // Refs for cleanup
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setError('');
+    setSubmitError(null);
+    
+    // Validate email
     try {
       emailSchema.parse({ email });
-      setError('');
-      setIsLoading(true);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        setError(err.errors[0].message);
+        return;
+      }
+    }
 
+    // Start submission
+    setIsSubmitting(true);
+
+    // Setup failsafe timeout
+    timeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && isSubmitting) {
+        setIsSubmitting(false);
+        setSubmitError(
+          language === 'bn' 
+            ? 'অনুরোধ সময় শেষ। আবার চেষ্টা করুন।' 
+            : 'Request timed out. Please try again.'
+        );
+        toast({
+          title: language === 'bn' ? 'টাইমআউট' : 'Timeout',
+          description: language === 'bn' 
+            ? 'সার্ভার সাড়া দিচ্ছে না। আবার চেষ্টা করুন।' 
+            : 'Server not responding. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }, REQUEST_TIMEOUT_MS);
+
+    try {
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
 
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!mountedRef.current) return;
+
       if (resetError) {
+        setSubmitError(getErrorMessage(resetError.message, language));
         toast({
           title: language === 'bn' ? 'ত্রুটি' : 'Error',
-          description: resetError.message,
+          description: getErrorMessage(resetError.message, language),
           variant: 'destructive',
         });
-        setIsLoading(false);
         return;
       }
 
@@ -50,11 +112,26 @@ const ForgotPassword: React.FC = () => {
           : 'Password reset link has been sent',
       });
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        setError(err.errors[0].message);
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
+
+      if (!mountedRef.current) return;
+
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setSubmitError(getErrorMessage(message, language));
+      toast({
+        title: language === 'bn' ? 'ত্রুটি' : 'Error',
+        description: getErrorMessage(message, language),
+        variant: 'destructive',
+      });
     } finally {
-      setIsLoading(false);
+      // ALWAYS reset isSubmitting in finally block
+      if (mountedRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -82,7 +159,7 @@ const ForgotPassword: React.FC = () => {
                     ? `আমরা ${email} এ পাসওয়ার্ড রিসেট লিংক পাঠিয়েছি। আপনার ইনবক্স চেক করুন।`
                     : `We've sent a password reset link to ${email}. Please check your inbox.`}
                 </p>
-                <Link to="/login">
+                <Link to="/auth/login">
                   <Button variant="outline" className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     {language === 'bn' ? 'লগইনে ফিরে যান' : 'Back to Login'}
@@ -119,6 +196,19 @@ const ForgotPassword: React.FC = () => {
                 </p>
               </div>
 
+              {/* Error Alert */}
+              {submitError && (
+                <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-destructive font-medium">
+                      {language === 'bn' ? 'ত্রুটি' : 'Error'}
+                    </p>
+                    <p className="text-sm text-destructive/80 mt-1">{submitError}</p>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -129,16 +219,27 @@ const ForgotPassword: React.FC = () => {
                     <input
                       type="email"
                       value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        if (error) setError('');
+                        if (submitError) setSubmitError(null);
+                      }}
                       placeholder="you@example.com"
-                      className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${error ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      disabled={isSubmitting}
+                      className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${error ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     />
                   </div>
                   {error && <p className="text-destructive text-xs mt-1">{error}</p>}
                 </div>
 
-                <Button variant="hero" size="xl" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
+                <Button 
+                  type="submit"
+                  variant="hero" 
+                  size="xl" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
                       {language === 'bn' ? 'পাঠানো হচ্ছে...' : 'Sending...'}
@@ -153,7 +254,7 @@ const ForgotPassword: React.FC = () => {
               </form>
 
               <p className="text-center text-muted-foreground mt-6">
-                <Link to="/login" className="text-accent font-medium hover:underline inline-flex items-center">
+                <Link to="/auth/login" className="text-accent font-medium hover:underline inline-flex items-center">
                   <ArrowLeft className="mr-1 h-4 w-4" />
                   {language === 'bn' ? 'লগইনে ফিরে যান' : 'Back to Login'}
                 </Link>
@@ -165,5 +266,37 @@ const ForgotPassword: React.FC = () => {
     </Layout>
   );
 };
+
+// Helper function to get user-friendly error messages
+function getErrorMessage(error: string, language: string): string {
+  const errorMap: Record<string, { en: string; bn: string }> = {
+    'User not found': {
+      en: 'No account found with this email.',
+      bn: 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি।',
+    },
+    'Too many requests': {
+      en: 'Too many attempts. Please wait and try again.',
+      bn: 'অনেক বেশি চেষ্টা। কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন।',
+    },
+    'Network request failed': {
+      en: 'Network error. Please check your connection.',
+      bn: 'নেটওয়ার্ক সমস্যা। আপনার কানেকশন চেক করুন।',
+    },
+    'Failed to fetch': {
+      en: 'Connection failed. Please check your internet.',
+      bn: 'কানেকশন ব্যর্থ। আপনার ইন্টারনেট চেক করুন।',
+    },
+  };
+
+  for (const [key, messages] of Object.entries(errorMap)) {
+    if (error.toLowerCase().includes(key.toLowerCase())) {
+      return language === 'bn' ? messages.bn : messages.en;
+    }
+  }
+
+  return language === 'bn' 
+    ? 'একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।' 
+    : 'Something went wrong. Please try again.';
+}
 
 export default ForgotPassword;

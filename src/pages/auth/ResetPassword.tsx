@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Lock, Eye, EyeOff, ArrowRight, CheckCircle, Check } from 'lucide-react';
+import { Lock, Eye, EyeOff, ArrowRight, CheckCircle, Check, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
 import { supabase } from '@/integrations/supabase/client';
@@ -17,32 +17,85 @@ const passwordSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Failsafe timeout constant
+const REQUEST_TIMEOUT_MS = 6000;
+
 const ResetPassword: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const navigate = useNavigate();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({ password: '', confirmPassword: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isValidSession, setIsValidSession] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+  
+  // Separate loading states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  
+  // Refs for cleanup
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
-    // Check if there's a valid recovery session
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY') {
-        setIsValidSession(true);
-      }
-    });
+    let authSubscription: { unsubscribe: () => void } | null = null;
 
-    // Also check current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsValidSession(true);
+    const checkSession = async () => {
+      try {
+        // Set up auth state listener
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+          if (event === 'PASSWORD_RECOVERY') {
+            if (mountedRef.current) {
+              setIsValidSession(true);
+              setIsCheckingSession(false);
+            }
+          }
+        });
+        authSubscription = subscription;
+
+        // Also check current session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (mountedRef.current) {
+          if (session) {
+            setIsValidSession(true);
+          }
+          setIsCheckingSession(false);
+        }
+      } catch (error) {
+        if (mountedRef.current) {
+          setIsCheckingSession(false);
+        }
       }
-    });
+    };
+
+    checkSession();
+
+    // Timeout for session check
+    const sessionTimeout = setTimeout(() => {
+      if (mountedRef.current && isCheckingSession) {
+        setIsCheckingSession(false);
+      }
+    }, 3000);
+
+    return () => {
+      clearTimeout(sessionTimeout);
+      authSubscription?.unsubscribe();
+    };
   }, []);
 
   const passwordRequirements = [
@@ -51,24 +104,75 @@ const ResetPassword: React.FC = () => {
     { met: /[0-9]/.test(formData.password), text: language === 'bn' ? 'একটি সংখ্যা' : 'One number' },
   ];
 
+  const handleInputChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    if (errors[field]) setErrors({ ...errors, [field]: '' });
+    if (submitError) setSubmitError(null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setErrors({});
+    setSubmitError(null);
+    
+    // Validate form
     try {
       passwordSchema.parse(formData);
-      setErrors({});
-      setIsLoading(true);
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        err.errors.forEach((error) => {
+          if (error.path[0]) newErrors[error.path[0] as string] = error.message;
+        });
+        setErrors(newErrors);
+        return;
+      }
+    }
 
+    // Start submission
+    setIsSubmitting(true);
+
+    // Setup failsafe timeout
+    timeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && isSubmitting) {
+        setIsSubmitting(false);
+        setSubmitError(
+          language === 'bn' 
+            ? 'অনুরোধ সময় শেষ। আবার চেষ্টা করুন।' 
+            : 'Request timed out. Please try again.'
+        );
+        toast({
+          title: language === 'bn' ? 'টাইমআউট' : 'Timeout',
+          description: language === 'bn' 
+            ? 'সার্ভার সাড়া দিচ্ছে না। আবার চেষ্টা করুন।' 
+            : 'Server not responding. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }, REQUEST_TIMEOUT_MS);
+
+    try {
       const { error } = await supabase.auth.updateUser({
         password: formData.password,
       });
 
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!mountedRef.current) return;
+
       if (error) {
+        setSubmitError(getErrorMessage(error.message, language));
         toast({
           title: language === 'bn' ? 'ত্রুটি' : 'Error',
-          description: error.message,
+          description: getErrorMessage(error.message, language),
           variant: 'destructive',
         });
-        setIsLoading(false);
         return;
       }
 
@@ -82,20 +186,59 @@ const ResetPassword: React.FC = () => {
 
       // Redirect to dashboard after 2 seconds
       setTimeout(() => {
-        navigate('/client');
+        if (mountedRef.current) {
+          navigate('/client', { replace: true });
+        }
       }, 2000);
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        err.errors.forEach((error) => {
-          if (error.path[0]) newErrors[error.path[0] as string] = error.message;
-        });
-        setErrors(newErrors);
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
+
+      if (!mountedRef.current) return;
+
+      const message = err instanceof Error ? err.message : 'Unknown error';
+      setSubmitError(getErrorMessage(message, language));
+      toast({
+        title: language === 'bn' ? 'ত্রুটি' : 'Error',
+        description: getErrorMessage(message, language),
+        variant: 'destructive',
+      });
     } finally {
-      setIsLoading(false);
+      // ALWAYS reset isSubmitting in finally block
+      if (mountedRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
+
+  // Loading state while checking session
+  if (isCheckingSession) {
+    return (
+      <Layout>
+        <SEOHead
+          title={language === 'bn' ? 'যাচাই করা হচ্ছে' : 'Verifying'}
+          description={language === 'bn' ? 'লিংক যাচাই করা হচ্ছে' : 'Verifying reset link'}
+          canonicalUrl="/reset-password"
+          noIndex={true}
+        />
+        <section className="min-h-[80vh] flex items-center section-padding bg-gradient-hero">
+          <div className="container-wide">
+            <div className="max-w-md mx-auto">
+              <div className="bg-card rounded-2xl border border-border p-8 shadow-lg text-center">
+                <div className="w-12 h-12 border-2 border-primary/30 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+                <p className="text-muted-foreground">
+                  {language === 'bn' ? 'লিংক যাচাই করা হচ্ছে...' : 'Verifying reset link...'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </Layout>
+    );
+  }
 
   if (isSuccess) {
     return (
@@ -190,6 +333,19 @@ const ResetPassword: React.FC = () => {
                 </p>
               </div>
 
+              {/* Error Alert */}
+              {submitError && (
+                <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm text-destructive font-medium">
+                      {language === 'bn' ? 'ত্রুটি' : 'Error'}
+                    </p>
+                    <p className="text-sm text-destructive/80 mt-1">{submitError}</p>
+                  </div>
+                </div>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label className="block text-sm font-medium mb-2">
@@ -200,14 +356,16 @@ const ResetPassword: React.FC = () => {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      onChange={(e) => handleInputChange('password', e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      disabled={isSubmitting}
+                      className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={isSubmitting}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                     >
                       {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -235,14 +393,16 @@ const ResetPassword: React.FC = () => {
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
                       value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                      onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                       placeholder="••••••••"
-                      className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      disabled={isSubmitting}
+                      className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      disabled={isSubmitting}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                     >
                       {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     </button>
@@ -250,8 +410,14 @@ const ResetPassword: React.FC = () => {
                   {errors.confirmPassword && <p className="text-destructive text-xs mt-1">{errors.confirmPassword}</p>}
                 </div>
 
-                <Button variant="hero" size="xl" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
+                <Button 
+                  type="submit"
+                  variant="hero" 
+                  size="xl" 
+                  className="w-full" 
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
                     <span className="flex items-center gap-2">
                       <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
                       {language === 'bn' ? 'আপডেট হচ্ছে...' : 'Updating...'}
@@ -271,5 +437,41 @@ const ResetPassword: React.FC = () => {
     </Layout>
   );
 };
+
+// Helper function to get user-friendly error messages
+function getErrorMessage(error: string, language: string): string {
+  const errorMap: Record<string, { en: string; bn: string }> = {
+    'New password should be different': {
+      en: 'New password must be different from your current password.',
+      bn: 'নতুন পাসওয়ার্ড আগের পাসওয়ার্ড থেকে ভিন্ন হতে হবে।',
+    },
+    'Password should be at least': {
+      en: 'Password must be at least 8 characters.',
+      bn: 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
+    },
+    'Session expired': {
+      en: 'Your session has expired. Please request a new reset link.',
+      bn: 'আপনার সেশন শেষ হয়ে গেছে। নতুন রিসেট লিংক অনুরোধ করুন।',
+    },
+    'Network request failed': {
+      en: 'Network error. Please check your connection.',
+      bn: 'নেটওয়ার্ক সমস্যা। আপনার কানেকশন চেক করুন।',
+    },
+    'Failed to fetch': {
+      en: 'Connection failed. Please check your internet.',
+      bn: 'কানেকশন ব্যর্থ। আপনার ইন্টারনেট চেক করুন।',
+    },
+  };
+
+  for (const [key, messages] of Object.entries(errorMap)) {
+    if (error.toLowerCase().includes(key.toLowerCase())) {
+      return language === 'bn' ? messages.bn : messages.en;
+    }
+  }
+
+  return language === 'bn' 
+    ? 'একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।' 
+    : 'Something went wrong. Please try again.';
+}
 
 export default ResetPassword;

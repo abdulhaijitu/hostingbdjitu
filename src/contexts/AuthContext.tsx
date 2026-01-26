@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
-import { User, Session } from '@supabase/supabase-js';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
+import { User, Session, AuthChangeEvent } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
 type AppRole = 'customer' | 'admin';
@@ -14,6 +14,7 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  refreshSession: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,12 +22,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Cache for role to prevent refetching
 const roleCache = new Map<string, AppRole | null>();
 
+// Session refresh interval (45 minutes - before 1 hour expiry)
+const SESSION_REFRESH_INTERVAL = 45 * 60 * 1000;
+
+// Auth initialization timeout
+const AUTH_INIT_TIMEOUT = 5000;
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  
+  // Refs for cleanup and preventing race conditions
+  const mountedRef = useRef(true);
+  const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isRefreshingRef = useRef(false);
 
   const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
     // Check cache first
@@ -56,15 +69,98 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, []);
 
+  // Session refresh function
+  const refreshSession = useCallback(async () => {
+    if (isRefreshingRef.current || !mountedRef.current) return;
+    
+    isRefreshingRef.current = true;
+    
+    try {
+      const { data: { session: newSession }, error } = await supabase.auth.refreshSession();
+      
+      if (!mountedRef.current) return;
+      
+      if (error) {
+        console.error('Session refresh error:', error);
+        // If refresh fails, sign out
+        if (error.message.includes('refresh_token_not_found') || 
+            error.message.includes('Invalid Refresh Token')) {
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setRole(null);
+        }
+        return;
+      }
+      
+      if (newSession) {
+        setSession(newSession);
+        setUser(newSession.user);
+      }
+    } catch (error) {
+      console.error('Session refresh failed:', error);
+    } finally {
+      isRefreshingRef.current = false;
+    }
+  }, []);
+
+  // Setup session refresh interval
+  const setupRefreshInterval = useCallback(() => {
+    // Clear existing interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+    }
+    
+    // Set up new interval
+    refreshIntervalRef.current = setInterval(() => {
+      if (session && mountedRef.current) {
+        refreshSession();
+      }
+    }, SESSION_REFRESH_INTERVAL);
+  }, [session, refreshSession]);
+
+  // Handle auth state changes
+  const handleAuthChange = useCallback(async (event: AuthChangeEvent, newSession: Session | null) => {
+    if (!mountedRef.current) return;
+    
+    // Update session and user
+    setSession(newSession);
+    setUser(newSession?.user ?? null);
+
+    if (newSession?.user) {
+      // Fetch role
+      const userRole = await fetchUserRole(newSession.user.id);
+      if (mountedRef.current) {
+        setRole(userRole);
+      }
+      
+      // Setup refresh interval when we have a session
+      setupRefreshInterval();
+    } else {
+      setRole(null);
+      // Clear refresh interval when no session
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+        refreshIntervalRef.current = null;
+      }
+    }
+
+    // Mark auth as ready if not already
+    if (!authReady && mountedRef.current) {
+      setLoading(false);
+      setAuthReady(true);
+    }
+  }, [fetchUserRole, authReady, setupRefreshInterval]);
+
   useEffect(() => {
-    let mounted = true;
+    mountedRef.current = true;
 
     const initializeAuth = async () => {
       try {
         // Get existing session first
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         
-        if (!mounted) return;
+        if (!mountedRef.current) return;
 
         if (existingSession?.user) {
           setSession(existingSession);
@@ -72,51 +168,68 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // Fetch role
           const userRole = await fetchUserRole(existingSession.user.id);
-          if (mounted) {
+          if (mountedRef.current) {
             setRole(userRole);
           }
+          
+          // Setup refresh interval
+          setupRefreshInterval();
         }
       } catch (error) {
         console.error('Error initializing auth:', error);
       } finally {
-        if (mounted) {
+        if (mountedRef.current) {
           setLoading(false);
           setAuthReady(true);
         }
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
-        if (!mounted) return;
-        
-        setSession(newSession);
-        setUser(newSession?.user ?? null);
+    // Set up auth state listener FIRST (as recommended by Supabase)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange);
 
-        if (newSession?.user) {
-          const userRole = await fetchUserRole(newSession.user.id);
-          if (mounted) {
-            setRole(userRole);
-          }
-        } else {
-          setRole(null);
-        }
-
-        if (!authReady) {
-          setLoading(false);
-          setAuthReady(true);
-        }
-      }
-    );
-
+    // Then initialize auth
     initializeAuth();
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
+    // Failsafe timeout - ensure auth resolves even if something goes wrong
+    initTimeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && !authReady) {
+        setLoading(false);
+        setAuthReady(true);
+      }
+    }, AUTH_INIT_TIMEOUT);
+
+    // Handle visibility change - refresh session when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && session && mountedRef.current) {
+        // Check if session is about to expire (within 10 minutes)
+        const expiresAt = session.expires_at;
+        if (expiresAt) {
+          const expiresIn = expiresAt * 1000 - Date.now();
+          if (expiresIn < 10 * 60 * 1000) {
+            refreshSession();
+          }
+        }
+      }
     };
-  }, [fetchUserRole, authReady]);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      mountedRef.current = false;
+      subscription.unsubscribe();
+      
+      if (refreshIntervalRef.current) {
+        clearInterval(refreshIntervalRef.current);
+      }
+      
+      if (initTimeoutRef.current) {
+        clearTimeout(initTimeoutRef.current);
+      }
+      
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [fetchUserRole, handleAuthChange, authReady, setupRefreshInterval, refreshSession, session]);
 
   const signUp = useCallback(async (email: string, password: string, fullName?: string) => {
     try {
@@ -155,6 +268,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (user?.id) {
       roleCache.delete(user.id);
     }
+    
+    // Clear refresh interval
+    if (refreshIntervalRef.current) {
+      clearInterval(refreshIntervalRef.current);
+      refreshIntervalRef.current = null;
+    }
+    
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);
@@ -171,7 +291,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     signIn,
     signOut,
     isAdmin: role === 'admin',
-  }), [user, session, role, loading, authReady, signUp, signIn, signOut]);
+    refreshSession,
+  }), [user, session, role, loading, authReady, signUp, signIn, signOut, refreshSession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
