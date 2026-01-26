@@ -4,7 +4,7 @@ import {
   CheckCircle, XCircle, Clock, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,15 +125,14 @@ const WebhookLogs: React.FC = () => {
   }).length || 0;
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'ওয়েবহুক লগ' : 'Webhook Logs'}
         description="View webhook logs"
         canonicalUrl="/admin/webhooks"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -368,10 +367,9 @@ const WebhookLogs: React.FC = () => {
                 </ScrollArea>
               )}
             </DialogContent>
-          </Dialog>
-        </div>
-      </section>
-    </Layout>
+        </Dialog>
+      </div>
+    </AdminLayout>
   );
 };
 

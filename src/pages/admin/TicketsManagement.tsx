@@ -5,7 +5,7 @@ import {
   AlertCircle, User, Send, Paperclip, MoreHorizontal, 
   RefreshCw, Loader2, Headphones
 } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -134,7 +134,7 @@ const TicketsManagement: React.FC = () => {
   const urgentCount = tickets?.filter(t => t.priority === 'urgent' && t.status !== 'closed').length || 0;
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'সাপোর্ট টিকেট ম্যানেজমেন্ট' : 'Support Tickets Management'}
         description="Manage customer support tickets"
@@ -142,8 +142,7 @@ const TicketsManagement: React.FC = () => {
         noIndex
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="mb-6">
             <Button variant="ghost" size="sm" className="mb-4" asChild>
@@ -335,8 +334,6 @@ const TicketsManagement: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* Ticket Detail Dialog */}
       <Dialog open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
@@ -446,7 +443,8 @@ const TicketsManagement: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

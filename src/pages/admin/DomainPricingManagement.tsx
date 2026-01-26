@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Globe, Star } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -116,15 +116,14 @@ const DomainPricingManagement: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'ডোমেইন প্রাইসিং ম্যানেজমেন্ট' : 'Domain Pricing Management'}
         description="Manage domain pricing"
         canonicalUrl="/admin/domain-pricing"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" size="icon" asChild>
               <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
@@ -198,8 +197,6 @@ const DomainPricingManagement: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -299,7 +296,8 @@ const DomainPricingManagement: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

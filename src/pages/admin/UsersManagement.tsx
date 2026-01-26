@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square, Shield, UserCog } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -320,15 +320,14 @@ const UsersManagement: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'ইউজার ম্যানেজমেন্ট' : 'Users Management'}
         description="Manage users"
         canonicalUrl="/admin/users"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           <div className="flex items-center gap-4 mb-8">
             <Button variant="ghost" size="icon" asChild>
               <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
@@ -547,8 +546,6 @@ const UsersManagement: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* User Orders Dialog */}
       <Dialog open={isOrdersDialogOpen} onOpenChange={setIsOrdersDialogOpen}>
@@ -657,7 +654,8 @@ const UsersManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -3,7 +3,7 @@ import {
   ListTodo, RefreshCw, RotateCcw, Clock, CheckCircle, 
   XCircle, Loader2, AlertTriangle, Server, Eye
 } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -79,15 +79,14 @@ const ProvisioningQueue: React.FC = () => {
   const completedCount = queue?.filter(q => q.status === 'completed').length || 0;
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'প্রভিশনিং কিউ' : 'Provisioning Queue'}
         description="Manage hosting provisioning queue"
         canonicalUrl="/admin/provisioning"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
@@ -286,8 +285,6 @@ const ProvisioningQueue: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* Details Dialog */}
       <Dialog open={showDetailsDialog} onOpenChange={setShowDetailsDialog}>
@@ -364,7 +361,8 @@ const ProvisioningQueue: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Package, Plus, Edit, Trash2, Server, Link2, Check, X
 } from 'lucide-react';
-import Layout from '@/components/layout/Layout';
+import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -165,15 +165,14 @@ const WHMPackageMapping: React.FC = () => {
   };
 
   return (
-    <Layout>
+    <AdminLayout>
       <SEOHead 
         title={language === 'bn' ? 'WHM প্যাকেজ ম্যাপিং' : 'WHM Package Mapping'}
         description="Map hosting plans to WHM packages"
         canonicalUrl="/admin/package-mapping"
       />
       
-      <section className="section-padding bg-muted/30 min-h-screen">
-        <div className="container-wide">
+      <div className="p-6 lg:p-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
               <h1 className="text-2xl lg:text-3xl font-bold font-display flex items-center gap-3">
@@ -283,8 +282,6 @@ const WHMPackageMapping: React.FC = () => {
               )}
             </CardContent>
           </Card>
-        </div>
-      </section>
 
       {/* Create/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
@@ -400,7 +397,8 @@ const WHMPackageMapping: React.FC = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Layout>
+      </div>
+    </AdminLayout>
   );
 };
 
