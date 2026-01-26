@@ -246,7 +246,7 @@ const HostingPlansManagement: React.FC = () => {
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto" aria-describedby="plan-dialog-description">
           <DialogHeader>
             <DialogTitle>
               {editingPlan 
@@ -254,6 +254,12 @@ const HostingPlansManagement: React.FC = () => {
                 : (language === 'bn' ? 'নতুন প্ল্যান তৈরি করুন' : 'Create New Plan')
               }
             </DialogTitle>
+            <p id="plan-dialog-description" className="text-sm text-muted-foreground">
+              {editingPlan
+                ? (language === 'bn' ? 'প্ল্যানের বিবরণ আপডেট করুন' : 'Update the plan details below')
+                : (language === 'bn' ? 'নতুন হোস্টিং প্ল্যানের তথ্য দিন' : 'Fill in the details for the new hosting plan')
+              }
+            </p>
           </DialogHeader>
           
           <div className="grid grid-cols-2 gap-4">
