@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Menu, X, Globe, Sun, Moon, Search } from 'lucide-react';
+import { ChevronDown, Menu, X, Globe, Sun, Moon, Search, Phone, Mail, User, UserPlus, Headphones, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
@@ -19,12 +19,22 @@ const Header: React.FC = () => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, resolvedTheme } = useTheme();
 
   // Prevent hydration mismatch
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Scroll detection for header shadow
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   // Keyboard shortcut for search
@@ -40,7 +50,7 @@ const Header: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  const menuItems: MenuItem[] = [
+  const mainMenuItems: MenuItem[] = [
     {
       label: t('nav.hosting'),
       href: '/hosting',
@@ -86,8 +96,6 @@ const Header: React.FC = () => {
         { label: t('nav.websiteDesign'), href: '/services/website-design' },
       ],
     },
-    { label: t('nav.affiliate'), href: '/affiliate' },
-    { label: t('nav.support'), href: '/support' },
   ];
 
   const toggleLanguage = () => {
@@ -102,93 +110,71 @@ const Header: React.FC = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      {/* Top Bar */}
+      <div className="bg-primary text-primary-foreground">
         <div className="container-wide">
-          <div className="flex h-16 items-center justify-between">
-            {/* Logo */}
-            <Link to="/" className="flex items-center">
-              <img 
-                src={chostLogo} 
-                alt="CHost - Secure.Fast.Online" 
-                className="h-10 sm:h-12 w-auto"
-              />
-            </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {menuItems.map((item) => (
-                <div
-                  key={item.label}
-                  className="relative"
-                  onMouseEnter={() => setActiveMenu(item.label)}
-                  onMouseLeave={() => setActiveMenu(null)}
-                >
-                  <Link
-                    to={item.href}
-                    className={cn(
-                      "flex items-center gap-1 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-lg hover:bg-muted/50",
-                      activeMenu === item.label && "text-foreground bg-muted/50"
-                    )}
-                  >
-                    {item.label}
-                    {item.children && (
-                      <ChevronDown className={cn(
-                        "h-4 w-4 transition-transform duration-200",
-                        activeMenu === item.label && "rotate-180"
-                      )} />
-                    )}
-                  </Link>
-
-                  {/* Dropdown */}
-                  {item.children && activeMenu === item.label && (
-                    <div className="absolute top-full left-0 mt-1 w-56 rounded-xl bg-card border border-border shadow-lg animate-fade-in z-50">
-                      <div className="p-2">
-                        {item.children.map((child) => (
-                          <Link
-                            key={child.label}
-                            to={child.href}
-                            className="block px-4 py-2.5 text-sm text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </nav>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-2">
-              {/* Search Button */}
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg bg-muted/50 hover:bg-muted"
+          <div className="flex h-10 items-center justify-between text-sm">
+            {/* Left - Contact Info */}
+            <div className="hidden sm:flex items-center gap-4 lg:gap-6">
+              <a 
+                href="tel:+8801833876434" 
+                className="flex items-center gap-2 hover:text-white/80 transition-colors group"
               >
-                <Search className="h-4 w-4" />
-                <span className="hidden sm:inline">{language === 'bn' ? 'সার্চ' : 'Search'}</span>
-                <kbd className="hidden sm:inline-flex h-5 items-center gap-1 rounded border border-border bg-background px-1.5 text-[10px] font-medium text-muted-foreground">
-                  ⌘K
-                </kbd>
-              </button>
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
+                  <Phone className="h-3 w-3" />
+                </span>
+                <span className="font-medium">+8801833876434</span>
+              </a>
+              <a 
+                href="mailto:support@chostbd.com" 
+                className="flex items-center gap-2 hover:text-white/80 transition-colors group"
+              >
+                <span className="flex items-center justify-center w-6 h-6 rounded-full bg-white/10 group-hover:bg-white/20 transition-colors">
+                  <Mail className="h-3 w-3" />
+                </span>
+                <span className="font-medium">support@chostbd.com</span>
+              </a>
+            </div>
 
-              {/* Theme Toggle - Improved */}
+            {/* Right - Quick Links & Actions */}
+            <div className="flex items-center gap-1 sm:gap-2 ml-auto">
+              {/* Affiliate Link */}
+              <Link 
+                to="/affiliate" 
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
+              >
+                <Gift className="h-3.5 w-3.5" />
+                <span>{t('nav.affiliate')}</span>
+              </Link>
+
+              {/* Support Link */}
+              <Link 
+                to="/support" 
+                className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
+              >
+                <Headphones className="h-3.5 w-3.5" />
+                <span>{t('nav.support')}</span>
+              </Link>
+
+              {/* Divider */}
+              <div className="hidden md:block w-px h-4 bg-white/20 mx-1" />
+
+              {/* Theme Toggle */}
               {mounted && (
                 <button
                   onClick={toggleTheme}
-                  className="relative flex items-center justify-center w-10 h-10 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                  className="relative flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/10 transition-colors"
                   aria-label="Toggle theme"
                 >
                   <Sun 
                     className={cn(
-                      "h-5 w-5 text-yellow-500 transition-all duration-300",
+                      "h-4 w-4 transition-all duration-300",
                       isDark ? "scale-0 rotate-90 opacity-0" : "scale-100 rotate-0 opacity-100"
                     )} 
                   />
                   <Moon 
                     className={cn(
-                      "absolute h-5 w-5 text-blue-400 transition-all duration-300",
+                      "absolute h-4 w-4 transition-all duration-300",
                       isDark ? "scale-100 rotate-0 opacity-100" : "scale-0 -rotate-90 opacity-0"
                     )} 
                   />
@@ -198,24 +184,137 @@ const Header: React.FC = () => {
               {/* Language Toggle */}
               <button
                 onClick={toggleLanguage}
-                className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors rounded-lg bg-muted/50 hover:bg-muted"
+                className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-white/10 transition-colors"
+                aria-label="Toggle language"
               >
                 <Globe className="h-4 w-4" />
-                <span className="font-semibold">{language === 'en' ? 'EN' : 'বাং'}</span>
               </button>
 
-              <div className="hidden sm:flex items-center gap-2">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link to="/login">{t('nav.login')}</Link>
-                </Button>
-                <Button variant="hero" size="sm" asChild>
-                  <Link to="/signup">{t('nav.signup')}</Link>
-                </Button>
+              {/* Divider */}
+              <div className="hidden sm:block w-px h-4 bg-white/20 mx-1" />
+
+              {/* Login */}
+              <Link 
+                to="/login" 
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
+              >
+                <User className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('nav.login')}</span>
+              </Link>
+
+              {/* Sign Up */}
+              <Link 
+                to="/signup" 
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
+              >
+                <UserPlus className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('nav.signup')}</span>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Header */}
+      <header className={cn(
+        "sticky top-0 z-50 w-full bg-background/98 backdrop-blur-md transition-all duration-300",
+        isScrolled ? "shadow-lg border-b border-border/50" : "border-b border-border/20"
+      )}>
+        <div className="container-wide">
+          <div className="flex h-16 lg:h-[72px] items-center justify-between">
+            {/* Logo */}
+            <Link to="/" className="flex items-center flex-shrink-0">
+              <img 
+                src={chostLogo} 
+                alt="CHost - Secure.Fast.Online" 
+                className="h-10 sm:h-12 w-auto"
+              />
+            </Link>
+
+            {/* Desktop Navigation - Centered */}
+            <nav className="hidden lg:flex items-center justify-center flex-1 mx-8">
+              <div className="flex items-center gap-1">
+                {mainMenuItems.map((item) => (
+                  <div
+                    key={item.label}
+                    className="relative"
+                    onMouseEnter={() => setActiveMenu(item.label)}
+                    onMouseLeave={() => setActiveMenu(null)}
+                  >
+                    <Link
+                      to={item.href}
+                      className={cn(
+                        "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-200 rounded-lg group",
+                        activeMenu === item.label && "text-primary"
+                      )}
+                    >
+                      <span className="relative">
+                        {item.label}
+                        <span className={cn(
+                          "absolute -bottom-1 left-0 w-full h-0.5 bg-primary rounded-full transform origin-left transition-transform duration-300",
+                          activeMenu === item.label ? "scale-x-100" : "scale-x-0"
+                        )} />
+                      </span>
+                      {item.children && (
+                        <ChevronDown className={cn(
+                          "h-4 w-4 transition-transform duration-200",
+                          activeMenu === item.label && "rotate-180 text-primary"
+                        )} />
+                      )}
+                    </Link>
+
+                    {/* Dropdown */}
+                    {item.children && activeMenu === item.label && (
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 rounded-xl bg-card border border-border shadow-2xl animate-fade-in z-50 overflow-hidden">
+                        <div className="p-2">
+                          {item.children.map((child, idx) => (
+                            <Link
+                              key={child.label}
+                              to={child.href}
+                              className="flex items-center gap-3 px-4 py-3 text-sm text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-lg transition-all duration-200 group"
+                              style={{ animationDelay: `${idx * 50}ms` }}
+                            >
+                              <span className="w-1.5 h-1.5 rounded-full bg-primary/30 group-hover:bg-primary transition-colors" />
+                              <span>{child.label}</span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            </nav>
+
+            {/* Right Actions */}
+            <div className="flex items-center gap-3 flex-shrink-0">
+              {/* Search Button */}
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-muted/50"
+              >
+                <Search className="h-4 w-4" />
+                <span className="hidden xl:inline">{language === 'bn' ? 'সার্চ' : 'Search'}</span>
+                <kbd className="hidden xl:inline-flex h-5 items-center gap-1 rounded border border-border bg-muted px-1.5 text-[10px] font-medium text-muted-foreground">
+                  ⌘K
+                </kbd>
+              </button>
+
+              {/* Get Started Button */}
+              <Button 
+                variant="hero" 
+                size="default" 
+                className="hidden sm:flex shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
+                asChild
+              >
+                <Link to="/hosting/web">
+                  {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
+                </Link>
+              </Button>
 
               {/* Mobile Menu Toggle */}
               <button
-                className="lg:hidden p-2 rounded-lg hover:bg-muted/50 transition-colors"
+                className="lg:hidden flex items-center justify-center w-10 h-10 rounded-lg hover:bg-muted/50 transition-colors"
                 onClick={() => setIsOpen(!isOpen)}
               >
                 {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -226,7 +325,7 @@ const Header: React.FC = () => {
 
         {/* Mobile Navigation */}
         {isOpen && (
-          <div className="lg:hidden border-t border-border bg-background animate-fade-in">
+          <div className="lg:hidden border-t border-border bg-background animate-slide-down">
             <div className="container-wide py-4 space-y-2">
               {/* Mobile Search */}
               <button
@@ -234,65 +333,104 @@ const Header: React.FC = () => {
                   setIsSearchOpen(true);
                   setIsOpen(false);
                 }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/50 rounded-xl transition-colors"
               >
                 <Search className="h-5 w-5" />
                 {language === 'bn' ? 'সার্চ করুন...' : 'Search...'}
               </button>
 
-              {menuItems.map((item) => (
-                <div key={item.label}>
-                  <Link
-                    to={item.href}
-                    className="flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
-                    onClick={() => !item.children && setIsOpen(false)}
-                  >
-                    {item.label}
-                    {item.children && <ChevronDown className="h-4 w-4" />}
-                  </Link>
-                  {item.children && (
-                    <div className="ml-4 mt-1 space-y-1">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.label}
-                          to={child.href}
-                          className="block px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors"
-                          onClick={() => setIsOpen(false)}
-                        >
-                          {child.label}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-              
-              {/* Mobile Theme Toggle */}
-              <div className="px-4 py-3 border-t border-border mt-4">
-                <button
-                  onClick={toggleTheme}
-                  className="flex items-center gap-3 w-full text-sm font-medium text-foreground/80 hover:text-foreground"
+              {/* Mobile Menu Items */}
+              <div className="space-y-1 pt-2">
+                {mainMenuItems.map((item) => (
+                  <div key={item.label}>
+                    <Link
+                      to={item.href}
+                      className="flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
+                      onClick={() => !item.children && setIsOpen(false)}
+                    >
+                      {item.label}
+                      {item.children && <ChevronDown className="h-4 w-4" />}
+                    </Link>
+                    {item.children && (
+                      <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/20 pl-4">
+                        {item.children.map((child) => (
+                          <Link
+                            key={child.label}
+                            to={child.href}
+                            className="block px-4 py-2.5 text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
+                            onClick={() => setIsOpen(false)}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {/* Mobile Quick Links */}
+              <div className="grid grid-cols-2 gap-2 pt-4 border-t border-border">
+                <Link
+                  to="/affiliate"
+                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary bg-muted/30 hover:bg-primary/5 rounded-xl transition-colors"
+                  onClick={() => setIsOpen(false)}
                 >
-                  {mounted && isDark ? (
-                    <>
-                      <Moon className="h-5 w-5 text-blue-400" />
-                      <span>{language === 'bn' ? 'ডার্ক মোড' : 'Dark Mode'}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sun className="h-5 w-5 text-yellow-500" />
-                      <span>{language === 'bn' ? 'লাইট মোড' : 'Light Mode'}</span>
-                    </>
-                  )}
+                  <Gift className="h-4 w-4" />
+                  {t('nav.affiliate')}
+                </Link>
+                <Link
+                  to="/support"
+                  className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary bg-muted/30 hover:bg-primary/5 rounded-xl transition-colors"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Headphones className="h-4 w-4" />
+                  {t('nav.support')}
+                </Link>
+              </div>
+              
+              {/* Mobile Theme & Language */}
+              <div className="flex items-center gap-2 pt-2">
+                {mounted && (
+                  <button
+                    onClick={toggleTheme}
+                    className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary bg-muted/30 hover:bg-primary/5 rounded-xl transition-colors"
+                  >
+                    {isDark ? (
+                      <>
+                        <Moon className="h-4 w-4 text-blue-400" />
+                        <span>{language === 'bn' ? 'ডার্ক' : 'Dark'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="h-4 w-4 text-yellow-500" />
+                        <span>{language === 'bn' ? 'লাইট' : 'Light'}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
+                  onClick={toggleLanguage}
+                  className="flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary bg-muted/30 hover:bg-primary/5 rounded-xl transition-colors"
+                >
+                  <Globe className="h-4 w-4" />
+                  <span>{language === 'en' ? 'English' : 'বাংলা'}</span>
                 </button>
               </div>
 
+              {/* Mobile Auth Buttons */}
               <div className="flex gap-2 pt-4 border-t border-border">
                 <Button variant="outline" className="flex-1" asChild>
-                  <Link to="/login" onClick={() => setIsOpen(false)}>{t('nav.login')}</Link>
+                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                    <User className="h-4 w-4 mr-2" />
+                    {t('nav.login')}
+                  </Link>
                 </Button>
                 <Button variant="hero" className="flex-1" asChild>
-                  <Link to="/signup" onClick={() => setIsOpen(false)}>{t('nav.signup')}</Link>
+                  <Link to="/signup" onClick={() => setIsOpen(false)}>
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    {t('nav.signup')}
+                  </Link>
                 </Button>
               </div>
             </div>
