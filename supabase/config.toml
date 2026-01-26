@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.check-rate-limit]
 verify_jwt = false
+
+[functions.get-user-role]
+verify_jwt = false
