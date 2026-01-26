@@ -313,3 +313,22 @@ export const useUpdateServer = () => {
     },
   });
 };
+
+// Admin: Delete server
+export const useDeleteServer = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('hosting_servers')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['hosting-servers'] });
+    },
+  });
+};
