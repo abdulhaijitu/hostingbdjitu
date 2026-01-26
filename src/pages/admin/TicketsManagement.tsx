@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   MessageSquare, ArrowLeft, Search, Clock, CheckCircle, 
   AlertCircle, User, Send, Paperclip, MoreHorizontal, 
-  RefreshCw, Loader2, Headphones
+  RefreshCw, Loader2, Headphones, Wifi, WifiOff, Download
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -32,6 +32,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import SEOHead from '@/components/common/SEOHead';
@@ -40,12 +45,16 @@ import { useSupportTickets, useTicketMessages, useUpdateTicketStatus, SupportTic
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { formatDistanceToNow } from 'date-fns';
+import { bn } from 'date-fns/locale';
 
 const TicketsManagement: React.FC = () => {
   const { language } = useLanguage();
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
   
   const { data: tickets, isLoading: ticketsLoading, refetch } = useSupportTickets();
   const [searchQuery, setSearchQuery] = useState('');
@@ -53,9 +62,42 @@ const TicketsManagement: React.FC = () => {
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
+  const [isConnected, setIsConnected] = useState(true);
+  const [isTyping, setIsTyping] = useState(false);
 
   const { data: messages, isLoading: messagesLoading } = useTicketMessages(selectedTicket?.id || null);
   const updateStatusMutation = useUpdateTicketStatus();
+
+  // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = useCallback(() => {
+    setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100);
+  }, []);
+
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      scrollToBottom();
+    }
+  }, [messages, scrollToBottom]);
+
+  // Monitor realtime connection status
+  useEffect(() => {
+    if (!selectedTicket) return;
+
+    const channel = supabase
+      .channel(`presence-${selectedTicket.id}`)
+      .on('presence', { event: 'sync' }, () => {
+        setIsConnected(true);
+      })
+      .subscribe((status) => {
+        setIsConnected(status === 'SUBSCRIBED');
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedTicket]);
 
   // Admin reply mutation
   const adminReplyMutation = useMutation({
@@ -371,110 +413,237 @@ const TicketsManagement: React.FC = () => {
             </CardContent>
           </Card>
 
-      {/* Ticket Detail Dialog */}
+      {/* Ticket Detail Dialog with Live Chat */}
       <Dialog open={!!selectedTicket} onOpenChange={(open) => !open && setSelectedTicket(null)}>
-        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3 flex-wrap">
-              <span className="font-mono text-muted-foreground">{selectedTicket?.ticket_number}</span>
-              {selectedTicket && getStatusBadge(selectedTicket.status)}
-              {selectedTicket && getPriorityBadge(selectedTicket.priority)}
-            </DialogTitle>
-            <p className="text-lg font-semibold">{selectedTicket?.subject}</p>
-            <p className="text-sm text-muted-foreground">
-              {selectedTicket?.category} • {selectedTicket && new Date(selectedTicket.created_at).toLocaleString()}
-            </p>
-          </DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0" aria-describedby="ticket-chat-description">
+          {/* Chat Header */}
+          <div className="px-6 py-4 border-b bg-gradient-to-r from-primary/5 to-transparent">
+            <DialogHeader>
+              <div className="flex items-center justify-between">
+                <DialogTitle className="flex items-center gap-3 flex-wrap">
+                  <span className="font-mono text-muted-foreground text-sm">{selectedTicket?.ticket_number}</span>
+                  {selectedTicket && getStatusBadge(selectedTicket.status)}
+                  {selectedTicket && getPriorityBadge(selectedTicket.priority)}
+                </DialogTitle>
+                <div className="flex items-center gap-2">
+                  {/* Connection Status */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className={cn(
+                        "flex items-center gap-1.5 px-2 py-1 rounded-full text-xs",
+                        isConnected ? "bg-emerald-500/10 text-emerald-600" : "bg-red-500/10 text-red-600"
+                      )}>
+                        {isConnected ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                        <span className="hidden sm:inline">{isConnected ? 'লাইভ' : 'অফলাইন'}</span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      {isConnected ? 'রিয়েল-টাইম সংযুক্ত' : 'সংযোগ বিচ্ছিন্ন'}
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+              </div>
+              <p id="ticket-chat-description" className="text-base font-semibold mt-2">{selectedTicket?.subject}</p>
+              <p className="text-sm text-muted-foreground">
+                {selectedTicket?.category} • {selectedTicket && formatDistanceToNow(new Date(selectedTicket.created_at), { addSuffix: true, locale: bn })}
+              </p>
+            </DialogHeader>
 
-          <div className="flex gap-2 mb-4">
-            <Select 
-              value={selectedTicket?.status} 
-              onValueChange={(value) => selectedTicket && handleUpdateStatus(selectedTicket.id, value)}
-            >
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="open">Open</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="resolved">Resolved</SelectItem>
-                <SelectItem value="closed">Closed</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex gap-2 mt-3">
+              <Select 
+                value={selectedTicket?.status} 
+                onValueChange={(value) => selectedTicket && handleUpdateStatus(selectedTicket.id, value)}
+              >
+                <SelectTrigger className="w-32 h-8 text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="open">Open</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="resolved">Resolved</SelectItem>
+                  <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <ScrollArea className="flex-1 pr-4 max-h-[400px]">
+          {/* Messages Area */}
+          <ScrollArea className="flex-1 px-6 py-4 max-h-[400px]" ref={scrollAreaRef}>
             {messagesLoading ? (
               <div className="space-y-4">
                 {[1, 2, 3].map(i => (
-                  <div key={i} className="flex gap-3">
-                    <Skeleton className="w-8 h-8 rounded-full" />
-                    <Skeleton className="h-20 flex-1 rounded-2xl" />
+                  <div key={i} className={cn("flex gap-3", i % 2 === 0 && "flex-row-reverse")}>
+                    <Skeleton className="w-10 h-10 rounded-full shrink-0" />
+                    <Skeleton className="h-24 flex-1 max-w-[70%] rounded-2xl" />
                   </div>
                 ))}
               </div>
+            ) : messages?.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-4 rounded-full bg-muted/50 mb-4">
+                  <MessageSquare className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <p className="text-muted-foreground">কোন মেসেজ নেই</p>
+                <p className="text-sm text-muted-foreground/70 mt-1">প্রথম রিপ্লাই পাঠান</p>
+              </div>
             ) : (
               <div className="space-y-4">
-                {messages?.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={cn(
-                      'flex gap-3',
-                      msg.is_staff_reply && 'flex-row-reverse'
-                    )}
-                  >
-                    <div className={cn(
-                      'w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0',
-                      msg.is_staff_reply ? 'bg-success/10' : 'bg-primary/10'
-                    )}>
-                      {msg.is_staff_reply ? (
-                        <Headphones className="h-4 w-4 text-success" />
-                      ) : (
-                        <User className="h-4 w-4 text-primary" />
+                {messages?.map((msg, index) => {
+                  const isStaff = msg.is_staff_reply;
+                  const showDate = index === 0 || 
+                    new Date(messages[index - 1].created_at).toDateString() !== new Date(msg.created_at).toDateString();
+                  
+                  return (
+                    <React.Fragment key={msg.id}>
+                      {showDate && (
+                        <div className="flex items-center gap-3 my-4">
+                          <div className="flex-1 h-px bg-border" />
+                          <span className="text-xs text-muted-foreground px-2 py-1 rounded-full bg-muted">
+                            {new Date(msg.created_at).toLocaleDateString('bn-BD', { weekday: 'long', day: 'numeric', month: 'long' })}
+                          </span>
+                          <div className="flex-1 h-px bg-border" />
+                        </div>
                       )}
+                      <div className={cn(
+                        'flex gap-3 group animate-in fade-in-0 slide-in-from-bottom-2 duration-300',
+                        isStaff && 'flex-row-reverse'
+                      )}>
+                        <div className={cn(
+                          'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 shadow-sm',
+                          isStaff 
+                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-600' 
+                            : 'bg-gradient-to-br from-primary to-primary/80'
+                        )}>
+                          {isStaff ? (
+                            <Headphones className="h-4 w-4 text-white" />
+                          ) : (
+                            <User className="h-4 w-4 text-white" />
+                          )}
+                        </div>
+                        <div className={cn(
+                          'max-w-[70%] rounded-2xl p-4 shadow-sm transition-all duration-200',
+                          isStaff 
+                            ? 'bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 rounded-tr-sm border border-emerald-500/20' 
+                            : 'bg-muted rounded-tl-sm border border-border'
+                        )}>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-xs font-medium">
+                              {isStaff ? 'সাপোর্ট টিম' : 'গ্রাহক'}
+                            </span>
+                          </div>
+                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>
+                          
+                          {/* Attachments */}
+                          {msg.attachments && msg.attachments.length > 0 && (
+                            <div className="mt-3 pt-3 border-t border-border/50">
+                              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                                <Paperclip className="h-3 w-3" />
+                                সংযুক্তি ({msg.attachments.length})
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {msg.attachments.map((attachment: any, i: number) => (
+                                  <a
+                                    key={i}
+                                    href={attachment.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background hover:bg-muted text-xs transition-colors"
+                                  >
+                                    <Download className="h-3 w-3" />
+                                    {attachment.name || `File ${i + 1}`}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          
+                          <p className="text-[10px] mt-2 text-muted-foreground/70 flex items-center gap-1">
+                            {new Date(msg.created_at).toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' })}
+                            {isStaff && <CheckCircle className="h-2.5 w-2.5 text-emerald-500" />}
+                          </p>
+                        </div>
+                      </div>
+                    </React.Fragment>
+                  );
+                })}
+                
+                {/* Typing Indicator */}
+                {isTyping && (
+                  <div className="flex gap-3 animate-in fade-in-0">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <User className="h-4 w-4 text-muted-foreground" />
                     </div>
-                    <div className={cn(
-                      'max-w-[70%] rounded-2xl p-4',
-                      msg.is_staff_reply 
-                        ? 'bg-success/10 rounded-tr-sm' 
-                        : 'bg-muted rounded-tl-sm'
-                    )}>
-                      <p className="text-sm">{msg.message}</p>
-                      <p className="text-xs mt-2 text-muted-foreground">
-                        {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </p>
+                    <div className="bg-muted rounded-2xl rounded-tl-sm px-4 py-3">
+                      <div className="flex gap-1">
+                        <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
                     </div>
                   </div>
-                ))}
+                )}
+                
+                <div ref={messagesEndRef} />
               </div>
             )}
           </ScrollArea>
 
           {/* Reply Section */}
-          {selectedTicket?.status !== 'closed' && (
-            <div className="pt-4 border-t mt-4">
-              <div className="flex gap-2">
-                <Textarea
-                  value={replyMessage}
-                  onChange={(e) => setReplyMessage(e.target.value)}
-                  placeholder={language === 'bn' ? 'রিপ্লাই লিখুন...' : 'Type your reply...'}
-                  className="flex-1 min-h-[80px]"
-                />
-              </div>
-              <div className="flex justify-end mt-3">
+          {selectedTicket?.status !== 'closed' ? (
+            <div className="px-6 py-4 border-t bg-muted/30">
+              <div className="flex gap-3">
+                <div className="flex-1 relative">
+                  <Textarea
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendReply();
+                      }
+                    }}
+                    placeholder={language === 'bn' ? 'রিপ্লাই লিখুন... (Enter চাপুন পাঠাতে)' : 'Type your reply... (Press Enter to send)'}
+                    className="min-h-[60px] max-h-[120px] pr-12 resize-none"
+                  />
+                  <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                          <Paperclip className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>ফাইল সংযুক্ত করুন</TooltipContent>
+                    </Tooltip>
+                  </div>
+                </div>
                 <Button 
                   onClick={handleSendReply} 
-                  className="gap-2"
+                  size="icon"
+                  className="h-[60px] w-12 shrink-0"
                   disabled={adminReplyMutation.isPending || !replyMessage.trim()}
                 >
                   {adminReplyMutation.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
-                    <Send className="h-4 w-4" />
+                    <Send className="h-5 w-5" />
                   )}
-                  {language === 'bn' ? 'রিপ্লাই পাঠান' : 'Send Reply'}
                 </Button>
               </div>
+              <p className="text-[10px] text-muted-foreground mt-2 text-center">
+                Shift+Enter নতুন লাইনের জন্য • Enter পাঠাতে
+              </p>
+            </div>
+          ) : (
+            <div className="px-6 py-4 border-t bg-muted/30 text-center">
+              <p className="text-sm text-muted-foreground">এই টিকেট বন্ধ করা হয়েছে</p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2"
+                onClick={() => selectedTicket && handleUpdateStatus(selectedTicket.id, 'open')}
+              >
+                পুনরায় খুলুন
+              </Button>
             </div>
           )}
         </DialogContent>
