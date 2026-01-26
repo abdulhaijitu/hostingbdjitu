@@ -38,13 +38,23 @@ const SESSION_REFRESH_INTERVAL = 45 * 60 * 1000;
 // Auth initialization timeout
 const AUTH_INIT_TIMEOUT = 5000;
 
-// Retry configuration for role fetch
+// Retry configuration for role fetch via edge function
 const ROLE_FETCH_MAX_RETRIES = 3;
 const ROLE_FETCH_BASE_DELAY = 1000; // 1 second base delay
+
+// Edge function URL for role resolution
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const GET_USER_ROLE_URL = `${SUPABASE_URL}/functions/v1/get-user-role`;
 
 // Helper: delay with exponential backoff
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 const getBackoffDelay = (attempt: number) => ROLE_FETCH_BASE_DELAY * Math.pow(2, attempt);
+
+interface RoleResponse {
+  role: 'admin' | 'customer' | null;
+  error?: string;
+  userId?: string;
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -59,7 +69,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
   const currentFetchRef = useRef<string | null>(null);
-  const retryCountRef = useRef(0);
 
   // Derived state from roleState
   const role = roleState.status === 'resolved' ? roleState.role : null;
@@ -67,14 +76,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const roleError = roleState.status === 'error' ? roleState.error : null;
   const isAdmin = role === 'admin';
 
-  const fetchUserRole = useCallback(async (userId: string, forceRefresh = false): Promise<AppRole | null> => {
+  // Fetch role via secure edge function with exponential backoff
+  const fetchUserRole = useCallback(async (accessToken: string, userId: string, forceRefresh = false): Promise<AppRole | null> => {
     // Check cache first (unless force refresh)
     if (!forceRefresh && roleCache.has(userId)) {
       const cachedRole = roleCache.get(userId)!;
       if (mountedRef.current) {
         setRoleState({ status: 'resolved', role: cachedRole });
       }
-      retryCountRef.current = 0;
       return cachedRole;
     }
 
@@ -99,20 +108,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       try {
-        const { data, error } = await supabase
-          .from('user_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .maybeSingle();
+        console.log(`Role fetch attempt ${attempt + 1}/${ROLE_FETCH_MAX_RETRIES + 1} via edge function...`);
+        
+        const response = await fetch(GET_USER_ROLE_URL, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+        });
 
         if (!mountedRef.current) {
           currentFetchRef.current = null;
           return null;
         }
 
-        if (error) {
-          lastError = error.message;
-          console.warn(`Role fetch attempt ${attempt + 1}/${ROLE_FETCH_MAX_RETRIES + 1} failed:`, error.message);
+        const data: RoleResponse = await response.json();
+
+        // Edge function returns 200 even on errors - check for role
+        if (data.role) {
+          const userRole: AppRole = data.role;
+          
+          // Cache the result
+          roleCache.set(userId, userRole);
+          setRoleState({ status: 'resolved', role: userRole });
+          currentFetchRef.current = null;
+          
+          if (attempt > 0) {
+            console.log(`Role fetch succeeded on attempt ${attempt + 1}: ${userRole}`);
+          } else {
+            console.log(`Role resolved: ${userRole}`);
+          }
+          
+          return userRole;
+        }
+
+        // Role is null - could be error or no role found
+        if (data.error) {
+          lastError = data.error;
+          console.warn(`Role fetch attempt ${attempt + 1}/${ROLE_FETCH_MAX_RETRIES + 1} returned error:`, data.error);
           
           // If not the last attempt, wait and retry
           if (attempt < ROLE_FETCH_MAX_RETRIES) {
@@ -121,31 +155,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await delay(backoffDelay);
             continue;
           }
-          
-          // All retries exhausted
-          console.error('Role fetch failed after all retries:', error.message);
-          setRoleState({ status: 'error', error: error.message });
+        } else {
+          // No role found, default to customer
+          const defaultRole: AppRole = 'customer';
+          roleCache.set(userId, defaultRole);
+          setRoleState({ status: 'resolved', role: defaultRole });
           currentFetchRef.current = null;
-          retryCountRef.current = 0;
-          return null;
+          console.log('No role found, defaulting to customer');
+          return defaultRole;
         }
-
-        // Success! Default to customer if no role record found
-        const userRole: AppRole = (data?.role as AppRole) || 'customer';
-        
-        // Cache the result
-        roleCache.set(userId, userRole);
-        setRoleState({ status: 'resolved', role: userRole });
-        currentFetchRef.current = null;
-        retryCountRef.current = 0;
-        
-        if (attempt > 0) {
-          console.log(`Role fetch succeeded on attempt ${attempt + 1}`);
-        }
-        
-        return userRole;
       } catch (error) {
-        lastError = error instanceof Error ? error.message : 'Unknown error';
+        lastError = error instanceof Error ? error.message : 'Network error';
         console.warn(`Role fetch attempt ${attempt + 1}/${ROLE_FETCH_MAX_RETRIES + 1} exception:`, lastError);
         
         // If not the last attempt, wait and retry
@@ -158,7 +178,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    // All retries exhausted with exception
+    // All retries exhausted - show error state with retry option
+    // CRITICAL: DO NOT deny access here - show retry UI instead
     console.error('Role fetch failed after all retries');
     if (mountedRef.current) {
       setRoleState({ 
@@ -167,21 +188,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
     }
     currentFetchRef.current = null;
-    retryCountRef.current = 0;
     return null;
   }, [roleState.status]);
 
   // Retry role fetch function (manual retry)
   const retryRoleFetch = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id || !session?.access_token) return;
     
     // Clear cache for this user
     roleCache.delete(user.id);
     currentFetchRef.current = null;
-    retryCountRef.current = 0;
     
-    await fetchUserRole(user.id, true);
-  }, [user?.id, fetchUserRole]);
+    await fetchUserRole(session.access_token, user.id, true);
+  }, [user?.id, session?.access_token, fetchUserRole]);
 
   // Session refresh function
   const refreshSession = useCallback(async () => {
@@ -237,9 +256,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(newSession);
     setUser(newSession?.user ?? null);
 
-    if (newSession?.user) {
-      // Fetch role for the user
-      await fetchUserRole(newSession.user.id);
+    if (newSession?.user && newSession.access_token) {
+      // Fetch role via secure edge function
+      await fetchUserRole(newSession.access_token, newSession.user.id);
       setupRefreshInterval();
     } else {
       // No user - reset role state to idle
@@ -266,11 +285,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         if (!mountedRef.current) return;
 
-        if (existingSession?.user) {
+        if (existingSession?.user && existingSession.access_token) {
           setSession(existingSession);
           setUser(existingSession.user);
           
-          await fetchUserRole(existingSession.user.id);
+          // Fetch role via secure edge function
+          await fetchUserRole(existingSession.access_token, existingSession.user.id);
           setupRefreshInterval();
         } else {
           // No session - role state stays idle
