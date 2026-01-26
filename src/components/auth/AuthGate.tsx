@@ -49,22 +49,11 @@ const AuthGate: React.FC<AuthGateProps> = ({ children, fallback }) => {
   const [timedOut, setTimedOut] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Debug logging (temporary)
-  useEffect(() => {
-    console.log('[AuthGate] State:', {
-      loading,
-      authReady,
-      hasUser: !!user,
-      timedOut,
-      path: location.pathname
-    });
-  }, [loading, authReady, user, timedOut, location.pathname]);
 
   // Timeout failsafe - auth should never hang
   useEffect(() => {
     if (loading && !timedOut) {
       timeoutRef.current = setTimeout(() => {
-        console.warn('[AuthGate] Auth loading timed out - forcing ready state');
         setTimedOut(true);
       }, AUTH_LOADING_TIMEOUT);
     }
