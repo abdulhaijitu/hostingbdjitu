@@ -1,13 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Server, Globe, Mail, Database, FolderOpen, 
   Shield, Archive, CreditCard, MessageSquare, User, LogOut, 
-  Bell, ChevronDown, Menu, X, Settings
+  ChevronDown, Settings, Sun, Moon, Home
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
@@ -33,8 +34,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
-import { Badge } from '@/components/ui/badge';
 import SEOHead from '@/components/common/SEOHead';
+import { NotificationProvider, NotificationBell } from './NotificationSystem';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -129,6 +130,7 @@ const TopBar = () => {
   const { user, signOut } = useAuth();
   const { data: profile } = useProfile();
   const { language } = useLanguage();
+  const { setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
@@ -136,38 +138,44 @@ const TopBar = () => {
     navigate('/');
   };
 
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark');
+  };
+
   const userInitials = profile?.full_name
     ? profile.full_name.split(' ').map(n => n[0]).join('').toUpperCase()
     : user?.email?.[0].toUpperCase() || 'U';
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:px-6 transition-colors duration-300">
       <SidebarTrigger className="md:hidden" />
+      
+      {/* Home Link */}
+      <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+        <Link to="/">
+          <Home className="h-4 w-4" />
+        </Link>
+      </Button>
       
       <div className="flex-1" />
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
+        {/* Theme Toggle */}
+        <Button 
+          variant="ghost" 
+          size="icon"
+          onClick={toggleTheme}
+          className="transition-all duration-300"
+        >
+          {resolvedTheme === 'dark' ? (
+            <Sun className="h-5 w-5 text-yellow-500 transition-transform duration-300 rotate-0" />
+          ) : (
+            <Moon className="h-5 w-5 transition-transform duration-300 rotate-0" />
+          )}
+        </Button>
+
         {/* Notifications */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px]">
-                3
-              </Badge>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-80 bg-popover border">
-            <DropdownMenuLabel>
-              {language === 'bn' ? 'নোটিফিকেশন' : 'Notifications'}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <div className="p-4 text-center text-sm text-muted-foreground">
-              <Bell className="h-8 w-8 mx-auto mb-2 opacity-50" />
-              {language === 'bn' ? 'কোন নতুন নোটিফিকেশন নেই' : 'No new notifications'}
-            </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <NotificationBell />
 
         {/* Account Dropdown */}
         <DropdownMenu>
@@ -232,8 +240,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
   title = 'Dashboard',
   description = 'Manage your hosting services'
 }) => {
-  const { language } = useLanguage();
-
   return (
     <>
       <SEOHead 
@@ -241,17 +247,21 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         description={description}
         canonicalUrl="/client"
       />
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <DashboardSidebar />
-          <div className="flex-1 flex flex-col min-h-screen">
-            <TopBar />
-            <main className="flex-1 p-4 lg:p-6 bg-muted/30">
-              {children}
-            </main>
+      <NotificationProvider>
+        <SidebarProvider>
+          <div className="min-h-screen flex w-full bg-background transition-colors duration-300">
+            <DashboardSidebar />
+            <div className="flex-1 flex flex-col min-h-screen">
+              <TopBar />
+              <main className="flex-1 p-4 lg:p-6 bg-muted/30 dark:bg-muted/10 transition-colors duration-300">
+                <div className="animate-fade-in">
+                  {children}
+                </div>
+              </main>
+            </div>
           </div>
-        </div>
-      </SidebarProvider>
+        </SidebarProvider>
+      </NotificationProvider>
     </>
   );
 };

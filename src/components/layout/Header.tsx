@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Menu, X, Globe, Sun, Moon, Search, Phone, Mail, User, UserPlus, Headphones, Gift } from 'lucide-react';
+import { ChevronDown, Menu, X, Globe, Sun, Moon, Search, Phone, Mail, User, UserPlus, Headphones, Gift, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
+import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
 import chostLogo from '@/assets/chost-logo.png';
 import SiteSearch from '@/components/common/SiteSearch';
@@ -25,6 +26,7 @@ const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { setTheme, resolvedTheme } = useTheme();
+  const { user } = useAuth();
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -204,23 +206,36 @@ const Header: React.FC = () => {
               {/* Divider */}
               <div className="hidden sm:block w-px h-4 bg-white/20 mx-1" />
 
-              {/* Login */}
-              <Link 
-                to="/login" 
-                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
-              >
-                <User className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{t('nav.login')}</span>
-              </Link>
+              {/* Auth - Show Dashboard if logged in, otherwise Login/Signup */}
+              {user ? (
+                <Link 
+                  to="/client" 
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
+                >
+                  <LayoutDashboard className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}</span>
+                </Link>
+              ) : (
+                <>
+                  {/* Login */}
+                  <Link 
+                    to="/login" 
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
+                  >
+                    <User className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{t('nav.login')}</span>
+                  </Link>
 
-              {/* Sign Up */}
-              <Link 
-                to="/signup" 
-                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
-              >
-                <UserPlus className="h-3.5 w-3.5" />
-                <span className="hidden sm:inline">{t('nav.signup')}</span>
-              </Link>
+                  {/* Sign Up */}
+                  <Link 
+                    to="/signup" 
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
+                  >
+                    <UserPlus className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">{t('nav.signup')}</span>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
