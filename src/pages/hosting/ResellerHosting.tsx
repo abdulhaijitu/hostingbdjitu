@@ -3,6 +3,7 @@ import { Check, ArrowRight, Users, Shield, Zap, Globe, Headphones, Server, X } f
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const ResellerHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -178,6 +179,12 @@ const ResellerHosting: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'রিসেলার হোস্টিং' : 'Reseller Hosting'}
+        description={language === 'bn' ? 'হোয়াইট-লেবেল রিসেলার হোস্টিং দিয়ে আপনার নিজের ওয়েব হোস্টিং ব্যবসা শুরু করুন।' : 'Start your own web hosting business with our white-label reseller hosting solutions.'}
+        keywords="reseller hosting, WHM hosting, start hosting business, Bangladesh"
+        canonicalUrl="/hosting/reseller"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

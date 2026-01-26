@@ -3,6 +3,7 @@ import { ArrowRight, Settings, Cpu, HardDrive, Wifi, Server, Shield, Zap, Check,
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const CustomDedicated: React.FC = () => {
   const { language } = useLanguage();
@@ -69,6 +70,12 @@ const CustomDedicated: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'কাস্টম ডেডিকেটেড সার্ভার' : 'Custom Dedicated Servers'}
+        description={language === 'bn' ? 'আপনার এন্টারপ্রাইজের জন্য কাস্টম হার্ডওয়্যার কনফিগারেশন। আমাদের টিম আপনার চাহিদা অনুযায়ী সার্ভার তৈরি করবে।' : 'Custom hardware configurations for your enterprise. Our team will build servers according to your needs.'}
+        keywords="custom dedicated server, enterprise server, server configuration, Bangladesh"
+        canonicalUrl="/servers/custom"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import SEOHead from '@/components/common/SEOHead';
 
 const PremiumHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -122,6 +123,12 @@ const PremiumHosting: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'প্রিমিয়াম হোস্টিং' : 'Premium Hosting'}
+        description={language === 'bn' ? 'LiteSpeed সার্ভার, অ্যাডভান্সড সিকিউরিটি এবং প্রায়োরিটি সাপোর্ট সহ প্রিমিয়াম ওয়েব হোস্টিং সার্ভিস।' : 'Premium web hosting with LiteSpeed servers, advanced security, and priority support for your business.'}
+        keywords="premium hosting, LiteSpeed hosting, enterprise hosting, Bangladesh hosting"
+        canonicalUrl="/hosting/premium"
+      />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

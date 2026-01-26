@@ -3,6 +3,7 @@ import { Check, ArrowRight, Mail, Shield, Globe, Inbox, Calendar, Users, Lock, X
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const EmailHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -82,6 +83,12 @@ const EmailHosting: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ইমেইল হোস্টিং' : 'Email Hosting'}
+        description={language === 'bn' ? 'আপনার নিজের ডোমেইনে প্রফেশনাল ইমেইল হোস্টিং। সুরক্ষিত, নির্ভরযোগ্য এবং সহজে ম্যানেজ করুন।' : 'Professional email hosting with your own domain. Secure, reliable, and easy to manage.'}
+        keywords="email hosting, business email, professional email, Bangladesh"
+        canonicalUrl="/email"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

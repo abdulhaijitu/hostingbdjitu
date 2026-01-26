@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Zap, Headphones } from 'lucide-react';
 import { z } from 'zod';
+import SEOHead from '@/components/common/SEOHead';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -45,6 +46,12 @@ const Login: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'লগইন' : 'Login'}
+        description={language === 'bn' ? 'আপনার হোস্টিং, ডোমেইন এবং সার্ভিস ম্যানেজ করতে লগইন করুন।' : 'Login to manage your hosting, domains, and services.'}
+        canonicalUrl="/login"
+        noIndex={true}
+      />
       <section className="min-h-[80vh] flex items-center section-padding bg-gradient-hero">
         <div className="container-wide">
           <div className="grid lg:grid-cols-2 gap-12 items-center">

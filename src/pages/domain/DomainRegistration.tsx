@@ -3,6 +3,7 @@ import { Search, ArrowRight, Globe, CheckCircle, Shield, Zap, Clock, Award, Star
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const DomainRegistration: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -101,6 +102,12 @@ const DomainRegistration: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ডোমেইন রেজিস্ট্রেশন' : 'Domain Registration'}
+        description={language === 'bn' ? 'বিনামূল্যে WHOIS প্রাইভেসি, DNS ম্যানেজমেন্ট এবং 24/7 সাপোর্ট সহ আপনার ডোমেইন নাম রেজিস্টার করুন।' : 'Register your domain name with free WHOIS privacy, DNS management, and 24/7 support.'}
+        keywords="domain registration, buy domain, .com domain, .bd domain, Bangladesh"
+        canonicalUrl="/domain/register"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">
