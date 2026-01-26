@@ -70,6 +70,51 @@ export type Database = {
           },
         ]
       }
+      canned_responses: {
+        Row: {
+          category: string
+          content: string
+          content_bn: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean | null
+          shortcut: string | null
+          sort_order: number | null
+          title: string
+          title_bn: string | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          content: string
+          content_bn?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          shortcut?: string | null
+          sort_order?: number | null
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          content?: string
+          content_bn?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          shortcut?: string | null
+          sort_order?: number | null
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       domain_pricing: {
         Row: {
           created_at: string
@@ -824,7 +869,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_agents: {
+        Row: {
+          email: string | null
+          full_name: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_rate_limit: {
