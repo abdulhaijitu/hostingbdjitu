@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +11,9 @@ import { HelmetProvider } from "react-helmet-async";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import AdminRoute from "@/components/auth/AdminRoute";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import OfflineIndicator from "@/components/common/OfflineIndicator";
+import AdminPageLoader from "@/components/admin/AdminPageLoader";
+
 // Pages
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
@@ -77,31 +81,34 @@ import BillingPage from "./pages/client/BillingPage";
 import SupportPage from "./pages/client/SupportPage";
 import ProfileSettingsPage from "./pages/client/ProfileSettingsPage";
 
-// Admin Pages
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import HostingPlansManagement from "./pages/admin/HostingPlansManagement";
-import DomainPricingManagement from "./pages/admin/DomainPricingManagement";
-import UsersManagement from "./pages/admin/UsersManagement";
-import TicketsManagement from "./pages/admin/TicketsManagement";
-import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
-import OrdersManagement from "./pages/admin/OrdersManagement";
-import PaymentsManagement from "./pages/admin/PaymentsManagement";
-import WebhookLogs from "./pages/admin/WebhookLogs";
-import ServerManagement from "./pages/admin/ServerManagement";
-import ProvisioningQueue from "./pages/admin/ProvisioningQueue";
-import WHMPackageMapping from "./pages/admin/WHMPackageMapping";
-import HostingAccountsManagement from "./pages/admin/HostingAccountsManagement";
-import ServerCredentials from "./pages/admin/ServerCredentials";
-import InvoicesManagement from "./pages/admin/InvoicesManagement";
-import RefundsManagement from "./pages/admin/RefundsManagement";
-import ResellersManagement from "./pages/admin/ResellersManagement";
-import AffiliatesManagement from "./pages/admin/AffiliatesManagement";
-import AnnouncementsManagement from "./pages/admin/AnnouncementsManagement";
-import SettingsManagement from "./pages/admin/SettingsManagement";
 // Checkout Pages
 import Checkout from "./pages/checkout/Checkout";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
 import CheckoutCancel from "./pages/checkout/CheckoutCancel";
+
+// =====================================================
+// LAZY LOADED ADMIN PAGES - Code splitting for faster initial load
+// =====================================================
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const HostingPlansManagement = lazy(() => import('./pages/admin/HostingPlansManagement'));
+const DomainPricingManagement = lazy(() => import('./pages/admin/DomainPricingManagement'));
+const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'));
+const TicketsManagement = lazy(() => import('./pages/admin/TicketsManagement'));
+const AnalyticsDashboard = lazy(() => import('./pages/admin/AnalyticsDashboard'));
+const OrdersManagement = lazy(() => import('./pages/admin/OrdersManagement'));
+const PaymentsManagement = lazy(() => import('./pages/admin/PaymentsManagement'));
+const WebhookLogs = lazy(() => import('./pages/admin/WebhookLogs'));
+const ServerManagement = lazy(() => import('./pages/admin/ServerManagement'));
+const ProvisioningQueue = lazy(() => import('./pages/admin/ProvisioningQueue'));
+const WHMPackageMapping = lazy(() => import('./pages/admin/WHMPackageMapping'));
+const HostingAccountsManagement = lazy(() => import('./pages/admin/HostingAccountsManagement'));
+const ServerCredentials = lazy(() => import('./pages/admin/ServerCredentials'));
+const InvoicesManagement = lazy(() => import('./pages/admin/InvoicesManagement'));
+const RefundsManagement = lazy(() => import('./pages/admin/RefundsManagement'));
+const ResellersManagement = lazy(() => import('./pages/admin/ResellersManagement'));
+const AffiliatesManagement = lazy(() => import('./pages/admin/AffiliatesManagement'));
+const AnnouncementsManagement = lazy(() => import('./pages/admin/AnnouncementsManagement'));
+const SettingsManagement = lazy(() => import('./pages/admin/SettingsManagement'));
 
 // Configure React Query with global error handling
 const queryClient = new QueryClient({
@@ -118,6 +125,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Wrapper component for lazy-loaded admin pages
+const LazyAdminPage = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<AdminPageLoader />}>
+    {children}
+  </Suspense>
+);
+
 const App = () => (
   <ErrorBoundary>
   <HelmetProvider>
@@ -129,6 +143,7 @@ const App = () => (
               <TooltipProvider>
                 <Toaster />
                 <Sonner />
+                <OfflineIndicator />
                 <Routes>
                   <Route path="/" element={<Index />} />
                   
@@ -207,27 +222,27 @@ const App = () => (
                   <Route path="/client/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
                   <Route path="/client/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
                   
-                  {/* Admin Routes - Use AdminRoute for layout shell + role protection */}
-                  <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
-                  <Route path="/admin/hosting-plans" element={<AdminRoute><HostingPlansManagement /></AdminRoute>} />
-                  <Route path="/admin/domain-pricing" element={<AdminRoute><DomainPricingManagement /></AdminRoute>} />
-                  <Route path="/admin/users" element={<AdminRoute><UsersManagement /></AdminRoute>} />
-                  <Route path="/admin/tickets" element={<AdminRoute><TicketsManagement /></AdminRoute>} />
-                  <Route path="/admin/analytics" element={<AdminRoute><AnalyticsDashboard /></AdminRoute>} />
-                  <Route path="/admin/orders" element={<AdminRoute><OrdersManagement /></AdminRoute>} />
-                  <Route path="/admin/payments" element={<AdminRoute><PaymentsManagement /></AdminRoute>} />
-                  <Route path="/admin/webhooks" element={<AdminRoute><WebhookLogs /></AdminRoute>} />
-                  <Route path="/admin/servers" element={<AdminRoute><ServerManagement /></AdminRoute>} />
-                  <Route path="/admin/provisioning" element={<AdminRoute><ProvisioningQueue /></AdminRoute>} />
-                  <Route path="/admin/package-mapping" element={<AdminRoute><WHMPackageMapping /></AdminRoute>} />
-                  <Route path="/admin/hosting-accounts" element={<AdminRoute><HostingAccountsManagement /></AdminRoute>} />
-                  <Route path="/admin/server-credentials" element={<AdminRoute><ServerCredentials /></AdminRoute>} />
-                  <Route path="/admin/invoices" element={<AdminRoute><InvoicesManagement /></AdminRoute>} />
-                  <Route path="/admin/refunds" element={<AdminRoute><RefundsManagement /></AdminRoute>} />
-                  <Route path="/admin/resellers" element={<AdminRoute><ResellersManagement /></AdminRoute>} />
-                  <Route path="/admin/affiliates" element={<AdminRoute><AffiliatesManagement /></AdminRoute>} />
-                  <Route path="/admin/announcements" element={<AdminRoute><AnnouncementsManagement /></AdminRoute>} />
-                  <Route path="/admin/settings" element={<AdminRoute><SettingsManagement /></AdminRoute>} />
+                  {/* Admin Routes - Lazy loaded with Suspense for faster initial load */}
+                  <Route path="/admin" element={<AdminRoute><LazyAdminPage><AdminDashboard /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/hosting-plans" element={<AdminRoute><LazyAdminPage><HostingPlansManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/domain-pricing" element={<AdminRoute><LazyAdminPage><DomainPricingManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/users" element={<AdminRoute><LazyAdminPage><UsersManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/tickets" element={<AdminRoute><LazyAdminPage><TicketsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/analytics" element={<AdminRoute><LazyAdminPage><AnalyticsDashboard /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/orders" element={<AdminRoute><LazyAdminPage><OrdersManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/payments" element={<AdminRoute><LazyAdminPage><PaymentsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/webhooks" element={<AdminRoute><LazyAdminPage><WebhookLogs /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/servers" element={<AdminRoute><LazyAdminPage><ServerManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/provisioning" element={<AdminRoute><LazyAdminPage><ProvisioningQueue /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/package-mapping" element={<AdminRoute><LazyAdminPage><WHMPackageMapping /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/hosting-accounts" element={<AdminRoute><LazyAdminPage><HostingAccountsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/server-credentials" element={<AdminRoute><LazyAdminPage><ServerCredentials /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/invoices" element={<AdminRoute><LazyAdminPage><InvoicesManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/refunds" element={<AdminRoute><LazyAdminPage><RefundsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/resellers" element={<AdminRoute><LazyAdminPage><ResellersManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/affiliates" element={<AdminRoute><LazyAdminPage><AffiliatesManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/announcements" element={<AdminRoute><LazyAdminPage><AnnouncementsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/settings" element={<AdminRoute><LazyAdminPage><SettingsManagement /></LazyAdminPage></AdminRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
