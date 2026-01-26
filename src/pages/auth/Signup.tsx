@@ -1,25 +1,293 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check, Shield, Zap, Gift } from 'lucide-react';
+import { z } from 'zod';
 
-const Signup: React.FC = () => (
-  <Layout>
-    <section className="section-padding">
-      <div className="container-wide">
-        <div className="max-w-md mx-auto card-hover p-8">
-          <h1 className="text-2xl font-bold font-display text-center mb-6">Create Your Account</h1>
-          <form className="space-y-4">
-            <input type="text" placeholder="Full Name" className="w-full p-3 rounded-lg border border-border bg-background" />
-            <input type="email" placeholder="Email Address" className="w-full p-3 rounded-lg border border-border bg-background" />
-            <input type="password" placeholder="Password" className="w-full p-3 rounded-lg border border-border bg-background" />
-            <input type="password" placeholder="Confirm Password" className="w-full p-3 rounded-lg border border-border bg-background" />
-            <Button variant="hero" size="lg" className="w-full">Sign Up</Button>
-          </form>
-          <p className="text-center mt-6 text-muted-foreground">Already have an account? <Link to="/login" className="text-accent hover:underline">Login</Link></p>
+const signupSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string().min(10, 'Invalid phone number'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+const Signup: React.FC = () => {
+  const { language } = useLanguage();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!agreedToTerms) {
+      setErrors({ terms: language === 'bn' ? 'শর্তাবলী মেনে নিতে হবে' : 'You must agree to the terms' });
+      return;
+    }
+    try {
+      signupSchema.parse(formData);
+      setErrors({});
+      setIsLoading(true);
+      setTimeout(() => setIsLoading(false), 1500);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) newErrors[err.path[0] as string] = err.message;
+        });
+        setErrors(newErrors);
+      }
+    }
+  };
+
+  const benefits = [
+    { icon: Shield, text: language === 'bn' ? 'ফ্রি SSL সার্টিফিকেট' : 'Free SSL Certificate' },
+    { icon: Zap, text: language === 'bn' ? 'ফ্রি ওয়েবসাইট মাইগ্রেশন' : 'Free Website Migration' },
+    { icon: Gift, text: language === 'bn' ? '৩০ দিনের মানি ব্যাক গ্যারান্টি' : '30-Day Money Back Guarantee' },
+  ];
+
+  const passwordRequirements = [
+    { met: formData.password.length >= 8, text: language === 'bn' ? 'কমপক্ষে ৮ অক্ষর' : 'At least 8 characters' },
+    { met: /[A-Z]/.test(formData.password), text: language === 'bn' ? 'একটি বড় হাতের অক্ষর' : 'One uppercase letter' },
+    { met: /[0-9]/.test(formData.password), text: language === 'bn' ? 'একটি সংখ্যা' : 'One number' },
+  ];
+
+  return (
+    <Layout>
+      <section className="min-h-[80vh] flex items-center section-padding bg-gradient-hero">
+        <div className="container-wide">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Left Side - Branding */}
+            <div className="hidden lg:block">
+              <h1 className="text-4xl sm:text-5xl font-bold font-display mb-6">
+                {language === 'bn' ? 'আজই শুরু করুন' : 'Get Started Today'}
+                <span className="text-gradient-primary block mt-2">
+                  {language === 'bn' ? 'বিনামূল্যে সাইন আপ' : 'Free Sign Up'}
+                </span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8">
+                {language === 'bn' 
+                  ? 'একটি অ্যাকাউন্ট তৈরি করুন এবং সেরা হোস্টিং সার্ভিস উপভোগ করুন।'
+                  : 'Create an account and enjoy the best hosting services.'}
+              </p>
+              
+              <div className="space-y-4 mb-8">
+                {benefits.map((b) => (
+                  <div key={b.text} className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg bg-success/10 flex items-center justify-center">
+                      <b.icon className="h-5 w-5 text-success" />
+                    </div>
+                    <span className="text-muted-foreground">{b.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="p-6 rounded-xl bg-card border border-border">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <span className="text-xl">🎉</span>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{language === 'bn' ? 'স্পেশাল অফার' : 'Special Offer'}</p>
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'নতুন ইউজারদের জন্য' : 'For new users'}</p>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {language === 'bn' 
+                    ? 'আজই সাইন আপ করুন এবং প্রথম মাসে ৫০% ডিসকাউন্ট পান!'
+                    : 'Sign up today and get 50% off on your first month!'}
+                </p>
+              </div>
+            </div>
+
+            {/* Right Side - Signup Form */}
+            <div className="w-full max-w-md mx-auto lg:mx-0">
+              <div className="bg-card rounded-2xl border border-border p-8 shadow-lg">
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold font-display mb-2">
+                    {language === 'bn' ? 'অ্যাকাউন্ট তৈরি করুন' : 'Create Account'}
+                  </h2>
+                  <p className="text-muted-foreground text-sm">
+                    {language === 'bn' ? 'আপনার তথ্য দিয়ে রেজিস্টার করুন' : 'Register with your details'}
+                  </p>
+                </div>
+
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {language === 'bn' ? 'পুরো নাম' : 'Full Name'}
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        placeholder={language === 'bn' ? 'আপনার নাম' : 'Your name'}
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.name ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      />
+                    </div>
+                    {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {language === 'bn' ? 'ইমেইল এড্রেস' : 'Email Address'}
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="you@example.com"
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.email ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      />
+                    </div>
+                    {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {language === 'bn' ? 'ফোন নম্বর' : 'Phone Number'}
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        placeholder="+880 1XXX-XXXXXX"
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.phone ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      />
+                    </div>
+                    {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {language === 'bn' ? 'পাসওয়ার্ড' : 'Password'}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={formData.password}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="••••••••"
+                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.password && <p className="text-destructive text-xs mt-1">{errors.password}</p>}
+                    
+                    {/* Password Requirements */}
+                    {formData.password && (
+                      <div className="mt-2 space-y-1">
+                        {passwordRequirements.map((req) => (
+                          <div key={req.text} className={`flex items-center gap-2 text-xs ${req.met ? 'text-success' : 'text-muted-foreground'}`}>
+                            <Check className={`h-3 w-3 ${req.met ? 'opacity-100' : 'opacity-30'}`} />
+                            {req.text}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2">
+                      {language === 'bn' ? 'পাসওয়ার্ড নিশ্চিত করুন' : 'Confirm Password'}
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        placeholder="••••••••"
+                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && <p className="text-destructive text-xs mt-1">{errors.confirmPassword}</p>}
+                  </div>
+
+                  <div className="flex items-start gap-2">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      checked={agreedToTerms}
+                      onChange={(e) => setAgreedToTerms(e.target.checked)}
+                      className="w-4 h-4 mt-0.5 rounded border-border text-primary focus:ring-accent"
+                    />
+                    <label htmlFor="terms" className="text-sm text-muted-foreground">
+                      {language === 'bn' ? 'আমি ' : 'I agree to the '}
+                      <Link to="/terms-of-service" className="text-accent hover:underline">
+                        {language === 'bn' ? 'শর্তাবলী' : 'Terms of Service'}
+                      </Link>
+                      {language === 'bn' ? ' এবং ' : ' and '}
+                      <Link to="/privacy-policy" className="text-accent hover:underline">
+                        {language === 'bn' ? 'প্রাইভেসি পলিসি' : 'Privacy Policy'}
+                      </Link>
+                      {language === 'bn' ? ' মেনে নিচ্ছি' : ''}
+                    </label>
+                  </div>
+                  {errors.terms && <p className="text-destructive text-xs">{errors.terms}</p>}
+
+                  <Button variant="hero" size="xl" className="w-full" disabled={isLoading}>
+                    {isLoading ? (
+                      <span className="flex items-center gap-2">
+                        <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
+                        {language === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating account...'}
+                      </span>
+                    ) : (
+                      <>
+                        {language === 'bn' ? 'সাইন আপ করুন' : 'Sign Up'}
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+
+                <p className="text-center text-muted-foreground mt-6">
+                  {language === 'bn' ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
+                  <Link to="/login" className="text-accent font-medium hover:underline">
+                    {language === 'bn' ? 'লগইন করুন' : 'Login'}
+                  </Link>
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-    </section>
-  </Layout>
-);
+      </section>
+    </Layout>
+  );
+};
+
 export default Signup;
