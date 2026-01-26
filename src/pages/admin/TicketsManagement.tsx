@@ -4,7 +4,7 @@ import {
   MessageSquare, ArrowLeft, Search, Clock, CheckCircle, 
   AlertCircle, User, Send, Paperclip, MoreHorizontal, 
   RefreshCw, Loader2, Headphones, Wifi, WifiOff, Download,
-  Image as ImageIcon, X, File
+  Image as ImageIcon, X, File, UserPlus, Users
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Progress } from '@/components/ui/progress';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
@@ -50,6 +52,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { bn } from 'date-fns/locale';
 import { useTicketAttachments, UploadedAttachment } from '@/hooks/useTicketAttachments';
+import { useAdminAgents, useAssignTicket } from '@/hooks/useAdminAgents';
 import CannedResponses from '@/components/support/CannedResponses';
 import ImagePreview from '@/components/support/ImagePreview';
 
@@ -68,10 +71,13 @@ const TicketsManagement: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: tickets, isLoading: ticketsLoading, refetch } = useSupportTickets();
+  const { data: agents } = useAdminAgents();
+  const assignTicketMutation = useAssignTicket();
   const { uploadFiles, isUploading, uploadProgress } = useTicketAttachments();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
+  const [agentFilter, setAgentFilter] = useState<string>('all');
   const [selectedTicket, setSelectedTicket] = useState<SupportTicket | null>(null);
   const [replyMessage, setReplyMessage] = useState('');
   const [isConnected, setIsConnected] = useState(true);
@@ -197,9 +203,24 @@ const TicketsManagement: React.FC = () => {
     
     const matchesStatus = statusFilter === 'all' || ticket.status === statusFilter;
     const matchesPriority = priorityFilter === 'all' || ticket.priority === priorityFilter;
+    const matchesAgent = agentFilter === 'all' || 
+      (agentFilter === 'unassigned' ? !ticket.assigned_to : ticket.assigned_to === agentFilter);
     
-    return matchesSearch && matchesStatus && matchesPriority;
+    return matchesSearch && matchesStatus && matchesPriority && matchesAgent;
   }) || [];
+
+  const getAgentName = (agentId: string | null) => {
+    if (!agentId) return null;
+    const agent = agents?.find(a => a.user_id === agentId);
+    return agent?.full_name || agent?.email || 'Unknown';
+  };
+
+  const handleAssignTicket = (ticketId: string, agentId: string | null) => {
+    assignTicketMutation.mutate({ ticketId, agentId });
+    if (selectedTicket?.id === ticketId) {
+      setSelectedTicket(prev => prev ? { ...prev, assigned_to: agentId } : null);
+    }
+  };
 
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
@@ -423,6 +444,20 @@ const TicketsManagement: React.FC = () => {
                     <SelectItem value="low">Low</SelectItem>
                   </SelectContent>
                 </Select>
+                <Select value={agentFilter} onValueChange={setAgentFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Agent" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">{language === 'bn' ? 'সব এজেন্ট' : 'All Agents'}</SelectItem>
+                    <SelectItem value="unassigned">{language === 'bn' ? 'অ্যাসাইন করা হয়নি' : 'Unassigned'}</SelectItem>
+                    {agents?.map(agent => (
+                      <SelectItem key={agent.user_id} value={agent.user_id}>
+                        {agent.full_name || agent.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </CardContent>
           </Card>
@@ -461,6 +496,19 @@ const TicketsManagement: React.FC = () => {
                             <span className="text-sm text-muted-foreground font-mono">{ticket.ticket_number}</span>
                             {getStatusBadge(ticket.status)}
                             {getPriorityBadge(ticket.priority)}
+                            {ticket.assigned_to && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Badge variant="outline" className="gap-1 text-xs">
+                                    <User className="h-3 w-3" />
+                                    {getAgentName(ticket.assigned_to)}
+                                  </Badge>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  {language === 'bn' ? 'অ্যাসাইন করা হয়েছে' : 'Assigned to'}
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
                           </div>
                           <h3 className="font-semibold truncate">{ticket.subject}</h3>
                           <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
@@ -487,6 +535,24 @@ const TicketsManagement: React.FC = () => {
                             <DropdownMenuItem onClick={() => handleUpdateStatus(ticket.id, 'closed')}>
                               Mark as Closed
                             </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => handleAssignTicket(ticket.id, null)}
+                              disabled={!ticket.assigned_to}
+                            >
+                              <X className="h-4 w-4 mr-2" />
+                              {language === 'bn' ? 'অ্যাসাইনমেন্ট সরান' : 'Remove Assignment'}
+                            </DropdownMenuItem>
+                            {agents?.map(agent => (
+                              <DropdownMenuItem 
+                                key={agent.user_id}
+                                onClick={() => handleAssignTicket(ticket.id, agent.user_id)}
+                                disabled={ticket.assigned_to === agent.user_id}
+                              >
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                {agent.full_name || agent.email}
+                              </DropdownMenuItem>
+                            ))}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
@@ -533,7 +599,7 @@ const TicketsManagement: React.FC = () => {
               </p>
             </DialogHeader>
 
-            <div className="flex gap-2 mt-3">
+            <div className="flex flex-wrap gap-2 mt-3">
               <Select 
                 value={selectedTicket?.status} 
                 onValueChange={(value) => selectedTicket && handleUpdateStatus(selectedTicket.id, value)}
@@ -546,6 +612,26 @@ const TicketsManagement: React.FC = () => {
                   <SelectItem value="pending">Pending</SelectItem>
                   <SelectItem value="resolved">Resolved</SelectItem>
                   <SelectItem value="closed">Closed</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              <Select 
+                value={selectedTicket?.assigned_to || 'unassigned'} 
+                onValueChange={(value) => selectedTicket && handleAssignTicket(selectedTicket.id, value === 'unassigned' ? null : value)}
+              >
+                <SelectTrigger className="w-44 h-8 text-xs">
+                  <Users className="h-3 w-3 mr-1.5" />
+                  <SelectValue placeholder={language === 'bn' ? 'এজেন্ট' : 'Agent'} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">
+                    {language === 'bn' ? 'অ্যাসাইন করা হয়নি' : 'Unassigned'}
+                  </SelectItem>
+                  {agents?.map(agent => (
+                    <SelectItem key={agent.user_id} value={agent.user_id}>
+                      {agent.full_name || agent.email}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

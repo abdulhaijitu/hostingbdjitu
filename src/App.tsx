@@ -101,6 +101,7 @@ const WebhookLogs = lazy(() => import('./pages/admin/WebhookLogs'));
 const ServerManagement = lazy(() => import('./pages/admin/ServerManagement'));
 const ProvisioningQueue = lazy(() => import('./pages/admin/ProvisioningQueue'));
 const WHMPackageMapping = lazy(() => import('./pages/admin/WHMPackageMapping'));
+const CannedResponsesManagement = lazy(() => import('./pages/admin/CannedResponsesManagement'));
 const HostingAccountsManagement = lazy(() => import('./pages/admin/HostingAccountsManagement'));
 const ServerCredentials = lazy(() => import('./pages/admin/ServerCredentials'));
 const InvoicesManagement = lazy(() => import('./pages/admin/InvoicesManagement'));
@@ -228,6 +229,7 @@ const App = () => (
                   <Route path="/admin/domain-pricing" element={<AdminRoute><LazyAdminPage><DomainPricingManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/users" element={<AdminRoute><LazyAdminPage><UsersManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/tickets" element={<AdminRoute><LazyAdminPage><TicketsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/canned-responses" element={<AdminRoute><LazyAdminPage><CannedResponsesManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/analytics" element={<AdminRoute><LazyAdminPage><AnalyticsDashboard /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/orders" element={<AdminRoute><LazyAdminPage><OrdersManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/payments" element={<AdminRoute><LazyAdminPage><PaymentsManagement /></LazyAdminPage></AdminRoute>} />
