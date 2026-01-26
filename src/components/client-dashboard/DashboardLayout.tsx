@@ -11,6 +11,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -181,15 +182,22 @@ const TopBar = () => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="flex items-center gap-2 px-2">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-8 w-8 ring-2 ring-primary/30">
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-white text-sm">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
               <div className="hidden md:block text-left">
-                <p className="text-sm font-medium leading-none">
-                  {profile?.full_name || user?.email?.split('@')[0]}
-                </p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium leading-none">
+                    {profile?.full_name || user?.email?.split('@')[0]}
+                  </p>
+                  <Badge className="bg-gradient-to-r from-primary to-accent text-white text-[10px] px-1.5 py-0 h-4 border-0">
+                    {language === 'bn' ? 'ক্লায়েন্ট' : 'Client'}
+                  </Badge>
+                </div>
                 <p className="text-xs text-muted-foreground truncate max-w-32">
                   {user?.email}
                 </p>
