@@ -38,6 +38,14 @@ const SESSION_REFRESH_INTERVAL = 45 * 60 * 1000;
 // Auth initialization timeout
 const AUTH_INIT_TIMEOUT = 5000;
 
+// Retry configuration for role fetch
+const ROLE_FETCH_MAX_RETRIES = 3;
+const ROLE_FETCH_BASE_DELAY = 1000; // 1 second base delay
+
+// Helper: delay with exponential backoff
+const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const getBackoffDelay = (attempt: number) => ROLE_FETCH_BASE_DELAY * Math.pow(2, attempt);
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
@@ -51,6 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
   const currentFetchRef = useRef<string | null>(null);
+  const retryCountRef = useRef(0);
 
   // Derived state from roleState
   const role = roleState.status === 'resolved' ? roleState.role : null;
@@ -65,6 +74,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (mountedRef.current) {
         setRoleState({ status: 'resolved', role: cachedRole });
       }
+      retryCountRef.current = 0;
       return cachedRole;
     }
 
@@ -79,53 +89,96 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRoleState({ status: 'loading' });
     }
 
-    try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
-
+    // Attempt fetch with exponential backoff retry
+    let lastError: string | null = null;
+    
+    for (let attempt = 0; attempt <= ROLE_FETCH_MAX_RETRIES; attempt++) {
       if (!mountedRef.current) {
         currentFetchRef.current = null;
         return null;
       }
 
-      if (error) {
-        console.error('Role fetch error:', error.message);
-        setRoleState({ status: 'error', error: error.message });
-        currentFetchRef.current = null;
-        return null;
-      }
+      try {
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .maybeSingle();
 
-      // Default to customer if no role record found
-      const userRole: AppRole = (data?.role as AppRole) || 'customer';
-      
-      // Cache the result
-      roleCache.set(userId, userRole);
-      setRoleState({ status: 'resolved', role: userRole });
-      currentFetchRef.current = null;
-      return userRole;
-    } catch (error) {
-      console.error('Role fetch exception:', error);
-      if (mountedRef.current) {
-        setRoleState({ 
-          status: 'error', 
-          error: error instanceof Error ? error.message : 'Unknown error' 
-        });
+        if (!mountedRef.current) {
+          currentFetchRef.current = null;
+          return null;
+        }
+
+        if (error) {
+          lastError = error.message;
+          console.warn(`Role fetch attempt ${attempt + 1}/${ROLE_FETCH_MAX_RETRIES + 1} failed:`, error.message);
+          
+          // If not the last attempt, wait and retry
+          if (attempt < ROLE_FETCH_MAX_RETRIES) {
+            const backoffDelay = getBackoffDelay(attempt);
+            console.log(`Retrying in ${backoffDelay}ms...`);
+            await delay(backoffDelay);
+            continue;
+          }
+          
+          // All retries exhausted
+          console.error('Role fetch failed after all retries:', error.message);
+          setRoleState({ status: 'error', error: error.message });
+          currentFetchRef.current = null;
+          retryCountRef.current = 0;
+          return null;
+        }
+
+        // Success! Default to customer if no role record found
+        const userRole: AppRole = (data?.role as AppRole) || 'customer';
+        
+        // Cache the result
+        roleCache.set(userId, userRole);
+        setRoleState({ status: 'resolved', role: userRole });
+        currentFetchRef.current = null;
+        retryCountRef.current = 0;
+        
+        if (attempt > 0) {
+          console.log(`Role fetch succeeded on attempt ${attempt + 1}`);
+        }
+        
+        return userRole;
+      } catch (error) {
+        lastError = error instanceof Error ? error.message : 'Unknown error';
+        console.warn(`Role fetch attempt ${attempt + 1}/${ROLE_FETCH_MAX_RETRIES + 1} exception:`, lastError);
+        
+        // If not the last attempt, wait and retry
+        if (attempt < ROLE_FETCH_MAX_RETRIES) {
+          const backoffDelay = getBackoffDelay(attempt);
+          console.log(`Retrying in ${backoffDelay}ms...`);
+          await delay(backoffDelay);
+          continue;
+        }
       }
-      currentFetchRef.current = null;
-      return null;
     }
+
+    // All retries exhausted with exception
+    console.error('Role fetch failed after all retries');
+    if (mountedRef.current) {
+      setRoleState({ 
+        status: 'error', 
+        error: lastError || 'রোল লোড করতে ব্যর্থ হয়েছে। আবার চেষ্টা করুন।'
+      });
+    }
+    currentFetchRef.current = null;
+    retryCountRef.current = 0;
+    return null;
   }, [roleState.status]);
 
-  // Retry role fetch function
+  // Retry role fetch function (manual retry)
   const retryRoleFetch = useCallback(async () => {
     if (!user?.id) return;
     
     // Clear cache for this user
     roleCache.delete(user.id);
     currentFetchRef.current = null;
+    retryCountRef.current = 0;
     
     await fetchUserRole(user.id, true);
   }, [user?.id, fetchUserRole]);
