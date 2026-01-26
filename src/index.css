@@ -376,6 +376,10 @@
   animation: wiggle 1s ease-in-out infinite;
 }
 
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+}
+
 /* Stagger Animation Delays */
 .stagger-1 { animation-delay: 0.1s; }
 .stagger-2 { animation-delay: 0.2s; }

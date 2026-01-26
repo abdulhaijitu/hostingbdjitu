@@ -7,11 +7,14 @@ import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
 import chostLogo from '@/assets/chost-logo.png';
 import SiteSearch from '@/components/common/SiteSearch';
+import PromoBanner from './PromoBanner';
+import MegaMenu from './MegaMenu';
 
 interface MenuItem {
   label: string;
   href: string;
-  children?: MenuItem[];
+  key?: string;
+  children?: Omit<MenuItem, 'children'>[];
 }
 
 const Header: React.FC = () => {
@@ -21,7 +24,7 @@ const Header: React.FC = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
-  const { theme, setTheme, resolvedTheme } = useTheme();
+  const { setTheme, resolvedTheme } = useTheme();
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -54,6 +57,7 @@ const Header: React.FC = () => {
     {
       label: t('nav.hosting'),
       href: '/hosting',
+      key: 'hosting',
       children: [
         { label: t('nav.webHosting'), href: '/hosting/web' },
         { label: t('nav.premiumHosting'), href: '/hosting/premium' },
@@ -64,6 +68,7 @@ const Header: React.FC = () => {
     {
       label: t('nav.vps'),
       href: '/vps',
+      key: 'vps',
       children: [
         { label: t('nav.cloudVps'), href: '/vps/cloud' },
         { label: t('nav.whmCpanelVps'), href: '/vps/whm-cpanel' },
@@ -73,6 +78,7 @@ const Header: React.FC = () => {
     {
       label: t('nav.servers'),
       href: '/servers',
+      key: 'servers',
       children: [
         { label: t('nav.dedicatedServer'), href: '/servers/dedicated' },
         { label: t('nav.whmCpanelDedicated'), href: '/servers/whm-cpanel' },
@@ -82,6 +88,7 @@ const Header: React.FC = () => {
     {
       label: t('nav.domain'),
       href: '/domain',
+      key: 'domain',
       children: [
         { label: t('nav.domainRegistration'), href: '/domain/register' },
         { label: t('nav.domainTransfer'), href: '/domain/transfer' },
@@ -92,6 +99,7 @@ const Header: React.FC = () => {
     {
       label: t('nav.otherServices'),
       href: '/services',
+      key: 'services',
       children: [
         { label: t('nav.websiteDesign'), href: '/services/website-design' },
       ],
@@ -110,6 +118,9 @@ const Header: React.FC = () => {
 
   return (
     <>
+      {/* Promo Banner */}
+      <PromoBanner />
+
       {/* Top Bar */}
       <div className="bg-primary text-primary-foreground">
         <div className="container-wide">
@@ -238,48 +249,39 @@ const Header: React.FC = () => {
                   <div
                     key={item.label}
                     className="relative"
-                    onMouseEnter={() => setActiveMenu(item.label)}
+                    onMouseEnter={() => setActiveMenu(item.key || item.label)}
                     onMouseLeave={() => setActiveMenu(null)}
                   >
                     <Link
                       to={item.href}
                       className={cn(
                         "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-200 rounded-lg group",
-                        activeMenu === item.label && "text-primary"
+                        activeMenu === (item.key || item.label) && "text-primary"
                       )}
                     >
                       <span className="relative">
                         {item.label}
                         <span className={cn(
                           "absolute -bottom-1 left-0 w-full h-0.5 bg-primary rounded-full transform origin-left transition-transform duration-300",
-                          activeMenu === item.label ? "scale-x-100" : "scale-x-0"
+                          activeMenu === (item.key || item.label) ? "scale-x-100" : "scale-x-0"
                         )} />
                       </span>
                       {item.children && (
                         <ChevronDown className={cn(
                           "h-4 w-4 transition-transform duration-200",
-                          activeMenu === item.label && "rotate-180 text-primary"
+                          activeMenu === (item.key || item.label) && "rotate-180 text-primary"
                         )} />
                       )}
                     </Link>
 
-                    {/* Dropdown */}
-                    {item.children && activeMenu === item.label && (
-                      <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-64 rounded-xl bg-card border border-border shadow-2xl animate-fade-in z-50 overflow-hidden">
-                        <div className="p-2">
-                          {item.children.map((child, idx) => (
-                            <Link
-                              key={child.label}
-                              to={child.href}
-                              className="flex items-center gap-3 px-4 py-3 text-sm text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-lg transition-all duration-200 group"
-                              style={{ animationDelay: `${idx * 50}ms` }}
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-primary/30 group-hover:bg-primary transition-colors" />
-                              <span>{child.label}</span>
-                            </Link>
-                          ))}
-                        </div>
-                      </div>
+                    {/* Mega Menu Dropdown */}
+                    {item.key && item.children && (
+                      <MegaMenu
+                        category={item.key}
+                        isActive={activeMenu === item.key}
+                        onClose={() => setActiveMenu(null)}
+                        language={language}
+                      />
                     )}
                   </div>
                 ))}
