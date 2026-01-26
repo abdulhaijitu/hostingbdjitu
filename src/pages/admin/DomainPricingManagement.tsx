@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Globe, Star, RefreshCw } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -117,7 +117,7 @@ const DomainPricingManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'ডোমেইন প্রাইসিং ম্যানেজমেন্ট' : 'Domain Pricing Management'}
         description="Manage domain pricing"
@@ -306,7 +306,7 @@ const DomainPricingManagement: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

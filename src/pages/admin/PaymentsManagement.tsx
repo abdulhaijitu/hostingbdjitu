@@ -4,7 +4,7 @@ import {
   DollarSign, Clock, CheckCircle, XCircle, RefreshCw
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -116,7 +116,7 @@ const PaymentsManagement: React.FC = () => {
   const pendingRevenue = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'পেমেন্ট ম্যানেজমেন্ট' : 'Payment Management'}
         description="Manage payments"
@@ -400,7 +400,7 @@ const PaymentsManagement: React.FC = () => {
             </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

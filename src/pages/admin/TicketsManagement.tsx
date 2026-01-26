@@ -5,7 +5,7 @@ import {
   AlertCircle, User, Send, Paperclip, MoreHorizontal, 
   RefreshCw, Loader2, Headphones
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -134,7 +134,7 @@ const TicketsManagement: React.FC = () => {
   const urgentCount = tickets?.filter(t => t.priority === 'urgent' && t.status !== 'closed').length || 0;
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'সাপোর্ট টিকেট ম্যানেজমেন্ট' : 'Support Tickets Management'}
         description="Manage customer support tickets"
@@ -480,7 +480,7 @@ const TicketsManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

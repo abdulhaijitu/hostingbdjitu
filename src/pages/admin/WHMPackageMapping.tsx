@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { 
   Package, Plus, Edit, Trash2, Server, Link2, Check, X
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -166,7 +166,7 @@ const WHMPackageMapping: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'WHM প্যাকেজ ম্যাপিং' : 'WHM Package Mapping'}
         description="Map hosting plans to WHM packages"
@@ -404,7 +404,7 @@ const WHMPackageMapping: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

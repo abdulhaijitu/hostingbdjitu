@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Star, Package, RefreshCw } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -154,7 +154,7 @@ const HostingPlansManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'হোস্টিং প্ল্যান ম্যানেজমেন্ট' : 'Hosting Plans Management'}
         description="Manage hosting plans"
@@ -365,7 +365,7 @@ const HostingPlansManagement: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

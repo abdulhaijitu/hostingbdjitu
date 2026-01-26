@@ -3,7 +3,7 @@ import {
   Server, Search, RefreshCw, Ban, CheckCircle, Trash2, 
   Eye, HardDrive, Mail, Database, Globe, User
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -179,7 +179,7 @@ const HostingAccountsManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'হোস্টিং অ্যাকাউন্ট ম্যানেজমেন্ট' : 'Hosting Accounts Management'}
         description="Manage all hosting accounts"
@@ -442,7 +442,7 @@ const HostingAccountsManagement: React.FC = () => {
         </AlertDialogContent>
       </AlertDialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

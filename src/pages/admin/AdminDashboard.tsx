@@ -4,7 +4,6 @@ import {
   TrendingUp, DollarSign, ShoppingCart,
   Package, Server, Users, MessageSquare, BarChart3, RefreshCw
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -79,7 +78,7 @@ const AdminDashboard: React.FC = () => {
   const isLoading = ordersLoading || paymentsLoading;
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'অ্যাডমিন ড্যাশবোর্ড' : 'Admin Dashboard'}
         description="Admin dashboard for CHost"
@@ -249,7 +248,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </div>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 
