@@ -12,6 +12,8 @@ import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
 import { NotificationBell } from '@/components/client-dashboard/NotificationSystem';
 import ServerHealthMonitor from '@/components/admin/ServerHealthMonitor';
+import PerformanceMonitor from '@/components/admin/PerformanceMonitor';
+import { usePagePerformance } from '@/hooks/usePagePerformance';
 import { 
   StatCardSkeleton, 
   TableSkeleton, 
@@ -50,6 +52,9 @@ const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
   const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders();
   const { data: payments, isLoading: paymentsLoading, isError: paymentsError, refetch: refetchPayments } = usePayments();
+  
+  // Track page performance
+  usePagePerformance('Admin Dashboard');
 
   // Calculate stats - memoized for performance
   const stats = useMemo(() => {
@@ -153,9 +158,12 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         {/* Server Health Monitoring */}
-        <div className="mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
             <ServerHealthMonitor />
+          </Suspense>
+          <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
+            <PerformanceMonitor />
           </Suspense>
         </div>
 
