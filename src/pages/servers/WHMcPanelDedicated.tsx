@@ -3,6 +3,7 @@ import { Check, ArrowRight, Server, Shield, Zap, Headphones, HardDrive, X } from
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const WHMcPanelDedicated: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -75,6 +76,12 @@ const WHMcPanelDedicated: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'WHM/cPanel ডেডিকেটেড' : 'WHM/cPanel Dedicated'}
+        description={language === 'bn' ? 'WHM এবং cPanel সহ সম্পূর্ণ ম্যানেজড ডেডিকেটেড সার্ভার। হোস্টিং এজেন্সির জন্য পারফেক্ট।' : 'Fully managed dedicated servers with WHM and cPanel. Perfect for hosting agencies.'}
+        keywords="WHM dedicated, cPanel dedicated, managed server, Bangladesh"
+        canonicalUrl="/servers/whm-cpanel"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

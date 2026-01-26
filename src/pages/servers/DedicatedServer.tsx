@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import SEOHead from '@/components/common/SEOHead';
 
 const DedicatedServer: React.FC = () => {
   const { language } = useLanguage();
@@ -92,6 +93,12 @@ const DedicatedServer: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ডেডিকেটেড সার্ভার' : 'Dedicated Servers'}
+        description={language === 'bn' ? 'Intel Xeon প্রসেসর, এন্টারপ্রাইজ SSD এবং আনলিমিটেড DDoS প্রোটেকশন সহ শক্তিশালী বেয়ার-মেটাল সার্ভার।' : 'Powerful bare-metal servers with Intel Xeon processors, enterprise SSDs, and unmetered DDoS protection.'}
+        keywords="dedicated server, bare metal server, enterprise server, Bangladesh"
+        canonicalUrl="/servers/dedicated"
+      />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

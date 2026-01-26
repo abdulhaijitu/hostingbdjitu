@@ -3,6 +3,7 @@ import { ArrowRight, RefreshCw, CheckCircle, Shield, Gift, Clock, Headphones, Se
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const DomainTransfer: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -66,6 +67,12 @@ const DomainTransfer: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ডোমেইন ট্রান্সফার' : 'Domain Transfer'}
+        description={language === 'bn' ? 'CHost-এ আপনার ডোমেইন ট্রান্সফার করুন এবং ১ বছর বিনামূল্যে এক্সটেনশন ও WHOIS প্রাইভেসি পান।' : 'Transfer your domain to CHost and get 1 year free extension plus free WHOIS privacy.'}
+        keywords="domain transfer, move domain, EPP code, Bangladesh"
+        canonicalUrl="/domain/transfer"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

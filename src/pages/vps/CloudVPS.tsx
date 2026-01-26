@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import SEOHead from '@/components/common/SEOHead';
 
 const CloudVPS: React.FC = () => {
   const { language } = useLanguage();
@@ -99,6 +100,12 @@ const CloudVPS: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ক্লাউড VPS' : 'Cloud VPS'}
+        description={language === 'bn' ? 'ফুল রুট অ্যাক্সেস, NVMe SSD স্টোরেজ এবং এন্টারপ্রাইজ-গ্রেড পারফরম্যান্স সহ শক্তিশালী ক্লাউড VPS।' : 'Powerful cloud VPS with full root access, NVMe SSD storage, and enterprise-grade performance.'}
+        keywords="cloud VPS, virtual server, VPS hosting, Bangladesh VPS"
+        canonicalUrl="/vps/cloud"
+      />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

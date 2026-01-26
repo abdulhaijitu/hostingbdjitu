@@ -3,6 +3,7 @@ import { Check, ArrowRight, Users, Globe, Shield, Zap, Code, Headphones, X, Doll
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const DomainReseller: React.FC = () => {
   const [isYearly, setIsYearly] = useState(true);
@@ -76,6 +77,12 @@ const DomainReseller: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ডোমেইন রিসেলার' : 'Domain Reseller'}
+        description={language === 'bn' ? 'ডোমেইন রিসেলার হয়ে আপনার গ্রাহকদের হোয়াইট-লেবেল সল্যুশন দিয়ে ডোমেইন রেজিস্ট্রেশন সার্ভিস অফার করুন।' : 'Become a domain reseller and offer domain registration services with our white-label solution.'}
+        keywords="domain reseller, sell domains, domain business, Bangladesh"
+        canonicalUrl="/domain/reseller"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { z } from 'zod';
+import SEOHead from '@/components/common/SEOHead';
 
 const affiliateSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -92,6 +93,12 @@ const Affiliate: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'অ্যাফিলিয়েট প্রোগ্রাম' : 'Affiliate Program'}
+        description={language === 'bn' ? 'আমাদের অ্যাফিলিয়েট প্রোগ্রামে যোগ দিন এবং প্রতিটি রেফারেলে ৫০% পর্যন্ত কমিশন আয় করুন।' : 'Join our affiliate program and earn up to 50% commission on every sale you refer.'}
+        keywords="affiliate program, referral program, earn commission, Bangladesh"
+        canonicalUrl="/affiliate"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

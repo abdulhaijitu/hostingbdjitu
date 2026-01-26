@@ -3,6 +3,7 @@ import { Check, ArrowRight, Server, Shield, Zap, Headphones, Clock, X } from 'lu
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const WHMcPanelVPS: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -70,6 +71,12 @@ const WHMcPanelVPS: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'WHM/cPanel VPS' : 'WHM/cPanel VPS'}
+        description={language === 'bn' ? 'WHM এবং cPanel প্রি-ইনস্টলড ম্যানেজড VPS। একাধিক ওয়েবসাইট এবং ক্লায়েন্ট হোস্টিংয়ের জন্য পারফেক্ট।' : 'Managed VPS with WHM and cPanel pre-installed. Perfect for hosting multiple websites and clients.'}
+        keywords="WHM VPS, cPanel VPS, managed VPS, Bangladesh"
+        canonicalUrl="/vps/whm-cpanel"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

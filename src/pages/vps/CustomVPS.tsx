@@ -3,6 +3,7 @@ import { ArrowRight, Settings, Cpu, HardDrive, Wifi, Server, Shield, Zap, Check,
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const CustomVPS: React.FC = () => {
   const { language } = useLanguage();
@@ -48,6 +49,12 @@ const CustomVPS: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'কাস্টম VPS' : 'Custom VPS'}
+        description={language === 'bn' ? 'নির্দিষ্ট রিসোর্স দরকার? সঠিক স্পেসিফিকেশন দিয়ে আপনার VPS কনফিগার করুন।' : 'Need specific resources? Configure your VPS with exact specifications.'}
+        keywords="custom VPS, configurable VPS, VPS builder, Bangladesh"
+        canonicalUrl="/vps/custom"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

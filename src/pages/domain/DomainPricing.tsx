@@ -4,6 +4,7 @@ import { Search, ArrowRight, Globe, Shield, Zap, CheckCircle, Tag, Star } from '
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import SEOHead from '@/components/common/SEOHead';
 
 const DomainPricing: React.FC = () => {
   const { language } = useLanguage();
@@ -48,6 +49,12 @@ const DomainPricing: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ডোমেইন প্রাইসিং' : 'Domain Pricing'}
+        description={language === 'bn' ? 'সব ডোমেইন এক্সটেনশনের জন্য স্বচ্ছ মূল্য। আত্মবিশ্বাসের সাথে রেজিস্টার, রিনিউ বা ট্রান্সফার করুন।' : 'Transparent pricing for all domain extensions. Register, renew, or transfer with confidence.'}
+        keywords="domain pricing, domain cost, TLD prices, Bangladesh"
+        canonicalUrl="/domain/pricing"
+      />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

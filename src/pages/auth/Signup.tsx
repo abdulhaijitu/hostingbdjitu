@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check, Shield, Zap, Gift } from 'lucide-react';
 import { z } from 'zod';
+import SEOHead from '@/components/common/SEOHead';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -68,6 +69,12 @@ const Signup: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'সাইন আপ' : 'Sign Up'}
+        description={language === 'bn' ? 'একটি অ্যাকাউন্ট তৈরি করুন এবং সেরা হোস্টিং সার্ভিস উপভোগ করুন।' : 'Create an account and enjoy the best hosting services.'}
+        canonicalUrl="/signup"
+        noIndex={true}
+      />
       <section className="min-h-[80vh] flex items-center section-padding bg-gradient-hero">
         <div className="container-wide">
           <div className="grid lg:grid-cols-2 gap-12 items-center">

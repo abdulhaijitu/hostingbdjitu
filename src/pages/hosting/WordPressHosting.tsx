@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import SEOHead from '@/components/common/SEOHead';
 
 const WordPressHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -104,6 +105,12 @@ const WordPressHosting: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead
+        title={language === 'bn' ? 'ওয়ার্ডপ্রেস হোস্টিং' : 'WordPress Hosting'}
+        description={language === 'bn' ? 'ওয়ার্ডপ্রেসের জন্য বিশেষভাবে অপটিমাইজড হোস্টিং। ১-ক্লিক ইনস্টল, অটো আপডেট এবং LiteSpeed ক্যাশ।' : 'Optimized hosting for WordPress with 1-click install, auto updates, and LiteSpeed cache.'}
+        keywords="WordPress hosting, managed WordPress, WP hosting, Bangladesh"
+        canonicalUrl="/hosting/wordpress"
+      />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />
