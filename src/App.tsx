@@ -83,6 +83,9 @@ import DomainPricingManagement from "./pages/admin/DomainPricingManagement";
 import UsersManagement from "./pages/admin/UsersManagement";
 import TicketsManagement from "./pages/admin/TicketsManagement";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard";
+import OrdersManagement from "./pages/admin/OrdersManagement";
+import PaymentsManagement from "./pages/admin/PaymentsManagement";
+import WebhookLogs from "./pages/admin/WebhookLogs";
 
 // Checkout Pages
 import Checkout from "./pages/checkout/Checkout";
@@ -186,7 +189,9 @@ const App = () => (
                   <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UsersManagement /></ProtectedRoute>} />
                   <Route path="/admin/tickets" element={<ProtectedRoute requireAdmin><TicketsManagement /></ProtectedRoute>} />
                   <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AnalyticsDashboard /></ProtectedRoute>} />
-                  
+                  <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><OrdersManagement /></ProtectedRoute>} />
+                  <Route path="/admin/payments" element={<ProtectedRoute requireAdmin><PaymentsManagement /></ProtectedRoute>} />
+                  <Route path="/admin/webhooks" element={<ProtectedRoute requireAdmin><WebhookLogs /></ProtectedRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
