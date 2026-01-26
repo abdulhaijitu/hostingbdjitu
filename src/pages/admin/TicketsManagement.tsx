@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { 
   MessageSquare, ArrowLeft, Search, Clock, CheckCircle, 
   AlertCircle, User, Send, Paperclip, MoreHorizontal, 
-  RefreshCw, Loader2, Headphones, Wifi, WifiOff, Download
+  RefreshCw, Loader2, Headphones, Wifi, WifiOff, Download,
+  Image as ImageIcon, X, File
 } from 'lucide-react';
 
 import { Card, CardContent } from '@/components/ui/card';
@@ -13,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +49,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { formatDistanceToNow } from 'date-fns';
 import { bn } from 'date-fns/locale';
+import { useTicketAttachments, UploadedAttachment } from '@/hooks/useTicketAttachments';
+import CannedResponses from '@/components/support/CannedResponses';
+import ImagePreview from '@/components/support/ImagePreview';
+
+interface PendingFile {
+  file: File;
+  preview?: string;
+}
 
 const TicketsManagement: React.FC = () => {
   const { language } = useLanguage();
@@ -55,8 +65,10 @@ const TicketsManagement: React.FC = () => {
   const queryClient = useQueryClient();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const { data: tickets, isLoading: ticketsLoading, refetch } = useSupportTickets();
+  const { uploadFiles, isUploading, uploadProgress } = useTicketAttachments();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
@@ -64,6 +76,7 @@ const TicketsManagement: React.FC = () => {
   const [replyMessage, setReplyMessage] = useState('');
   const [isConnected, setIsConnected] = useState(true);
   const [isTyping, setIsTyping] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState<PendingFile[]>([]);
 
   const { data: messages, isLoading: messagesLoading } = useTicketMessages(selectedTicket?.id || null);
   const updateStatusMutation = useUpdateTicketStatus();
@@ -99,17 +112,67 @@ const TicketsManagement: React.FC = () => {
     };
   }, [selectedTicket]);
 
-  // Admin reply mutation
+  // Cleanup file previews on unmount
+  useEffect(() => {
+    return () => {
+      pendingFiles.forEach(f => {
+        if (f.preview) URL.revokeObjectURL(f.preview);
+      });
+    };
+  }, [pendingFiles]);
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const validFiles = files.filter(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: language === 'bn' ? 'ফাইল বড়' : 'File too large',
+          description: language === 'bn' ? 'সর্বোচ্চ ১০MB' : 'Maximum 10MB allowed',
+          variant: 'destructive',
+        });
+        return false;
+      }
+      return true;
+    }).slice(0, 5 - pendingFiles.length);
+
+    const newPendingFiles: PendingFile[] = validFiles.map(file => ({
+      file,
+      preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : undefined,
+    }));
+
+    setPendingFiles(prev => [...prev, ...newPendingFiles]);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removePendingFile = (index: number) => {
+    setPendingFiles(prev => {
+      const file = prev[index];
+      if (file.preview) URL.revokeObjectURL(file.preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  // Admin reply mutation with attachments
   const adminReplyMutation = useMutation({
-    mutationFn: async ({ ticketId, message }: { ticketId: string; message: string }) => {
+    mutationFn: async ({ ticketId, message, attachments }: { ticketId: string; message: string; attachments?: UploadedAttachment[] }) => {
+      const attachmentsJson = attachments?.map(att => ({
+        name: att.name,
+        size: att.size,
+        type: att.type,
+        url: att.url,
+        path: att.path,
+      })) || [];
+      
       const { data, error } = await supabase
         .from('ticket_messages')
-        .insert({
+        .insert([{
           ticket_id: ticketId,
           user_id: user!.id,
           message: message,
           is_staff_reply: true,
-        })
+          attachments: attachmentsJson,
+        }])
         .select()
         .single();
 
@@ -119,6 +182,7 @@ const TicketsManagement: React.FC = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['ticket-messages', variables.ticketId] });
       setReplyMessage('');
+      setPendingFiles([]);
       toast({
         title: language === 'bn' ? 'রিপ্লাই পাঠানো হয়েছে' : 'Reply Sent',
         description: language === 'bn' ? 'গ্রাহককে নোটিফিকেশন পাঠানো হয়েছে' : 'Customer has been notified',
@@ -157,9 +221,25 @@ const TicketsManagement: React.FC = () => {
     return <Badge className={styles[priority]}>{priority}</Badge>;
   };
 
-  const handleSendReply = () => {
+  const handleSendReply = async () => {
     if (!replyMessage.trim() || !selectedTicket) return;
-    adminReplyMutation.mutate({ ticketId: selectedTicket.id, message: replyMessage });
+
+    try {
+      let uploadedAttachments: UploadedAttachment[] = [];
+      
+      if (pendingFiles.length > 0) {
+        const filesToUpload = pendingFiles.map(f => f.file);
+        uploadedAttachments = await uploadFiles(filesToUpload, selectedTicket.id);
+      }
+
+      await adminReplyMutation.mutateAsync({ 
+        ticketId: selectedTicket.id, 
+        message: replyMessage,
+        attachments: uploadedAttachments,
+      });
+    } catch (error) {
+      console.error('Send reply error:', error);
+    }
   };
 
   const handleUpdateStatus = (ticketId: string, newStatus: string) => {
@@ -167,6 +247,10 @@ const TicketsManagement: React.FC = () => {
     if (selectedTicket?.id === ticketId) {
       setSelectedTicket(prev => prev ? { ...prev, status: newStatus as SupportTicket['status'] } : null);
     }
+  };
+
+  const handleCannedResponseSelect = (content: string) => {
+    setReplyMessage(prev => prev ? `${prev}\n\n${content}` : content);
   };
 
   // Stats
@@ -533,27 +617,12 @@ const TicketsManagement: React.FC = () => {
                           </div>
                           <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.message}</p>
                           
-                          {/* Attachments */}
-                          {msg.attachments && msg.attachments.length > 0 && (
+                          {/* Attachments with Image Preview */}
+                          {msg.attachments && Array.isArray(msg.attachments) && msg.attachments.length > 0 && (
                             <div className="mt-3 pt-3 border-t border-border/50">
-                              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                                <Paperclip className="h-3 w-3" />
-                                সংযুক্তি ({msg.attachments.length})
-                              </p>
-                              <div className="flex flex-wrap gap-2">
-                                {msg.attachments.map((attachment: any, i: number) => (
-                                  <a
-                                    key={i}
-                                    href={attachment.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-background hover:bg-muted text-xs transition-colors"
-                                  >
-                                    <Download className="h-3 w-3" />
-                                    {attachment.name || `File ${i + 1}`}
-                                  </a>
-                                ))}
-                              </div>
+                              <ImagePreview 
+                                attachments={msg.attachments as any[]}
+                              />
                             </div>
                           )}
                           
@@ -591,6 +660,59 @@ const TicketsManagement: React.FC = () => {
           {/* Reply Section */}
           {selectedTicket?.status !== 'closed' ? (
             <div className="px-6 py-4 border-t bg-muted/30">
+              {/* Upload Progress */}
+              {isUploading && (
+                <div className="mb-3 bg-muted/50 rounded-lg p-3">
+                  <div className="flex items-center justify-between text-sm mb-1.5">
+                    <span className="text-muted-foreground flex items-center gap-2">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      {language === 'bn' ? 'আপলোড হচ্ছে...' : 'Uploading...'}
+                    </span>
+                    <span className="text-primary font-medium">{Math.round(uploadProgress)}%</span>
+                  </div>
+                  <Progress value={uploadProgress} className="h-1.5" />
+                </div>
+              )}
+
+              {/* Pending Files Preview */}
+              {pendingFiles.length > 0 && !isUploading && (
+                <div className="flex flex-wrap gap-2 mb-3">
+                  {pendingFiles.map((item, index) => (
+                    <div 
+                      key={index}
+                      className={cn(
+                        "relative group rounded-lg overflow-hidden",
+                        item.preview ? "w-16 h-16" : "flex items-center gap-2 bg-muted px-3 py-2"
+                      )}
+                    >
+                      {item.preview ? (
+                        <>
+                          <img
+                            src={item.preview}
+                            alt={item.file.name}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            onClick={() => removePendingFile(index)}
+                            className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-4 w-4 text-white" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <File className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs truncate max-w-[100px]">{item.file.name}</span>
+                          <button onClick={() => removePendingFile(index)}>
+                            <X className="h-3 w-3 text-muted-foreground hover:text-destructive" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <div className="flex-1 relative">
                   <Textarea
@@ -603,16 +725,42 @@ const TicketsManagement: React.FC = () => {
                       }
                     }}
                     placeholder={language === 'bn' ? 'রিপ্লাই লিখুন... (Enter চাপুন পাঠাতে)' : 'Type your reply... (Press Enter to send)'}
-                    className="min-h-[60px] max-h-[120px] pr-12 resize-none"
+                    className="min-h-[60px] max-h-[120px] pr-24 resize-none"
                   />
                   <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                    {/* Canned Responses */}
+                    <CannedResponses 
+                      onSelect={handleCannedResponseSelect}
+                      language={language as 'en' | 'bn'}
+                    />
+                    
+                    {/* File Upload */}
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      className="hidden"
+                      multiple
+                      accept="image/*,.pdf,.doc,.docx,.txt,.zip"
+                      onChange={handleFileSelect}
+                    />
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          onClick={() => fileInputRef.current?.click()}
+                          disabled={pendingFiles.length >= 5}
+                        >
                           <Paperclip className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
-                      <TooltipContent>ফাইল সংযুক্ত করুন</TooltipContent>
+                      <TooltipContent>
+                        {pendingFiles.length >= 5 
+                          ? (language === 'bn' ? 'সর্বোচ্চ ৫টি ফাইল' : 'Max 5 files')
+                          : (language === 'bn' ? 'ফাইল সংযুক্ত করুন' : 'Attach files')
+                        }
+                      </TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
@@ -620,9 +768,9 @@ const TicketsManagement: React.FC = () => {
                   onClick={handleSendReply} 
                   size="icon"
                   className="h-[60px] w-12 shrink-0"
-                  disabled={adminReplyMutation.isPending || !replyMessage.trim()}
+                  disabled={adminReplyMutation.isPending || isUploading || !replyMessage.trim()}
                 >
-                  {adminReplyMutation.isPending ? (
+                  {adminReplyMutation.isPending || isUploading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <Send className="h-5 w-5" />
