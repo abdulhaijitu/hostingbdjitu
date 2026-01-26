@@ -19,6 +19,7 @@ import { ErrorState, EmptyState } from '@/components/common/DashboardSkeletons';
 import SEOHead from '@/components/common/SEOHead';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePagePerformance } from '@/hooks/usePagePerformance';
 
 interface UserWithProfile {
   id: string;
@@ -53,6 +54,9 @@ const UsersManagement: React.FC = () => {
   const [roleChangeUser, setRoleChangeUser] = useState<UserWithProfile | null>(null);
   const [newRole, setNewRole] = useState<'customer' | 'admin'>('customer');
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
+  
+  // Track page performance
+  usePagePerformance('Users Management');
 
   useEffect(() => {
     fetchUsers();

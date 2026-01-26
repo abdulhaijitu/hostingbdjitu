@@ -1,11 +1,14 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { adminAnalytics } from '@/lib/adminAnalytics';
 
 interface Props {
   children: ReactNode;
   /** Optional fallback component */
   fallback?: ReactNode;
+  /** Page name for analytics */
+  pageName?: string;
 }
 
 interface State {
@@ -44,11 +47,13 @@ class AdminErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    // Log error for debugging (could be sent to error tracking service)
-    console.error('[AdminErrorBoundary] Runtime error caught:', {
+    // Track error in analytics
+    adminAnalytics.trackError({
+      pageName: this.props.pageName || 'Unknown',
+      route: window.location.pathname,
       error: error.message,
       stack: error.stack,
-      componentStack: errorInfo.componentStack,
+      timestamp: new Date(),
     });
     
     this.setState({ errorInfo });

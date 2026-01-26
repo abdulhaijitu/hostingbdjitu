@@ -4,6 +4,7 @@ import {
   ArrowLeft, Package, Calendar, User, CreditCard, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { usePagePerformance } from '@/hooks/usePagePerformance';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,9 @@ const OrdersManagement: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const { data: orders, isLoading } = useOrders();
+  
+  // Track page performance
+  usePagePerformance('Orders Management');
   
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');

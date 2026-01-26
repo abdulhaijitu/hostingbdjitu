@@ -18,6 +18,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
 import { ErrorState } from '@/components/common/DashboardSkeletons';
+import { usePagePerformance } from '@/hooks/usePagePerformance';
 import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, differenceInDays, differenceInMonths } from 'date-fns';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
@@ -26,6 +27,9 @@ const AnalyticsDashboard: React.FC = () => {
   const { language } = useLanguage();
   const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders();
   const { data: payments, isLoading: paymentsLoading, isError: paymentsError, refetch: refetchPayments } = usePayments();
+  
+  // Track page performance
+  usePagePerformance('Analytics Dashboard');
 
   const isLoading = ordersLoading || paymentsLoading;
   const hasError = ordersError || paymentsError;
