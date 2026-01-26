@@ -65,6 +65,7 @@ import InvoicesPage from "./pages/dashboard/InvoicesPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import HostingPlansManagement from "./pages/admin/HostingPlansManagement";
 import DomainPricingManagement from "./pages/admin/DomainPricingManagement";
+import UsersManagement from "./pages/admin/UsersManagement";
 
 // Checkout Pages
 import Checkout from "./pages/checkout/Checkout";
@@ -149,6 +150,7 @@ const App = () => (
                   <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
                   <Route path="/admin/hosting-plans" element={<ProtectedRoute requireAdmin><HostingPlansManagement /></ProtectedRoute>} />
                   <Route path="/admin/domain-pricing" element={<ProtectedRoute requireAdmin><DomainPricingManagement /></ProtectedRoute>} />
+                  <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UsersManagement /></ProtectedRoute>} />
                   
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />

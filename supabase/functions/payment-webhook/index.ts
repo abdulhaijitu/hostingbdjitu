@@ -126,6 +126,13 @@ Deno.serve(async (req) => {
 
     // If payment is completed, update order and create invoice
     if (paymentStatus === "completed" && payment) {
+      // Get order details
+      const { data: order } = await adminClient
+        .from("orders")
+        .select("*")
+        .eq("id", payment.order_id)
+        .single();
+
       // Update order status
       await adminClient
         .from("orders")
@@ -150,6 +157,43 @@ Deno.serve(async (req) => {
           status: "paid",
           paid_at: new Date().toISOString(),
         });
+
+      // Get user profile for email
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("email, full_name")
+        .eq("user_id", payment.user_id)
+        .single();
+
+      // Send payment completed email notification
+      if (profile?.email && order) {
+        try {
+          const emailPayload = {
+            type: "payment_completed",
+            orderId: order.id,
+            userEmail: profile.email,
+            userName: profile.full_name || "",
+            orderNumber: order.order_number,
+            itemName: order.item_name,
+            amount: payment.amount,
+            paymentMethod: payload.payment_method || null,
+            transactionId: payload.transaction_id || null,
+          };
+
+          await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-email`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+            },
+            body: JSON.stringify(emailPayload),
+          });
+
+          console.log("Payment email sent to:", profile.email);
+        } catch (emailError) {
+          console.error("Failed to send payment email:", emailError);
+        }
+      }
     }
 
     // Update webhook log as processed
