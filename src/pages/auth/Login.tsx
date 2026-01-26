@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Zap, Headphones } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -14,19 +16,39 @@ const loginSchema = z.object({
 
 const Login: React.FC = () => {
   const { language } = useLanguage();
+  const { signIn } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       loginSchema.parse(formData);
       setErrors({});
       setIsLoading(true);
-      // Simulate login
-      setTimeout(() => setIsLoading(false), 1500);
+      
+      const { error } = await signIn(formData.email, formData.password);
+      
+      if (error) {
+        toast({
+          title: language === 'bn' ? 'লগইন ব্যর্থ' : 'Login Failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      toast({
+        title: language === 'bn' ? 'সফল!' : 'Success!',
+        description: language === 'bn' ? 'সফলভাবে লগইন হয়েছে' : 'Successfully logged in',
+      });
+      
+      navigate('/client');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -35,6 +57,8 @@ const Login: React.FC = () => {
         });
         setErrors(newErrors);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
