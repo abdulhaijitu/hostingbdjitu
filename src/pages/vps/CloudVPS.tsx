@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const CloudVPS: React.FC = () => {
   const { language } = useLanguage();
@@ -106,6 +107,18 @@ const CloudVPS: React.FC = () => {
         keywords="cloud VPS, virtual server, VPS hosting, Bangladesh VPS"
         canonicalUrl="/vps/cloud"
       />
+      <ProductSchema 
+        name="Cloud VPS"
+        description="Powerful cloud VPS with full root access, NVMe SSD storage, and enterprise-grade performance."
+        price="999"
+        url="/vps/cloud"
+        category="VPS Hosting"
+      />
+      <FAQSchema faqs={[
+        { question: "What is Cloud VPS?", answer: "Cloud VPS is a virtual private server hosted on cloud infrastructure with dedicated resources and full root access." },
+        { question: "Do I get full root access?", answer: "Yes, all VPS plans include full root access so you can install any software you need." },
+        { question: "Can I scale resources?", answer: "Yes, you can easily upgrade your VPS resources anytime without downtime." }
+      ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

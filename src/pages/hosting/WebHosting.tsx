@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const WebHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -120,6 +121,18 @@ const WebHosting: React.FC = () => {
         keywords="web hosting, shared hosting, cheap hosting, cPanel hosting, Bangladesh hosting, NVMe SSD hosting"
         canonicalUrl="/hosting/web"
       />
+      <ProductSchema 
+        name="Web Hosting"
+        description="Premium web hosting with NVMe SSD storage, free SSL, and 24/7 support."
+        price="199"
+        url="/hosting/web"
+        category="Web Hosting"
+      />
+      <FAQSchema faqs={[
+        { question: "What is included in web hosting?", answer: "Our web hosting includes NVMe SSD storage, free SSL certificate, cPanel access, daily backups, and 24/7 support." },
+        { question: "What is the uptime guarantee?", answer: "We guarantee 99.99% uptime for all our web hosting plans." },
+        { question: "Can I upgrade my plan later?", answer: "Yes, you can easily upgrade your hosting plan anytime from your control panel." }
+      ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

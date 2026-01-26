@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const DomainTransfer: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -73,6 +74,18 @@ const DomainTransfer: React.FC = () => {
         keywords="domain transfer, move domain, EPP code, Bangladesh"
         canonicalUrl="/domain/transfer"
       />
+      <ProductSchema 
+        name="Domain Transfer"
+        description="Transfer your domain to CHost and get 1 year free extension plus free WHOIS privacy."
+        price="1299"
+        url="/domain/transfer"
+        category="Domain Services"
+      />
+      <FAQSchema faqs={[
+        { question: "How long does the transfer take?", answer: "Usually 5-7 days, but can sometimes complete within 24 hours." },
+        { question: "Will my site go down during transfer?", answer: "No, your website remains fully online throughout the transfer process." },
+        { question: "Where do I get the auth code?", answer: "Request it from your current domain registrar's dashboard." }
+      ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">

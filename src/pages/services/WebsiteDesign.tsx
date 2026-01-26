@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
 
 const WebsiteDesign: React.FC = () => {
   const { language } = useLanguage();
@@ -140,6 +141,18 @@ const WebsiteDesign: React.FC = () => {
         keywords="website design, web development, responsive design, Bangladesh"
         canonicalUrl="/services/website-design"
       />
+      <ProductSchema 
+        name="Website Design"
+        description="Professional website design and development services with mobile responsive design and SEO optimization."
+        price="14999"
+        url="/services/website-design"
+        category="Web Design Services"
+      />
+      <FAQSchema faqs={[
+        { question: "How long does it take to build a website?", answer: "Depending on complexity, websites typically take 2-6 weeks from design to launch." },
+        { question: "Is the website mobile responsive?", answer: "Yes, all our websites are fully responsive and optimized for all devices." },
+        { question: "Do you provide ongoing support?", answer: "Yes, all packages include support ranging from 1 to 6 months after launch." }
+      ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
         <div className="container-wide text-center">
