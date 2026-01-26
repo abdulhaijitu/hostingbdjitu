@@ -92,6 +92,12 @@ import ProvisioningQueue from "./pages/admin/ProvisioningQueue";
 import WHMPackageMapping from "./pages/admin/WHMPackageMapping";
 import HostingAccountsManagement from "./pages/admin/HostingAccountsManagement";
 import ServerCredentials from "./pages/admin/ServerCredentials";
+import InvoicesManagement from "./pages/admin/InvoicesManagement";
+import RefundsManagement from "./pages/admin/RefundsManagement";
+import ResellersManagement from "./pages/admin/ResellersManagement";
+import AffiliatesManagement from "./pages/admin/AffiliatesManagement";
+import AnnouncementsManagement from "./pages/admin/AnnouncementsManagement";
+import SettingsManagement from "./pages/admin/SettingsManagement";
 // Checkout Pages
 import Checkout from "./pages/checkout/Checkout";
 import CheckoutSuccess from "./pages/checkout/CheckoutSuccess";
@@ -216,6 +222,12 @@ const App = () => (
                   <Route path="/admin/package-mapping" element={<AdminRoute><WHMPackageMapping /></AdminRoute>} />
                   <Route path="/admin/hosting-accounts" element={<AdminRoute><HostingAccountsManagement /></AdminRoute>} />
                   <Route path="/admin/server-credentials" element={<AdminRoute><ServerCredentials /></AdminRoute>} />
+                  <Route path="/admin/invoices" element={<AdminRoute><InvoicesManagement /></AdminRoute>} />
+                  <Route path="/admin/refunds" element={<AdminRoute><RefundsManagement /></AdminRoute>} />
+                  <Route path="/admin/resellers" element={<AdminRoute><ResellersManagement /></AdminRoute>} />
+                  <Route path="/admin/affiliates" element={<AdminRoute><AffiliatesManagement /></AdminRoute>} />
+                  <Route path="/admin/announcements" element={<AdminRoute><AnnouncementsManagement /></AdminRoute>} />
+                  <Route path="/admin/settings" element={<AdminRoute><SettingsManagement /></AdminRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
