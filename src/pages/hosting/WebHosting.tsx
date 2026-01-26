@@ -5,6 +5,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import SEOHead from '@/components/common/SEOHead';
 
 const WebHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -111,6 +112,14 @@ const WebHosting: React.FC = () => {
 
   return (
     <Layout>
+      <SEOHead 
+        title={language === 'bn' ? 'ওয়েব হোস্টিং' : 'Web Hosting'}
+        description={language === 'bn' 
+          ? 'সাশ্রয়ী মূল্যে প্রিমিয়াম ওয়েব হোস্টিং। NVMe SSD, ফ্রি SSL, ২৪/৭ সাপোর্ট। মাত্র ৳১৯৯/মাস থেকে শুরু।'
+          : 'Premium web hosting at affordable prices. NVMe SSD, free SSL, 24/7 support. Starting from ৳199/month.'}
+        keywords="web hosting, shared hosting, cheap hosting, cPanel hosting, Bangladesh hosting, NVMe SSD hosting"
+        canonicalUrl="/hosting/web"
+      />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-mesh pointer-events-none" />

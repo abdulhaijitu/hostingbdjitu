@@ -10,10 +10,22 @@ import TestimonialsSection from '@/components/home/TestimonialsSection';
 import FAQSection from '@/components/home/FAQSection';
 import NewsletterSection from '@/components/home/NewsletterSection';
 import CTASection from '@/components/home/CTASection';
+import SEOHead from '@/components/common/SEOHead';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Index: React.FC = () => {
+  const { language } = useLanguage();
+
   return (
     <Layout>
+      <SEOHead 
+        title="Home"
+        description={language === 'bn' 
+          ? 'বাংলাদেশের সেরা ওয়েব হোস্টিং সেবা। ৯৯.৯৯% আপটাইম গ্যারান্টি, ২৪/৭ সাপোর্ট, NVMe SSD স্টোরেজ। ওয়েব হোস্টিং, VPS, ডেডিকেটেড সার্ভার এবং ডোমেইন রেজিস্ট্রেশন।'
+          : 'Best web hosting service in Bangladesh. 99.99% uptime guarantee, 24/7 support, NVMe SSD storage. Web hosting, VPS, dedicated servers, and domain registration.'}
+        keywords="web hosting, domain registration, VPS, dedicated server, cloud hosting, Bangladesh hosting, cPanel hosting, WordPress hosting, cheap hosting"
+        canonicalUrl="/"
+      />
       <HeroSection />
       <DomainSearch />
       <PricingSection />
