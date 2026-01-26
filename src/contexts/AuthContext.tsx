@@ -22,9 +22,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoading, setRoleLoading] = useState(false);
 
-  const fetchUserRole = async (userId: string) => {
+  const fetchUserRole = async (userId: string): Promise<AppRole | null> => {
     try {
+      setRoleLoading(true);
       const { data, error } = await supabase
         .from('user_roles')
         .select('role')
@@ -40,44 +42,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error fetching user role:', error);
       return null;
+    } finally {
+      setRoleLoading(false);
     }
   };
 
   useEffect(() => {
+    let mounted = true;
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
+        if (!mounted) return;
+        
         setSession(newSession);
         setUser(newSession?.user ?? null);
 
         if (newSession?.user) {
-          // Defer role fetch to avoid blocking
-          setTimeout(async () => {
-            const userRole = await fetchUserRole(newSession.user.id);
+          const userRole = await fetchUserRole(newSession.user.id);
+          if (mounted) {
             setRole(userRole);
-          }, 0);
+            setLoading(false);
+          }
         } else {
           setRole(null);
+          setLoading(false);
         }
-
-        setLoading(false);
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
-      setSession(existingSession);
-      setUser(existingSession?.user ?? null);
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: existingSession } } = await supabase.auth.getSession();
+        
+        if (!mounted) return;
 
-      if (existingSession?.user) {
-        const userRole = await fetchUserRole(existingSession.user.id);
-        setRole(userRole);
+        setSession(existingSession);
+        setUser(existingSession?.user ?? null);
+
+        if (existingSession?.user) {
+          const userRole = await fetchUserRole(existingSession.user.id);
+          if (mounted) {
+            setRole(userRole);
+          }
+        }
+      } catch (error) {
+        console.error('Error initializing auth:', error);
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
+    };
 
-      setLoading(false);
-    });
+    initializeAuth();
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
   }, []);
