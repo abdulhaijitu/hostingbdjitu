@@ -10,7 +10,7 @@ interface AuthContextType {
   role: AppRole | null;
   loading: boolean;
   authReady: boolean;
-  roleLoading: boolean; // New: explicit role loading state
+  roleLoading: boolean;
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -35,27 +35,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
-  const [roleLoading, setRoleLoading] = useState(false); // Explicit role loading state
+  // CRITICAL: roleLoading starts as TRUE and only becomes false after role is resolved
+  const [roleLoading, setRoleLoading] = useState(true);
   
   // Refs for cleanup and preventing race conditions
   const mountedRef = useRef(true);
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const initTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isRefreshingRef = useRef(false);
+  const roleFetchInProgressRef = useRef(false);
 
   const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
-    // Set role loading state FIRST - always
+    // Prevent concurrent fetches
+    if (roleFetchInProgressRef.current) {
+      console.log('[AuthContext] Role fetch already in progress, skipping...');
+      return role;
+    }
+    
+    roleFetchInProgressRef.current = true;
+    
+    // Ensure roleLoading is true
     setRoleLoading(true);
+    console.log('[AuthContext] Starting role fetch for user:', userId);
     
     // Check cache first
     if (roleCache.has(userId)) {
       const cachedRole = roleCache.get(userId) ?? null;
       console.log('[AuthContext] Role from cache:', cachedRole);
       setRoleLoading(false);
+      roleFetchInProgressRef.current = false;
       return cachedRole;
     }
 
-    console.log('[AuthContext] Fetching role from database for user:', userId);
+    console.log('[AuthContext] Fetching role from database...');
 
     try {
       const { data, error } = await supabase
@@ -64,25 +76,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('user_id', userId)
         .maybeSingle();
 
-      if (error) {
-        console.error('[AuthContext] Error fetching user role:', error);
-        setRoleLoading(false);
+      if (!mountedRef.current) {
+        roleFetchInProgressRef.current = false;
         return null;
       }
 
-      const userRole = (data?.role as AppRole) || null;
-      console.log('[AuthContext] Role fetched:', userRole);
+      if (error) {
+        console.error('[AuthContext] Error fetching user role:', error);
+        setRoleLoading(false);
+        roleFetchInProgressRef.current = false;
+        return null;
+      }
+
+      const userRole = (data?.role as AppRole) || 'customer'; // Default to customer if no role found
+      console.log('[AuthContext] Role fetched successfully:', userRole);
       
       // Cache the result
       roleCache.set(userId, userRole);
       setRoleLoading(false);
+      roleFetchInProgressRef.current = false;
       return userRole;
     } catch (error) {
       console.error('[AuthContext] Error fetching user role:', error);
-      setRoleLoading(false);
+      if (mountedRef.current) {
+        setRoleLoading(false);
+      }
+      roleFetchInProgressRef.current = false;
       return null;
     }
-  }, []);
+  }, [role]);
 
   // Session refresh function
   const refreshSession = useCallback(async () => {
@@ -104,6 +126,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser(null);
           setSession(null);
           setRole(null);
+          setRoleLoading(false);
         }
         return;
       }
@@ -138,21 +161,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleAuthChange = useCallback(async (event: AuthChangeEvent, newSession: Session | null) => {
     if (!mountedRef.current) return;
     
+    console.log('[AuthContext] Auth state changed:', event, !!newSession?.user);
+    
     // Update session and user
     setSession(newSession);
     setUser(newSession?.user ?? null);
 
     if (newSession?.user) {
+      // Keep roleLoading true until role is fetched
+      setRoleLoading(true);
+      
       // Fetch role
       const userRole = await fetchUserRole(newSession.user.id);
       if (mountedRef.current) {
         setRole(userRole);
+        console.log('[AuthContext] Role set after auth change:', userRole);
       }
       
       // Setup refresh interval when we have a session
       setupRefreshInterval();
     } else {
       setRole(null);
+      setRoleLoading(false); // No user = no role loading needed
       // Clear refresh interval when no session
       if (refreshIntervalRef.current) {
         clearInterval(refreshIntervalRef.current);
@@ -171,31 +201,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     mountedRef.current = true;
 
     const initializeAuth = async () => {
+      console.log('[AuthContext] Initializing auth...');
+      
       try {
         // Get existing session first
         const { data: { session: existingSession } } = await supabase.auth.getSession();
         
         if (!mountedRef.current) return;
 
+        console.log('[AuthContext] Existing session:', !!existingSession?.user);
+
         if (existingSession?.user) {
           setSession(existingSession);
           setUser(existingSession.user);
+          
+          // Keep roleLoading true until role is fetched
+          setRoleLoading(true);
           
           // Fetch role
           const userRole = await fetchUserRole(existingSession.user.id);
           if (mountedRef.current) {
             setRole(userRole);
+            console.log('[AuthContext] Initial role set:', userRole);
           }
           
           // Setup refresh interval
           setupRefreshInterval();
+        } else {
+          // No user, no role loading needed
+          setRoleLoading(false);
         }
       } catch (error) {
-        console.error('Error initializing auth:', error);
+        console.error('[AuthContext] Error initializing auth:', error);
+        setRoleLoading(false);
       } finally {
         if (mountedRef.current) {
           setLoading(false);
           setAuthReady(true);
+          console.log('[AuthContext] Auth ready');
         }
       }
     };
@@ -209,8 +252,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Failsafe timeout - ensure auth resolves even if something goes wrong
     initTimeoutRef.current = setTimeout(() => {
       if (mountedRef.current && !authReady) {
+        console.log('[AuthContext] Auth timeout reached, forcing ready state');
         setLoading(false);
         setAuthReady(true);
+        setRoleLoading(false);
       }
     }, AUTH_INIT_TIMEOUT);
 
@@ -266,6 +311,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = useCallback(async (email: string, password: string) => {
+    // Set roleLoading true before sign in completes
+    setRoleLoading(true);
+    
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -274,6 +322,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { error: error as Error | null };
     } catch (error) {
+      setRoleLoading(false);
       return { error: error as Error };
     }
   }, []);
@@ -294,6 +343,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setSession(null);
     setRole(null);
+    setRoleLoading(false);
   }, [user?.id]);
 
   const value = useMemo(() => ({
