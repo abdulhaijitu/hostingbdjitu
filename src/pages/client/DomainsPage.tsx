@@ -7,12 +7,15 @@ import {
 import DashboardLayout from '@/components/client-dashboard/DashboardLayout';
 import StatusBadge from '@/components/client-dashboard/StatusBadge';
 import DNSManagementModal from '@/components/client-dashboard/DNSManagementModal';
+import WHOISLookup from '@/components/client-dashboard/WHOISLookup';
+import DNSPropagationChecker from '@/components/client-dashboard/DNSPropagationChecker';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -94,141 +97,165 @@ const DomainsPage: React.FC = () => {
             </Link>
           </Button>
         </div>
-
-        {/* Search */}
-        <div className="mt-4 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={language === 'bn' ? 'ডোমেইন খুঁজুন...' : 'Search domains...'}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
       </div>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-28 w-full" />
-          ))}
-        </div>
-      ) : filteredDomains.length > 0 ? (
-        <div className="space-y-4">
-          {filteredDomains.map(domain => (
-            <Card key={domain.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-xl bg-success/10">
-                      <Globe className="h-6 w-6 text-success" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-lg">
-                        {domain.domain_name || domain.item_name}
-                      </h3>
-                      <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3.5 w-3.5" />
-                          Registered: {new Date(domain.created_at).toLocaleDateString()}
-                        </span>
-                        {domain.expiry_date && (
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Expires: {new Date(domain.expiry_date).toLocaleDateString()}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          <Lock className="h-3.5 w-3.5" />
-                          Locked
-                        </span>
+      <Tabs defaultValue="domains" className="mb-6">
+        <TabsList className="grid w-full grid-cols-3 lg:w-auto lg:inline-grid">
+          <TabsTrigger value="domains">
+            {language === 'bn' ? 'ডোমেইন' : 'Domains'}
+          </TabsTrigger>
+          <TabsTrigger value="whois">
+            WHOIS
+          </TabsTrigger>
+          <TabsTrigger value="dns">
+            DNS Propagation
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="domains" className="mt-6">
+          {/* Search */}
+          <div className="mb-4 relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder={language === 'bn' ? 'ডোমেইন খুঁজুন...' : 'Search domains...'}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map(i => (
+                <Skeleton key={i} className="h-28 w-full" />
+              ))}
+            </div>
+          ) : filteredDomains.length > 0 ? (
+            <div className="space-y-4">
+              {filteredDomains.map(domain => (
+                <Card key={domain.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                      <div className="flex items-start gap-4">
+                        <div className="p-3 rounded-xl bg-success/10">
+                          <Globe className="h-6 w-6 text-success" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold text-lg">
+                            {domain.domain_name || domain.item_name}
+                          </h3>
+                          <div className="flex flex-wrap gap-4 mt-2 text-sm text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3.5 w-3.5" />
+                              Registered: {new Date(domain.created_at).toLocaleDateString()}
+                            </span>
+                            {domain.expiry_date && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3.5 w-3.5" />
+                                Expires: {new Date(domain.expiry_date).toLocaleDateString()}
+                              </span>
+                            )}
+                            <span className="flex items-center gap-1">
+                              <Lock className="h-3.5 w-3.5" />
+                              Locked
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-2">
+                        <StatusBadge status={domain.status} />
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleRenew(domain)}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          {language === 'bn' ? 'রিনিউ' : 'Renew'}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setDnsDomain(domain.domain_name || domain.item_name);
+                            setShowDNSDialog(true);
+                          }}
+                        >
+                          <Network className="h-4 w-4 mr-2" />
+                          {language === 'bn' ? 'DNS' : 'DNS'}
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => {
+                            setSelectedDomain(domain);
+                            setShowNameserverDialog(true);
+                          }}
+                        >
+                          <Settings className="h-4 w-4 mr-2" />
+                          {language === 'bn' ? 'নেমসার্ভার' : 'Nameservers'}
+                        </Button>
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleToggleLock(domain)}
+                        >
+                          <Lock className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-2">
-                    <StatusBadge status={domain.status} />
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleRenew(domain)}
-                    >
-                      <RefreshCw className="h-4 w-4 mr-2" />
-                      {language === 'bn' ? 'রিনিউ' : 'Renew'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setDnsDomain(domain.domain_name || domain.item_name);
-                        setShowDNSDialog(true);
-                      }}
-                    >
-                      <Network className="h-4 w-4 mr-2" />
-                      {language === 'bn' ? 'DNS' : 'DNS'}
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => {
-                        setSelectedDomain(domain);
-                        setShowNameserverDialog(true);
-                      }}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      {language === 'bn' ? 'নেমসার্ভার' : 'Nameservers'}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => handleToggleLock(domain)}
-                    >
-                      <Lock className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
 
-                {/* Auto-renew toggle */}
-                <div className="mt-4 pt-4 border-t flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Switch 
-                      id={`autorenew-${domain.id}`}
-                      defaultChecked={true}
-                      onCheckedChange={(checked) => handleToggleAutoRenew(domain, checked)}
-                    />
-                    <Label htmlFor={`autorenew-${domain.id}`} className="text-sm">
-                      {language === 'bn' ? 'অটো-রিনিউ সক্রিয়' : 'Auto-Renew Enabled'}
-                    </Label>
-                  </div>
-                </div>
+                    {/* Auto-renew toggle */}
+                    <div className="mt-4 pt-4 border-t flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Switch 
+                          id={`autorenew-${domain.id}`}
+                          defaultChecked={true}
+                          onCheckedChange={(checked) => handleToggleAutoRenew(domain, checked)}
+                        />
+                        <Label htmlFor={`autorenew-${domain.id}`} className="text-sm">
+                          {language === 'bn' ? 'অটো-রিনিউ সক্রিয়' : 'Auto-Renew Enabled'}
+                        </Label>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="py-12 text-center">
+                <Globe className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+                <h3 className="font-semibold text-lg mb-2">
+                  {searchQuery 
+                    ? (language === 'bn' ? 'কোন ডোমেইন পাওয়া যায়নি' : 'No Domains Found')
+                    : (language === 'bn' ? 'কোন ডোমেইন নেই' : 'No Domains Yet')}
+                </h3>
+                <p className="text-muted-foreground mb-6">
+                  {searchQuery 
+                    ? (language === 'bn' ? 'আপনার সার্চ পরিবর্তন করে দেখুন' : 'Try adjusting your search')
+                    : (language === 'bn' ? 'আপনার প্রথম ডোমেইন রেজিস্টার করুন' : 'Register your first domain name')}
+                </p>
+                {!searchQuery && (
+                  <Button variant="hero" asChild>
+                    <Link to="/domain/register">
+                      {language === 'bn' ? 'ডোমেইন রেজিস্টার করুন' : 'Register a Domain'}
+                    </Link>
+                  </Button>
+                )}
               </CardContent>
             </Card>
-          ))}
-        </div>
-      ) : (
-        <Card>
-          <CardContent className="py-12 text-center">
-            <Globe className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h3 className="font-semibold text-lg mb-2">
-              {searchQuery 
-                ? (language === 'bn' ? 'কোন ডোমেইন পাওয়া যায়নি' : 'No Domains Found')
-                : (language === 'bn' ? 'কোন ডোমেইন নেই' : 'No Domains Yet')}
-            </h3>
-            <p className="text-muted-foreground mb-6">
-              {searchQuery 
-                ? (language === 'bn' ? 'আপনার সার্চ পরিবর্তন করে দেখুন' : 'Try adjusting your search')
-                : (language === 'bn' ? 'আপনার প্রথম ডোমেইন রেজিস্টার করুন' : 'Register your first domain name')}
-            </p>
-            {!searchQuery && (
-              <Button variant="hero" asChild>
-                <Link to="/domain/register">
-                  {language === 'bn' ? 'ডোমেইন রেজিস্টার করুন' : 'Register a Domain'}
-                </Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
+          )}
+        </TabsContent>
+
+        <TabsContent value="whois" className="mt-6">
+          <WHOISLookup />
+        </TabsContent>
+
+        <TabsContent value="dns" className="mt-6">
+          <DNSPropagationChecker />
+        </TabsContent>
+      </Tabs>
 
       {/* Nameserver Dialog */}
       <Dialog open={showNameserverDialog} onOpenChange={setShowNameserverDialog}>
