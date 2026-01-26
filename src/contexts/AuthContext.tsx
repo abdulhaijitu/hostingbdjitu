@@ -58,21 +58,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const roleError = roleState.status === 'error' ? roleState.error : null;
   const isAdmin = role === 'admin';
 
-  const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
-    // Prevent concurrent fetches for the same user
-    if (currentFetchRef.current === userId) {
+  const fetchUserRole = useCallback(async (userId: string, forceRefresh = false): Promise<AppRole | null> => {
+    // Check cache first (unless force refresh)
+    if (!forceRefresh && roleCache.has(userId)) {
+      const cachedRole = roleCache.get(userId)!;
+      if (mountedRef.current) {
+        setRoleState({ status: 'resolved', role: cachedRole });
+      }
+      return cachedRole;
+    }
+
+    // Skip if already fetching for this user (unless force refresh)
+    if (!forceRefresh && currentFetchRef.current === userId && roleState.status === 'loading') {
       return null;
     }
     
     currentFetchRef.current = userId;
-    setRoleState({ status: 'loading' });
     
-    // Check cache first
-    if (roleCache.has(userId)) {
-      const cachedRole = roleCache.get(userId)!;
-      setRoleState({ status: 'resolved', role: cachedRole });
-      currentFetchRef.current = null;
-      return cachedRole;
+    if (mountedRef.current) {
+      setRoleState({ status: 'loading' });
     }
 
     try {
@@ -88,6 +92,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (error) {
+        console.error('Role fetch error:', error.message);
         setRoleState({ status: 'error', error: error.message });
         currentFetchRef.current = null;
         return null;
@@ -102,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentFetchRef.current = null;
       return userRole;
     } catch (error) {
+      console.error('Role fetch exception:', error);
       if (mountedRef.current) {
         setRoleState({ 
           status: 'error', 
@@ -111,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       currentFetchRef.current = null;
       return null;
     }
-  }, []);
+  }, [roleState.status]);
 
   // Retry role fetch function
   const retryRoleFetch = useCallback(async () => {
@@ -121,7 +127,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     roleCache.delete(user.id);
     currentFetchRef.current = null;
     
-    await fetchUserRole(user.id);
+    await fetchUserRole(user.id, true);
   }, [user?.id, fetchUserRole]);
 
   // Session refresh function
