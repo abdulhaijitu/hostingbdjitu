@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   Server, Plus, RefreshCw, Edit2, Trash2, Globe, 
-  CheckCircle, XCircle, Loader2, Activity, HardDrive
+  CheckCircle, XCircle, Loader2, Activity, HardDrive, AlertTriangle
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Select,
   SelectContent,
@@ -36,7 +46,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import SEOHead from '@/components/common/SEOHead';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useHostingServers, useCreateServer, useUpdateServer, useWHMAction } from '@/hooks/useWHMAdmin';
+import { useHostingServers, useCreateServer, useUpdateServer, useDeleteServer, useWHMAction } from '@/hooks/useWHMAdmin';
 
 const ServerManagement: React.FC = () => {
   const { language } = useLanguage();
@@ -44,10 +54,12 @@ const ServerManagement: React.FC = () => {
   const { data: servers, isLoading, refetch } = useHostingServers();
   const createServer = useCreateServer();
   const updateServer = useUpdateServer();
+  const deleteServer = useDeleteServer();
   const whmAction = useWHMAction();
   
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedServer, setSelectedServer] = useState<any>(null);
   const [checkingStatus, setCheckingStatus] = useState<string | null>(null);
   const [serverStatuses, setServerStatuses] = useState<Record<string, any>>({});
@@ -89,6 +101,25 @@ const ServerManagement: React.FC = () => {
         description: formData.name,
       });
       setShowEditDialog(false);
+      setSelectedServer(null);
+    } catch (error: any) {
+      toast({
+        title: language === 'bn' ? 'ত্রুটি' : 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleDeleteServer = async () => {
+    if (!selectedServer) return;
+    try {
+      await deleteServer.mutateAsync(selectedServer.id);
+      toast({
+        title: language === 'bn' ? 'সার্ভার মুছে ফেলা হয়েছে' : 'Server Deleted',
+        description: selectedServer.name,
+      });
+      setShowDeleteDialog(false);
       setSelectedServer(null);
     } catch (error: any) {
       toast({
@@ -332,6 +363,7 @@ const ServerManagement: React.FC = () => {
                               size="icon"
                               onClick={() => checkServerStatus(server)}
                               disabled={checkingStatus === server.id}
+                              title={language === 'bn' ? 'স্ট্যাটাস চেক করুন' : 'Check Status'}
                             >
                               {checkingStatus === server.id ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -343,8 +375,21 @@ const ServerManagement: React.FC = () => {
                               variant="ghost"
                               size="icon"
                               onClick={() => openEditDialog(server)}
+                              title={language === 'bn' ? 'সম্পাদনা করুন' : 'Edit'}
                             >
                               <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setSelectedServer(server);
+                                setShowDeleteDialog(true);
+                              }}
+                              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title={language === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+                            >
+                              <Trash2 className="h-4 w-4" />
                             </Button>
                           </div>
                         </TableCell>
@@ -568,6 +613,37 @@ const ServerManagement: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-destructive" />
+              {language === 'bn' ? 'সার্ভার মুছে ফেলুন?' : 'Delete Server?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {language === 'bn' 
+                ? `আপনি কি "${selectedServer?.name}" সার্ভারটি মুছে ফেলতে চান? এই অ্যাকশন পূর্বাবস্থায় ফেরানো যাবে না।`
+                : `Are you sure you want to delete "${selectedServer?.name}"? This action cannot be undone.`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {language === 'bn' ? 'বাতিল' : 'Cancel'}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteServer}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteServer.isPending}
+            >
+              {deleteServer.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              {language === 'bn' ? 'মুছে ফেলুন' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
       </div>
     </>
   );
