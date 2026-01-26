@@ -44,13 +44,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isRefreshingRef = useRef(false);
 
   const fetchUserRole = useCallback(async (userId: string): Promise<AppRole | null> => {
+    // Set role loading state FIRST - always
+    setRoleLoading(true);
+    
     // Check cache first
     if (roleCache.has(userId)) {
-      return roleCache.get(userId) ?? null;
+      const cachedRole = roleCache.get(userId) ?? null;
+      console.log('[AuthContext] Role from cache:', cachedRole);
+      setRoleLoading(false);
+      return cachedRole;
     }
 
-    // Set role loading state
-    setRoleLoading(true);
+    console.log('[AuthContext] Fetching role from database for user:', userId);
 
     try {
       const { data, error } = await supabase
@@ -60,19 +65,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (error) {
-        console.error('Error fetching user role:', error);
+        console.error('[AuthContext] Error fetching user role:', error);
+        setRoleLoading(false);
         return null;
       }
 
       const userRole = (data?.role as AppRole) || null;
+      console.log('[AuthContext] Role fetched:', userRole);
+      
       // Cache the result
       roleCache.set(userId, userRole);
+      setRoleLoading(false);
       return userRole;
     } catch (error) {
-      console.error('Error fetching user role:', error);
-      return null;
-    } finally {
+      console.error('[AuthContext] Error fetching user role:', error);
       setRoleLoading(false);
+      return null;
     }
   }, []);
 

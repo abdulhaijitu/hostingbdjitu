@@ -54,12 +54,23 @@ const Login: React.FC = () => {
 
   // Redirect if already authenticated - WAIT for role to be resolved
   useEffect(() => {
+    console.log('[Login] Auth state:', { authReady, user: !!user, role, roleLoading, isAdmin, hasRedirected: hasRedirected.current });
+    
     // Don't redirect if not ready or already redirected
     if (!authReady || !user || hasRedirected.current) return;
     
     // CRITICAL: Wait for role to be resolved before redirecting
     // This prevents admin users from being sent to /client
-    if (roleLoading) return;
+    if (roleLoading) {
+      console.log('[Login] Waiting for role to resolve...');
+      return;
+    }
+    
+    // Ensure role is actually resolved (not null when it shouldn't be)
+    if (role === null) {
+      console.log('[Login] Role is null, waiting...');
+      return;
+    }
     
     // Role is resolved, determine redirect path
     let redirectPath: string;
@@ -67,9 +78,11 @@ const Login: React.FC = () => {
     if (isAdmin) {
       // Admin users go to admin dashboard (unless they came from a specific page)
       redirectPath = fromPath?.startsWith('/admin') ? fromPath : '/admin';
+      console.log('[Login] Admin user, redirecting to:', redirectPath);
     } else {
       // Regular users go to client dashboard or their original destination
       redirectPath = fromPath && !fromPath.startsWith('/admin') ? fromPath : '/client';
+      console.log('[Login] Regular user, redirecting to:', redirectPath);
     }
     
     hasRedirected.current = true;
