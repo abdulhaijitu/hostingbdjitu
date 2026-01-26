@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Zap, Headphones } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, ArrowRight, Shield, Zap, Headphones, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,41 +15,60 @@ const loginSchema = z.object({
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
+// Failsafe timeout constant
+const LOGIN_TIMEOUT_MS = 6000;
+
 const Login: React.FC = () => {
   const { language } = useLanguage();
-  const { signIn } = useAuth();
+  const { user, authReady, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
+  
+  // Separate loading states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
+  // Refs for cleanup
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
+
+  // Get redirect path from location state or default
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/client';
+
+  // Cleanup on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Redirect if already authenticated - only after auth is ready
+  useEffect(() => {
+    if (authReady && user) {
+      const redirectPath = isAdmin ? '/admin' : from;
+      navigate(redirectPath, { replace: true });
+    }
+  }, [authReady, user, isAdmin, navigate, from]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setLoginError(null);
+    setErrors({});
+    
+    // Validate form
     try {
       loginSchema.parse(formData);
-      setErrors({});
-      setIsLoading(true);
-      
-      const { error } = await signIn(formData.email, formData.password);
-      
-      if (error) {
-        toast({
-          title: language === 'bn' ? 'লগইন ব্যর্থ' : 'Login Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      toast({
-        title: language === 'bn' ? 'সফল!' : 'Success!',
-        description: language === 'bn' ? 'সফলভাবে লগইন হয়েছে' : 'Successfully logged in',
-      });
-      
-      navigate('/client');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -57,26 +76,124 @@ const Login: React.FC = () => {
           if (err.path[0]) newErrors[err.path[0] as string] = err.message;
         });
         setErrors(newErrors);
+        return;
       }
+    }
+
+    // Start submission
+    setIsSubmitting(true);
+
+    // Setup failsafe timeout
+    timeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && isSubmitting) {
+        setIsSubmitting(false);
+        setLoginError(
+          language === 'bn' 
+            ? 'লগইন সময় শেষ। আবার চেষ্টা করুন।' 
+            : 'Login timed out. Please try again.'
+        );
+        toast({
+          title: language === 'bn' ? 'লগইন টাইমআউট' : 'Login Timeout',
+          description: language === 'bn' 
+            ? 'সার্ভার সাড়া দিচ্ছে না। আবার চেষ্টা করুন।' 
+            : 'Server not responding. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }, LOGIN_TIMEOUT_MS);
+
+    try {
+      // Call Supabase auth directly for better control
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      // Clear timeout since we got a response
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!mountedRef.current) return;
+
+      if (error) {
+        setLoginError(getErrorMessage(error.message, language));
+        toast({
+          title: language === 'bn' ? 'লগইন ব্যর্থ' : 'Login Failed',
+          description: getErrorMessage(error.message, language),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Verify session was created
+      if (!data.session || !data.user) {
+        setLoginError(
+          language === 'bn' 
+            ? 'সেশন তৈরি হয়নি। আবার চেষ্টা করুন।' 
+            : 'Session not created. Please try again.'
+        );
+        return;
+      }
+
+      // Success - show toast and redirect will happen via useEffect
+      toast({
+        title: language === 'bn' ? 'সফল!' : 'Success!',
+        description: language === 'bn' ? 'সফলভাবে লগইন হয়েছে' : 'Successfully logged in',
+      });
+
+      // Navigate after session is confirmed
+      // Role check happens in AuthContext, so we navigate to client
+      // and AuthGate will redirect to admin if needed
+      navigate(from, { replace: true });
+
+    } catch (error) {
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!mountedRef.current) return;
+
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setLoginError(getErrorMessage(message, language));
+      toast({
+        title: language === 'bn' ? 'ত্রুটি' : 'Error',
+        description: getErrorMessage(message, language),
+        variant: 'destructive',
+      });
     } finally {
-      setIsLoading(false);
+      // ALWAYS reset isSubmitting in finally block
+      if (mountedRef.current) {
+        setIsSubmitting(false);
+      }
     }
   };
 
   const handleGoogleLogin = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/client`,
-      },
-    });
-
-    if (error) {
-      toast({
-        title: language === 'bn' ? 'Google লগইন ব্যর্থ' : 'Google Login Failed',
-        description: error.message,
-        variant: 'destructive',
+    setLoginError(null);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/client`,
+        },
       });
+
+      if (error) {
+        setLoginError(getErrorMessage(error.message, language));
+        toast({
+          title: language === 'bn' ? 'Google লগইন ব্যর্থ' : 'Google Login Failed',
+          description: getErrorMessage(error.message, language),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setLoginError(getErrorMessage(message, language));
     }
   };
 
@@ -134,6 +251,19 @@ const Login: React.FC = () => {
                   </p>
                 </div>
 
+                {/* Error Alert */}
+                {loginError && (
+                  <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-destructive font-medium">
+                        {language === 'bn' ? 'লগইন ব্যর্থ' : 'Login Failed'}
+                      </p>
+                      <p className="text-sm text-destructive/80 mt-1">{loginError}</p>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-5">
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -144,9 +274,14 @@ const Login: React.FC = () => {
                       <input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, email: e.target.value });
+                          if (errors.email) setErrors({ ...errors, email: '' });
+                          if (loginError) setLoginError(null);
+                        }}
                         placeholder="you@example.com"
-                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.email ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.email ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                     </div>
                     {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
@@ -166,14 +301,20 @@ const Login: React.FC = () => {
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, password: e.target.value });
+                          if (errors.password) setErrors({ ...errors, password: '' });
+                          if (loginError) setLoginError(null);
+                        }}
                         placeholder="••••••••"
-                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        disabled={isSubmitting}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -185,15 +326,22 @@ const Login: React.FC = () => {
                     <input
                       type="checkbox"
                       id="remember"
-                      className="w-4 h-4 rounded border-border text-primary focus:ring-accent"
+                      disabled={isSubmitting}
+                      className="w-4 h-4 rounded border-border text-primary focus:ring-accent disabled:opacity-50"
                     />
                     <label htmlFor="remember" className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'আমাকে মনে রাখুন' : 'Remember me'}
                     </label>
                   </div>
 
-                  <Button variant="hero" size="xl" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
+                  <Button 
+                    type="submit"
+                    variant="hero" 
+                    size="xl" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
                       <span className="flex items-center gap-2">
                         <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
                         {language === 'bn' ? 'লগইন হচ্ছে...' : 'Logging in...'}
@@ -223,6 +371,7 @@ const Login: React.FC = () => {
                   variant="outline" 
                   className="w-full h-12 gap-3"
                   onClick={handleGoogleLogin}
+                  disabled={isSubmitting}
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -259,5 +408,47 @@ const Login: React.FC = () => {
     </Layout>
   );
 };
+
+// Helper function to get user-friendly error messages
+function getErrorMessage(error: string, language: string): string {
+  const errorMap: Record<string, { en: string; bn: string }> = {
+    'Invalid login credentials': {
+      en: 'Invalid email or password. Please try again.',
+      bn: 'ভুল ইমেইল বা পাসওয়ার্ড। আবার চেষ্টা করুন।',
+    },
+    'Email not confirmed': {
+      en: 'Please verify your email before logging in.',
+      bn: 'লগইন করার আগে আপনার ইমেইল ভেরিফাই করুন।',
+    },
+    'User not found': {
+      en: 'No account found with this email.',
+      bn: 'এই ইমেইল দিয়ে কোনো অ্যাকাউন্ট পাওয়া যায়নি।',
+    },
+    'Too many requests': {
+      en: 'Too many login attempts. Please wait and try again.',
+      bn: 'অনেক বেশি লগইন চেষ্টা। কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন।',
+    },
+    'Network request failed': {
+      en: 'Network error. Please check your connection.',
+      bn: 'নেটওয়ার্ক সমস্যা। আপনার কানেকশন চেক করুন।',
+    },
+    'Failed to fetch': {
+      en: 'Connection failed. Please check your internet.',
+      bn: 'কানেকশন ব্যর্থ। আপনার ইন্টারনেট চেক করুন।',
+    },
+  };
+
+  // Find matching error
+  for (const [key, messages] of Object.entries(errorMap)) {
+    if (error.toLowerCase().includes(key.toLowerCase())) {
+      return language === 'bn' ? messages.bn : messages.en;
+    }
+  }
+
+  // Default message
+  return language === 'bn' 
+    ? 'একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।' 
+    : 'Something went wrong. Please try again.';
+}
 
 export default Login;
