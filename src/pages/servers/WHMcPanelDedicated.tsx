@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WHMcPanelDedicated: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -94,6 +94,11 @@ const WHMcPanelDedicated: React.FC = () => {
         { question: "Is the server fully managed?", answer: "Yes, we handle all server management including updates, security patches, and monitoring." },
         { question: "How many websites can I host?", answer: "You can host unlimited websites with our WHM Dedicated servers." },
         { question: "Is IPMI access included?", answer: "Yes, IPMI access is included for remote server management." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Servers', url: '/servers' },
+        { name: 'WHM/cPanel Dedicated', url: '/servers/whm-cpanel' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const DedicatedServer: React.FC = () => {
   const { language } = useLanguage();
@@ -111,6 +111,11 @@ const DedicatedServer: React.FC = () => {
         { question: "What is a dedicated server?", answer: "A dedicated server is a physical server exclusively allocated to you with full hardware access." },
         { question: "What processors are available?", answer: "We offer Intel Xeon E3, E5, and Silver series processors for various performance needs." },
         { question: "Is DDoS protection included?", answer: "Yes, all dedicated servers include up to 1Tbps DDoS protection." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Servers', url: '/servers' },
+        { name: 'Dedicated Server', url: '/servers/dedicated' }
       ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">

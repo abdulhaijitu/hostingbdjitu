@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const CustomVPS: React.FC = () => {
   const { language } = useLanguage();
@@ -67,6 +67,11 @@ const CustomVPS: React.FC = () => {
         { question: "Can I configure my own VPS?", answer: "Yes, you can select CPU, RAM, storage, and bandwidth according to your specific needs." },
         { question: "What is the maximum configuration?", answer: "You can configure up to 64 vCPU, 256GB RAM, and 4TB NVMe storage." },
         { question: "How long does setup take?", answer: "Custom VPS is typically provisioned within 24 hours after quote approval." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'VPS', url: '/vps' },
+        { name: 'Custom VPS', url: '/vps/custom' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

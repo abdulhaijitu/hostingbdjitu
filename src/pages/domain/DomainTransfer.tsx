@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const DomainTransfer: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -85,6 +85,11 @@ const DomainTransfer: React.FC = () => {
         { question: "How long does the transfer take?", answer: "Usually 5-7 days, but can sometimes complete within 24 hours." },
         { question: "Will my site go down during transfer?", answer: "No, your website remains fully online throughout the transfer process." },
         { question: "Where do I get the auth code?", answer: "Request it from your current domain registrar's dashboard." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Domain', url: '/domain' },
+        { name: 'Domain Transfer', url: '/domain/transfer' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

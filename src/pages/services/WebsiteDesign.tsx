@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WebsiteDesign: React.FC = () => {
   const { language } = useLanguage();
@@ -152,6 +152,11 @@ const WebsiteDesign: React.FC = () => {
         { question: "How long does it take to build a website?", answer: "Depending on complexity, websites typically take 2-6 weeks from design to launch." },
         { question: "Is the website mobile responsive?", answer: "Yes, all our websites are fully responsive and optimized for all devices." },
         { question: "Do you provide ongoing support?", answer: "Yes, all packages include support ranging from 1 to 6 months after launch." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Services', url: '/services' },
+        { name: 'Website Design', url: '/services/website-design' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">

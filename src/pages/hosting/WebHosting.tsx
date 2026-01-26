@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WebHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -132,6 +132,11 @@ const WebHosting: React.FC = () => {
         { question: "What is included in web hosting?", answer: "Our web hosting includes NVMe SSD storage, free SSL certificate, cPanel access, daily backups, and 24/7 support." },
         { question: "What is the uptime guarantee?", answer: "We guarantee 99.99% uptime for all our web hosting plans." },
         { question: "Can I upgrade my plan later?", answer: "Yes, you can easily upgrade your hosting plan anytime from your control panel." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'Hosting', url: '/hosting' },
+        { name: 'Web Hosting', url: '/hosting/web' }
       ]} />
       {/* Hero */}
       <section className="bg-gradient-hero section-padding relative overflow-hidden">

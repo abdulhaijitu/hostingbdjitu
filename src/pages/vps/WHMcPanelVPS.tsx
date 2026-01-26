@@ -4,7 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
-import { ProductSchema, FAQSchema } from '@/components/common/SchemaMarkup';
+import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WHMcPanelVPS: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -89,6 +89,11 @@ const WHMcPanelVPS: React.FC = () => {
         { question: "Is cPanel license included?", answer: "Yes, cPanel/WHM license is included in all WHM VPS plans." },
         { question: "How many websites can I host?", answer: "You can host multiple websites based on your plan - from 10 to unlimited cPanel accounts." },
         { question: "Is migration free?", answer: "Yes, we offer free migration from your existing hosting provider." }
+      ]} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', url: '/' },
+        { name: 'VPS', url: '/vps' },
+        { name: 'WHM/cPanel VPS', url: '/vps/whm-cpanel' }
       ]} />
       {/* Hero Section */}
       <section className="bg-gradient-hero section-padding">
