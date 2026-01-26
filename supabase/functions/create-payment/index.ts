@@ -121,6 +121,32 @@ Deno.serve(async (req) => {
       console.error("Database error:", paymentError);
     }
 
+    // Send order placed email
+    try {
+      const emailPayload = {
+        type: "order_placed",
+        orderId: orderId,
+        userEmail: customerEmail,
+        userName: customerName,
+        orderNumber: orderId,
+        itemName: itemName,
+        amount: amount,
+      };
+
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-order-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify(emailPayload),
+      });
+
+      console.log("Order email sent to:", customerEmail);
+    } catch (emailError) {
+      console.error("Failed to send order email:", emailError);
+    }
+
     return new Response(JSON.stringify({
       success: true,
       payment_url: uddoktaResult.payment_url,
