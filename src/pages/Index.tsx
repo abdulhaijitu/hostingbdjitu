@@ -8,6 +8,7 @@ import ServicesSection from '@/components/home/ServicesSection';
 import TrustSection from '@/components/home/TrustSection';
 import TestimonialsSection from '@/components/home/TestimonialsSection';
 import FAQSection from '@/components/home/FAQSection';
+import NewsletterSection from '@/components/home/NewsletterSection';
 import CTASection from '@/components/home/CTASection';
 
 const Index: React.FC = () => {
@@ -21,6 +22,7 @@ const Index: React.FC = () => {
       <TrustSection />
       <TestimonialsSection />
       <FAQSection />
+      <NewsletterSection />
       <CTASection />
     </Layout>
   );
