@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check, Shield, Zap, Gift } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const signupSchema = z.object({
   name: z.string().min(2, 'Name must be at least 2 characters'),
@@ -20,6 +22,9 @@ const signupSchema = z.object({
 
 const Signup: React.FC = () => {
   const { language } = useLanguage();
+  const { signUp } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -33,7 +38,7 @@ const Signup: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedToTerms) {
       setErrors({ terms: language === 'bn' ? 'শর্তাবলী মেনে নিতে হবে' : 'You must agree to the terms' });
@@ -43,7 +48,25 @@ const Signup: React.FC = () => {
       signupSchema.parse(formData);
       setErrors({});
       setIsLoading(true);
-      setTimeout(() => setIsLoading(false), 1500);
+      
+      const { error } = await signUp(formData.email, formData.password, formData.name);
+      
+      if (error) {
+        toast({
+          title: language === 'bn' ? 'সাইন আপ ব্যর্থ' : 'Sign Up Failed',
+          description: error.message,
+          variant: 'destructive',
+        });
+        setIsLoading(false);
+        return;
+      }
+      
+      toast({
+        title: language === 'bn' ? 'সফল!' : 'Success!',
+        description: language === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে। লগইন করুন।' : 'Account created successfully. Please login.',
+      });
+      
+      navigate('/login');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -52,6 +75,8 @@ const Signup: React.FC = () => {
         });
         setErrors(newErrors);
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
