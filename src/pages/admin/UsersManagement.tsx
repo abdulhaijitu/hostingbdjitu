@@ -355,7 +355,11 @@ const UsersManagement: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{users.length}</div>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-16" />
+                ) : (
+                  <div className="text-3xl font-bold">{users.length}</div>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -365,7 +369,11 @@ const UsersManagement: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{users.filter(u => u.role === 'admin').length}</div>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <div className="text-3xl font-bold">{users.filter(u => u.role === 'admin').length}</div>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -375,7 +383,11 @@ const UsersManagement: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
+                {isLoading ? (
+                  <Skeleton className="h-9 w-12" />
+                ) : (
+                  <div className="text-3xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
+                )}
               </CardContent>
             </Card>
           </div>
