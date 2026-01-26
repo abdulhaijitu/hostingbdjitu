@@ -20,7 +20,7 @@ const LOGIN_TIMEOUT_MS = 6000;
 
 const Login: React.FC = () => {
   const { language } = useLanguage();
-  const { user, authReady, isAdmin } = useAuth();
+  const { user, authReady, isAdmin, role, roleLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -36,9 +36,10 @@ const Login: React.FC = () => {
   // Refs for cleanup
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mountedRef = useRef(true);
+  const hasRedirected = useRef(false);
 
-  // Get redirect path from location state or default
-  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/client';
+  // Get redirect path from location state (for returning to previous page after login)
+  const fromPath = (location.state as { from?: { pathname: string } })?.from?.pathname;
 
   // Cleanup on unmount
   useEffect(() => {
@@ -51,13 +52,29 @@ const Login: React.FC = () => {
     };
   }, []);
 
-  // Redirect if already authenticated - only after auth is ready
+  // Redirect if already authenticated - WAIT for role to be resolved
   useEffect(() => {
-    if (authReady && user) {
-      const redirectPath = isAdmin ? '/admin' : from;
-      navigate(redirectPath, { replace: true });
+    // Don't redirect if not ready or already redirected
+    if (!authReady || !user || hasRedirected.current) return;
+    
+    // CRITICAL: Wait for role to be resolved before redirecting
+    // This prevents admin users from being sent to /client
+    if (roleLoading) return;
+    
+    // Role is resolved, determine redirect path
+    let redirectPath: string;
+    
+    if (isAdmin) {
+      // Admin users go to admin dashboard (unless they came from a specific page)
+      redirectPath = fromPath?.startsWith('/admin') ? fromPath : '/admin';
+    } else {
+      // Regular users go to client dashboard or their original destination
+      redirectPath = fromPath && !fromPath.startsWith('/admin') ? fromPath : '/client';
     }
-  }, [authReady, user, isAdmin, navigate, from]);
+    
+    hasRedirected.current = true;
+    navigate(redirectPath, { replace: true });
+  }, [authReady, user, isAdmin, role, roleLoading, navigate, fromPath]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -137,16 +154,15 @@ const Login: React.FC = () => {
         return;
       }
 
-      // Success - show toast and redirect will happen via useEffect
+      // Success - show toast
+      // DON'T navigate here - let the useEffect handle redirect after role is resolved
       toast({
         title: language === 'bn' ? 'সফল!' : 'Success!',
         description: language === 'bn' ? 'সফলভাবে লগইন হয়েছে' : 'Successfully logged in',
       });
 
-      // Navigate after session is confirmed
-      // Role check happens in AuthContext, so we navigate to client
-      // and AuthGate will redirect to admin if needed
-      navigate(from, { replace: true });
+      // Reset hasRedirected ref to allow useEffect to handle navigation
+      hasRedirected.current = false;
 
     } catch (error) {
       // Clear timeout

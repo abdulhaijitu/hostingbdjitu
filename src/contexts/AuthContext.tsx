@@ -10,6 +10,7 @@ interface AuthContextType {
   role: AppRole | null;
   loading: boolean;
   authReady: boolean;
+  roleLoading: boolean; // New: explicit role loading state
   signUp: (email: string, password: string, fullName?: string) => Promise<{ error: Error | null }>;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -34,6 +35,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  const [roleLoading, setRoleLoading] = useState(false); // Explicit role loading state
   
   // Refs for cleanup and preventing race conditions
   const mountedRef = useRef(true);
@@ -46,6 +48,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (roleCache.has(userId)) {
       return roleCache.get(userId) ?? null;
     }
+
+    // Set role loading state
+    setRoleLoading(true);
 
     try {
       const { data, error } = await supabase
@@ -66,6 +71,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error fetching user role:', error);
       return null;
+    } finally {
+      setRoleLoading(false);
     }
   }, []);
 
@@ -287,12 +294,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     role,
     loading,
     authReady,
+    roleLoading,
     signUp,
     signIn,
     signOut,
     isAdmin: role === 'admin',
     refreshSession,
-  }), [user, session, role, loading, authReady, signUp, signIn, signOut, refreshSession]);
+  }), [user, session, role, loading, authReady, roleLoading, signUp, signIn, signOut, refreshSession]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
