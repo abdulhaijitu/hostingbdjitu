@@ -3,7 +3,7 @@ import {
   ListTodo, RefreshCw, RotateCcw, Clock, CheckCircle, 
   XCircle, Loader2, AlertTriangle, Server, Eye
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -79,7 +79,7 @@ const ProvisioningQueue: React.FC = () => {
   const completedCount = queue?.filter(q => q.status === 'completed').length || 0;
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'প্রভিশনিং কিউ' : 'Provisioning Queue'}
         description="Manage hosting provisioning queue"
@@ -378,7 +378,7 @@ const ProvisioningQueue: React.FC = () => {
         </DialogContent>
       </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

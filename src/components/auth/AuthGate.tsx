@@ -1,155 +1,92 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
-import { RefreshCw, LogIn, ShieldAlert } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface AuthGateProps {
   children: React.ReactNode;
-  requireAdmin?: boolean;
+  /** Custom fallback while auth is loading */
   fallback?: React.ReactNode;
 }
 
-// Minimal loading indicator - never throws errors
-const MinimalLoader = ({ type = 'client' }: { type?: 'admin' | 'client' }) => {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-3">
-        <div className="relative">
-          <div className={cn(
-            "h-10 w-10 rounded-xl animate-pulse",
-            type === 'admin' ? 'bg-primary/20' : 'bg-primary/20'
-          )} />
-          <div className="absolute inset-0 h-10 w-10 rounded-xl border-2 border-primary border-t-transparent animate-spin" />
-        </div>
-        <span className="text-sm text-muted-foreground animate-pulse">
-          {type === 'admin' ? 'অনুমতি যাচাই করা হচ্ছে...' : 'লোড হচ্ছে...'}
-        </span>
-      </div>
-    </div>
-  );
-};
+// Timeout constant (5 seconds max for auth)
+const AUTH_LOADING_TIMEOUT = 5000;
 
-// Role error state - shown when role fetch fails
-const RoleErrorState: React.FC<{ onRetry: () => void; error?: string }> = ({ onRetry, error }) => (
+// Minimal loading indicator - pure function, no ref issues
+const MinimalAuthLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="text-center p-8 max-w-md">
-      <div className="h-16 w-16 rounded-full bg-destructive/10 mx-auto mb-4 flex items-center justify-center">
-        <ShieldAlert className="h-8 w-8 text-destructive" />
+    <div className="flex flex-col items-center gap-3">
+      <div className="relative">
+        <div className="h-10 w-10 rounded-xl bg-primary/20 animate-pulse" />
+        <div className="absolute inset-0 h-10 w-10 rounded-xl border-2 border-primary border-t-transparent animate-spin" />
       </div>
-      <h2 className="text-xl font-bold mb-2">অনুমতি লোড করতে সমস্যা</h2>
-      <p className="text-muted-foreground mb-4">
-        আপনার ইউজার রোল লোড করা সম্ভব হয়নি। আবার চেষ্টা করুন।
-      </p>
-      {error && (
-        <p className="text-xs text-destructive/70 mb-4 font-mono bg-destructive/5 p-2 rounded">
-          {error}
-        </p>
-      )}
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Button onClick={onRetry} variant="default">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          আবার চেষ্টা করুন
-        </Button>
-        <Button onClick={() => window.location.href = '/auth/login'} variant="outline">
-          <LogIn className="h-4 w-4 mr-2" />
-          পুনরায় লগইন
-        </Button>
-      </div>
-    </div>
-  </div>
-);
-
-// Access denied state - shown when user doesn't have permission
-const AccessDeniedState: React.FC = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="text-center p-8 max-w-md">
-      <div className="h-16 w-16 rounded-full bg-destructive/10 mx-auto mb-4 flex items-center justify-center">
-        <ShieldAlert className="h-8 w-8 text-destructive" />
-      </div>
-      <h2 className="text-xl font-bold mb-2">অ্যাক্সেস অনুমোদিত নয়</h2>
-      <p className="text-muted-foreground mb-4">
-        এই পেজ দেখার অনুমতি আপনার নেই। শুধুমাত্র অ্যাডমিন ইউজাররা এই পেজ দেখতে পারেন।
-      </p>
-      <div className="flex flex-col sm:flex-row gap-3 justify-center">
-        <Button onClick={() => window.location.href = '/client'} variant="default">
-          ড্যাশবোর্ডে যান
-        </Button>
-        <Button onClick={() => window.location.href = '/'} variant="outline">
-          হোম পেজে যান
-        </Button>
-      </div>
+      <span className="text-sm text-muted-foreground animate-pulse">
+        লোড হচ্ছে...
+      </span>
     </div>
   </div>
 );
 
 /**
- * AuthGate - Authentication and Authorization wrapper
+ * AuthGate - Level 1 authentication wrapper
  * 
- * CRITICAL PRINCIPLES:
- * - Authentication (login check) ≠ Authorization (role check)
- * - NEVER throw errors for loading/undefined states
- * - NEVER redirect before role is resolved
- * - Use explicit state machine for role resolution
+ * SINGLE RESPONSIBILITY:
+ * - Resolve auth session only
+ * - Set user or null
+ * - Set authLoading = false ALWAYS
  * 
- * Flow:
- * 1. Wait for auth to be ready (show loader)
- * 2. Check if user is logged in (redirect to login if not)
- * 3. For admin routes: wait for role resolution (show loader)
- * 4. Handle role errors gracefully (show error state, not error boundary)
- * 5. Only deny access AFTER role is confirmed non-admin
+ * AuthGate MUST NOT:
+ * - Fetch role
+ * - Redirect based on role  
+ * - Fetch page data
+ * 
+ * While authLoading = true:
+ * → show minimal loader only
  */
-const AuthGate: React.FC<AuthGateProps> = ({ 
-  children, 
-  requireAdmin = false,
-  fallback 
-}) => {
-  const { 
-    user, 
-    loading, 
-    authReady, 
-    isAdmin, 
-    role, 
-    roleLoading, 
-    roleError,
-    retryRoleFetch 
-  } = useAuth();
+const AuthGate: React.FC<AuthGateProps> = ({ children, fallback }) => {
+  const { user, loading, authReady } = useAuth();
   const location = useLocation();
-  
-  // Determine route type for loader styling
-  const routeType = location.pathname.startsWith('/admin') ? 'admin' : 'client';
+  const [timedOut, setTimedOut] = useState(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // PHASE 1: Wait for authentication to resolve
-  if (loading || !authReady) {
-    return fallback || <MinimalLoader type={routeType} />;
+  // Debug logging (temporary)
+  useEffect(() => {
+    console.log('[AuthGate] State:', {
+      loading,
+      authReady,
+      hasUser: !!user,
+      timedOut,
+      path: location.pathname
+    });
+  }, [loading, authReady, user, timedOut, location.pathname]);
+
+  // Timeout failsafe - auth should never hang
+  useEffect(() => {
+    if (loading && !timedOut) {
+      timeoutRef.current = setTimeout(() => {
+        console.warn('[AuthGate] Auth loading timed out - forcing ready state');
+        setTimedOut(true);
+      }, AUTH_LOADING_TIMEOUT);
+    }
+
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, [loading, timedOut]);
+
+  // PHASE 1: Auth is loading and hasn't timed out
+  if (loading && !authReady && !timedOut) {
+    return fallback ? <>{fallback}</> : <MinimalAuthLoader />;
   }
 
-  // PHASE 2: Check authentication (is user logged in?)
+  // PHASE 2: No user - redirect to login
   if (!user) {
     return <Navigate to="/auth/login" state={{ from: location }} replace />;
   }
 
-  // PHASE 3: For admin routes, check authorization
-  if (requireAdmin) {
-    // 3a: Role is still loading - show loader (NEVER error boundary)
-    // Also check if role is null but no error (still resolving)
-    if (roleLoading || (role === null && !roleError)) {
-      return fallback || <MinimalLoader type="admin" />;
-    }
-
-    // 3b: Role fetch had an error - show retry UI (not error boundary)
-    if (roleError) {
-      return <RoleErrorState onRetry={retryRoleFetch} error={roleError} />;
-    }
-
-    // 3c: Role is resolved - check if admin
-    if (!isAdmin) {
-      return <AccessDeniedState />;
-    }
-  }
-
-  // All checks passed - render children
+  // PHASE 3: User authenticated - render children (role check happens in RoleGate)
   return <>{children}</>;
 };
 

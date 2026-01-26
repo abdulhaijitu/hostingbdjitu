@@ -3,7 +3,7 @@ import {
   Key, Server, Eye, EyeOff, Save, Plus, Trash2, 
   Shield, CheckCircle, AlertCircle, Loader2 
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -164,7 +164,7 @@ const ServerCredentials: React.FC = () => {
   ) || [];
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'WHM API কনফিগারেশন' : 'WHM API Configuration'}
         description="Configure WHM API credentials for servers"
@@ -439,7 +439,7 @@ const ServerCredentials: React.FC = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

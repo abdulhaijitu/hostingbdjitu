@@ -3,7 +3,7 @@ import {
   Server, Plus, RefreshCw, Edit2, Trash2, Globe, 
   CheckCircle, XCircle, Loader2, Activity, HardDrive
 } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -176,7 +176,7 @@ const ServerManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'সার্ভার ম্যানেজমেন্ট' : 'Server Management'}
         description="Manage WHM/cPanel servers"
@@ -569,7 +569,7 @@ const ServerManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

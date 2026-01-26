@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square, Shield, UserCog, RefreshCw } from 'lucide-react';
-import AdminLayout from '@/components/admin/AdminLayout';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -332,7 +332,7 @@ const UsersManagement: React.FC = () => {
   };
 
   return (
-    <AdminLayout>
+    <>
       <SEOHead 
         title={language === 'bn' ? 'ইউজার ম্যানেজমেন্ট' : 'Users Management'}
         description="Manage users"
@@ -695,7 +695,7 @@ const UsersManagement: React.FC = () => {
         </DialogContent>
       </Dialog>
       </div>
-    </AdminLayout>
+    </>
   );
 };
 

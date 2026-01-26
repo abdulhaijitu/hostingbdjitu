@@ -8,6 +8,7 @@ import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
+import AdminRoute from "@/components/auth/AdminRoute";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
 // Pages
 import Index from "./pages/Index";
@@ -200,21 +201,21 @@ const App = () => (
                   <Route path="/client/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
                   <Route path="/client/profile" element={<ProtectedRoute><ProfileSettingsPage /></ProtectedRoute>} />
                   
-                  {/* Admin Routes */}
-                  <Route path="/admin" element={<ProtectedRoute requireAdmin><AdminDashboard /></ProtectedRoute>} />
-                  <Route path="/admin/hosting-plans" element={<ProtectedRoute requireAdmin><HostingPlansManagement /></ProtectedRoute>} />
-                  <Route path="/admin/domain-pricing" element={<ProtectedRoute requireAdmin><DomainPricingManagement /></ProtectedRoute>} />
-                  <Route path="/admin/users" element={<ProtectedRoute requireAdmin><UsersManagement /></ProtectedRoute>} />
-                  <Route path="/admin/tickets" element={<ProtectedRoute requireAdmin><TicketsManagement /></ProtectedRoute>} />
-                  <Route path="/admin/analytics" element={<ProtectedRoute requireAdmin><AnalyticsDashboard /></ProtectedRoute>} />
-                  <Route path="/admin/orders" element={<ProtectedRoute requireAdmin><OrdersManagement /></ProtectedRoute>} />
-                  <Route path="/admin/payments" element={<ProtectedRoute requireAdmin><PaymentsManagement /></ProtectedRoute>} />
-                  <Route path="/admin/webhooks" element={<ProtectedRoute requireAdmin><WebhookLogs /></ProtectedRoute>} />
-                  <Route path="/admin/servers" element={<ProtectedRoute requireAdmin><ServerManagement /></ProtectedRoute>} />
-                  <Route path="/admin/provisioning" element={<ProtectedRoute requireAdmin><ProvisioningQueue /></ProtectedRoute>} />
-                  <Route path="/admin/package-mapping" element={<ProtectedRoute requireAdmin><WHMPackageMapping /></ProtectedRoute>} />
-                  <Route path="/admin/hosting-accounts" element={<ProtectedRoute requireAdmin><HostingAccountsManagement /></ProtectedRoute>} />
-                  <Route path="/admin/server-credentials" element={<ProtectedRoute requireAdmin><ServerCredentials /></ProtectedRoute>} />
+                  {/* Admin Routes - Use AdminRoute for layout shell + role protection */}
+                  <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                  <Route path="/admin/hosting-plans" element={<AdminRoute><HostingPlansManagement /></AdminRoute>} />
+                  <Route path="/admin/domain-pricing" element={<AdminRoute><DomainPricingManagement /></AdminRoute>} />
+                  <Route path="/admin/users" element={<AdminRoute><UsersManagement /></AdminRoute>} />
+                  <Route path="/admin/tickets" element={<AdminRoute><TicketsManagement /></AdminRoute>} />
+                  <Route path="/admin/analytics" element={<AdminRoute><AnalyticsDashboard /></AdminRoute>} />
+                  <Route path="/admin/orders" element={<AdminRoute><OrdersManagement /></AdminRoute>} />
+                  <Route path="/admin/payments" element={<AdminRoute><PaymentsManagement /></AdminRoute>} />
+                  <Route path="/admin/webhooks" element={<AdminRoute><WebhookLogs /></AdminRoute>} />
+                  <Route path="/admin/servers" element={<AdminRoute><ServerManagement /></AdminRoute>} />
+                  <Route path="/admin/provisioning" element={<AdminRoute><ProvisioningQueue /></AdminRoute>} />
+                  <Route path="/admin/package-mapping" element={<AdminRoute><WHMPackageMapping /></AdminRoute>} />
+                  <Route path="/admin/hosting-accounts" element={<AdminRoute><HostingAccountsManagement /></AdminRoute>} />
+                  <Route path="/admin/server-credentials" element={<AdminRoute><ServerCredentials /></AdminRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
