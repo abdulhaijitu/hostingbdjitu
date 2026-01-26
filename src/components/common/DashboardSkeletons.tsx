@@ -284,12 +284,21 @@ export const PageLoadingSkeleton: React.FC = () => (
   </div>
 );
 
-// Auth Loading Screen (skeleton dashboard preview)
+// Auth Loading Screen (skeleton dashboard preview) - DEPRECATED
+// Use content-only skeletons instead
 export const AuthLoadingSkeleton: React.FC<{ type?: 'admin' | 'client' }> = ({ type = 'client' }) => {
-  if (type === 'admin') {
-    return <AdminDashboardSkeleton />;
-  }
-  return <ClientDashboardSkeleton />;
+  // Return minimal loader instead of full dashboard skeleton
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-3">
+        <div className="relative">
+          <div className="h-10 w-10 rounded-xl bg-primary/20 animate-pulse" />
+          <div className="absolute inset-0 h-10 w-10 rounded-xl border-2 border-primary border-t-transparent animate-spin" />
+        </div>
+        <span className="text-sm text-muted-foreground animate-pulse">Loading...</span>
+      </div>
+    </div>
+  );
 };
 
 // Empty State Component
@@ -318,19 +327,34 @@ export const ErrorState: React.FC<{
   title?: string;
   description?: string;
   onRetry?: () => void;
+  isTimeout?: boolean;
 }> = ({ 
   title = "Something went wrong", 
   description = "Failed to load data. Please try again.",
-  onRetry 
+  onRetry,
+  isTimeout = false
 }) => (
   <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-    <div className="p-4 rounded-2xl bg-destructive/10 mb-4">
-      <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-      </svg>
+    <div className={cn(
+      "p-4 rounded-2xl mb-4",
+      isTimeout ? "bg-warning/10" : "bg-destructive/10"
+    )}>
+      {isTimeout ? (
+        <svg className="h-8 w-8 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      ) : (
+        <svg className="h-8 w-8 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+        </svg>
+      )}
     </div>
-    <h3 className="text-lg font-semibold mb-1">{title}</h3>
-    <p className="text-muted-foreground text-sm max-w-sm mb-4">{description}</p>
+    <h3 className="text-lg font-semibold mb-1">
+      {isTimeout ? "Request Timed Out" : title}
+    </h3>
+    <p className="text-muted-foreground text-sm max-w-sm mb-4">
+      {isTimeout ? "The request took too long. Please check your connection and try again." : description}
+    </p>
     {onRetry && (
       <button
         onClick={onRetry}
@@ -339,5 +363,83 @@ export const ErrorState: React.FC<{
         Try Again
       </button>
     )}
+  </div>
+);
+
+// Content-only skeleton for admin pages (no layout)
+export const AdminContentSkeleton: React.FC = () => (
+  <div className="space-y-6">
+    {/* Stats Grid */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {[1, 2, 3, 4].map((i) => (
+        <StatCardSkeleton key={i} />
+      ))}
+    </div>
+    
+    {/* Table */}
+    <TableSkeleton rows={5} columns={5} />
+  </div>
+);
+
+// Content-only skeleton for client pages (no layout)
+export const ClientContentSkeleton: React.FC = () => (
+  <div className="space-y-6">
+    {/* Stats Grid */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <StatCardSkeleton key={i} />
+      ))}
+    </div>
+    
+    {/* Content Cards */}
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="lg:col-span-2 space-y-4">
+        <div className="bg-card rounded-xl border border-border p-6 space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      </div>
+      <div className="space-y-4">
+        <div className="bg-card rounded-xl border border-border p-6">
+          <SkeletonPulse className="h-5 w-28 mb-4" />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <SkeletonPulse key={i} className="h-10 w-full" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// Stats-only skeleton
+export const StatsGridSkeleton: React.FC<{ count?: number }> = ({ count = 4 }) => (
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    {Array.from({ length: count }).map((_, i) => (
+      <StatCardSkeleton key={i} />
+    ))}
+  </div>
+);
+
+// List skeleton
+export const ListSkeleton: React.FC<{ rows?: number }> = ({ rows = 5 }) => (
+  <div className="space-y-3">
+    {Array.from({ length: rows }).map((_, i) => (
+      <div key={i} className="h-16 bg-muted/50 rounded-lg animate-pulse" />
+    ))}
+  </div>
+);
+
+// Card content skeleton
+export const CardContentSkeleton: React.FC = () => (
+  <div className="space-y-4">
+    <SkeletonPulse className="h-5 w-32" />
+    <div className="space-y-3">
+      {[1, 2, 3].map((i) => (
+        <SkeletonPulse key={i} className="h-12 w-full" />
+      ))}
+    </div>
   </div>
 );

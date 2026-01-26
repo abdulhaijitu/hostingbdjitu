@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square, Shield, UserCog } from 'lucide-react';
+import { ArrowLeft, Users, Search, Package, CreditCard, Mail, Phone, Building, Download, FileSpreadsheet, Trash2, UserX, CheckSquare, Square, Shield, UserCog, RefreshCw } from 'lucide-react';
 import AdminLayout from '@/components/admin/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -15,6 +15,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState, EmptyState } from '@/components/common/DashboardSkeletons';
 import SEOHead from '@/components/common/SEOHead';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +40,8 @@ const UsersManagement: React.FC = () => {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserWithProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
+  const [isTimeout, setIsTimeout] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithProfile | null>(null);
   const [userOrders, setUserOrders] = useState<any[]>([]);
@@ -57,28 +60,33 @@ const UsersManagement: React.FC = () => {
 
   const fetchUsers = async () => {
     setIsLoading(true);
+    setIsError(false);
+    setIsTimeout(false);
+    
+    // 8 second failsafe timeout
+    const timeoutId = setTimeout(() => {
+      setIsLoading(false);
+      setIsError(true);
+      setIsTimeout(true);
+    }, 8000);
+
     try {
-      // Fetch profiles with user roles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
+      // Parallelize API calls for better performance
+      const [profilesResult, rolesResult, ordersResult] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('user_roles').select('user_id, role'),
+        supabase.from('orders').select('user_id, amount, status'),
+      ]);
 
-      if (profilesError) throw profilesError;
+      clearTimeout(timeoutId);
 
-      // Fetch user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
+      if (profilesResult.error) throw profilesResult.error;
+      if (rolesResult.error) throw rolesResult.error;
+      if (ordersResult.error) throw ordersResult.error;
 
-      if (rolesError) throw rolesError;
-
-      // Fetch orders summary per user
-      const { data: orders, error: ordersError } = await supabase
-        .from('orders')
-        .select('user_id, amount, status');
-
-      if (ordersError) throw ordersError;
+      const profiles = profilesResult.data;
+      const roles = rolesResult.data;
+      const orders = ordersResult.data;
 
       // Combine data
       const usersData: UserWithProfile[] = profiles.map(profile => {
@@ -102,13 +110,17 @@ const UsersManagement: React.FC = () => {
       });
 
       setUsers(usersData);
+      setIsError(false);
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('Error fetching users:', error);
+      setIsError(true);
       toast({
         title: language === 'bn' ? 'ত্রুটি হয়েছে' : 'Error occurred',
         variant: 'destructive',
       });
     } finally {
+      clearTimeout(timeoutId);
       setIsLoading(false);
     }
   };
@@ -344,6 +356,12 @@ const UsersManagement: React.FC = () => {
                 }
               </p>
             </div>
+            {isError && (
+              <Button variant="outline" size="sm" onClick={fetchUsers}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Retry'}
+              </Button>
+            )}
           </div>
 
           {/* Stats */}
@@ -462,7 +480,17 @@ const UsersManagement: React.FC = () => {
               </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
+              {isError ? (
+                <ErrorState 
+                  title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা' : 'Failed to Load Data'}
+                  description={isTimeout 
+                    ? (language === 'bn' ? 'রিকোয়েস্ট টাইমআউট হয়েছে। আবার চেষ্টা করুন।' : 'Request timed out. Please try again.')
+                    : (language === 'bn' ? 'ইউজার ডেটা লোড করতে সমস্যা হয়েছে' : 'Could not load user data')
+                  }
+                  onRetry={fetchUsers}
+                  isTimeout={isTimeout}
+                />
+              ) : isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
                 </div>
