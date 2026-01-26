@@ -2,6 +2,7 @@ import React from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import FloatingChat from '@/components/common/FloatingChat';
+import BackToTop from '@/components/common/BackToTop';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,6 +17,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
       <Footer />
       <FloatingChat />
+      <BackToTop />
     </div>
   );
 };
