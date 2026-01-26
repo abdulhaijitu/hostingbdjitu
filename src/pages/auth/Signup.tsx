@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check, Shield, Zap, Gift } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, ArrowRight, Check, Shield, Zap, Gift, AlertCircle } from 'lucide-react';
 import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,9 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 
 const signupSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  phone: z.string().min(10, 'Invalid phone number'),
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(100, 'Name must be less than 100 characters'),
+  email: z.string().trim().email('Invalid email address').max(255, 'Email must be less than 255 characters'),
+  phone: z.string().min(10, 'Invalid phone number').max(20, 'Phone number too long'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -21,11 +21,15 @@ const signupSchema = z.object({
   path: ["confirmPassword"],
 });
 
+// Failsafe timeout constant
+const SIGNUP_TIMEOUT_MS = 6000;
+
 const Signup: React.FC = () => {
   const { language } = useLanguage();
-  const { signUp } = useAuth();
+  const { user, authReady } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -36,39 +40,50 @@ const Signup: React.FC = () => {
     confirmPassword: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  // Separate loading states
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [signupError, setSignupError] = useState<string | null>(null);
+  
+  // Refs for cleanup
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const mountedRef = useRef(true);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (authReady && user) {
+      navigate('/client', { replace: true });
+    }
+  }, [authReady, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Clear previous errors
+    setSignupError(null);
+    setErrors({});
+    
+    // Check terms agreement
     if (!agreedToTerms) {
       setErrors({ terms: language === 'bn' ? 'শর্তাবলী মেনে নিতে হবে' : 'You must agree to the terms' });
       return;
     }
+    
+    // Validate form
     try {
       signupSchema.parse(formData);
-      setErrors({});
-      setIsLoading(true);
-      
-      const { error } = await signUp(formData.email, formData.password, formData.name);
-      
-      if (error) {
-        toast({
-          title: language === 'bn' ? 'সাইন আপ ব্যর্থ' : 'Sign Up Failed',
-          description: error.message,
-          variant: 'destructive',
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      toast({
-        title: language === 'bn' ? 'সফল!' : 'Success!',
-        description: language === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!' : 'Account created successfully!',
-      });
-      
-      // Auto-login: Navigate directly to dashboard
-      navigate('/client');
     } catch (error) {
       if (error instanceof z.ZodError) {
         const newErrors: Record<string, string> = {};
@@ -76,10 +91,136 @@ const Signup: React.FC = () => {
           if (err.path[0]) newErrors[err.path[0] as string] = err.message;
         });
         setErrors(newErrors);
+        return;
       }
-    } finally {
-      setIsLoading(false);
     }
+
+    // Start submission
+    setIsSubmitting(true);
+
+    // Setup failsafe timeout
+    timeoutRef.current = setTimeout(() => {
+      if (mountedRef.current && isSubmitting) {
+        setIsSubmitting(false);
+        setSignupError(
+          language === 'bn' 
+            ? 'সাইন আপ সময় শেষ। আবার চেষ্টা করুন।' 
+            : 'Sign up timed out. Please try again.'
+        );
+        toast({
+          title: language === 'bn' ? 'সাইন আপ টাইমআউট' : 'Sign Up Timeout',
+          description: language === 'bn' 
+            ? 'সার্ভার সাড়া দিচ্ছে না। আবার চেষ্টা করুন।' 
+            : 'Server not responding. Please try again.',
+          variant: 'destructive',
+        });
+      }
+    }, SIGNUP_TIMEOUT_MS);
+
+    try {
+      // Call Supabase auth directly for better control
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          emailRedirectTo: window.location.origin,
+          data: {
+            full_name: formData.name,
+            phone: formData.phone,
+          },
+        },
+      });
+
+      // Clear timeout since we got a response
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!mountedRef.current) return;
+
+      if (error) {
+        setSignupError(getErrorMessage(error.message, language));
+        toast({
+          title: language === 'bn' ? 'সাইন আপ ব্যর্থ' : 'Sign Up Failed',
+          description: getErrorMessage(error.message, language),
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Check if user was created
+      if (!data.user) {
+        setSignupError(
+          language === 'bn' 
+            ? 'অ্যাকাউন্ট তৈরি হয়নি। আবার চেষ্টা করুন।' 
+            : 'Account not created. Please try again.'
+        );
+        return;
+      }
+
+      // Success - show toast
+      toast({
+        title: language === 'bn' ? 'সফল!' : 'Success!',
+        description: language === 'bn' ? 'অ্যাকাউন্ট সফলভাবে তৈরি হয়েছে!' : 'Account created successfully!',
+      });
+
+      // Navigate to dashboard (auto-login via Supabase)
+      navigate('/client', { replace: true });
+
+    } catch (error) {
+      // Clear timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+
+      if (!mountedRef.current) return;
+
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setSignupError(getErrorMessage(message, language));
+      toast({
+        title: language === 'bn' ? 'ত্রুটি' : 'Error',
+        description: getErrorMessage(message, language),
+        variant: 'destructive',
+      });
+    } finally {
+      // ALWAYS reset isSubmitting in finally block
+      if (mountedRef.current) {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleGoogleSignup = async () => {
+    setSignupError(null);
+    
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/client`,
+        },
+      });
+
+      if (error) {
+        setSignupError(getErrorMessage(error.message, language));
+        toast({
+          title: language === 'bn' ? 'Google সাইন আপ ব্যর্থ' : 'Google Sign Up Failed',
+          description: getErrorMessage(error.message, language),
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      setSignupError(getErrorMessage(message, language));
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData({ ...formData, [field]: value });
+    if (errors[field]) setErrors({ ...errors, [field]: '' });
+    if (signupError) setSignupError(null);
   };
 
   const benefits = [
@@ -160,6 +301,19 @@ const Signup: React.FC = () => {
                   </p>
                 </div>
 
+                {/* Error Alert */}
+                {signupError && (
+                  <div className="mb-6 p-4 rounded-lg bg-destructive/10 border border-destructive/20 flex items-start gap-3">
+                    <AlertCircle className="h-5 w-5 text-destructive flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-destructive font-medium">
+                        {language === 'bn' ? 'সাইন আপ ব্যর্থ' : 'Sign Up Failed'}
+                      </p>
+                      <p className="text-sm text-destructive/80 mt-1">{signupError}</p>
+                    </div>
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-2">
@@ -170,9 +324,10 @@ const Signup: React.FC = () => {
                       <input
                         type="text"
                         value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
                         placeholder={language === 'bn' ? 'আপনার নাম' : 'Your name'}
-                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.name ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.name ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                     </div>
                     {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
@@ -187,9 +342,10 @@ const Signup: React.FC = () => {
                       <input
                         type="email"
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) => handleInputChange('email', e.target.value)}
                         placeholder="you@example.com"
-                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.email ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.email ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                     </div>
                     {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
@@ -204,9 +360,10 @@ const Signup: React.FC = () => {
                       <input
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) => handleInputChange('phone', e.target.value)}
                         placeholder="+880 1XXX-XXXXXX"
-                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.phone ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-4 rounded-lg bg-background text-foreground border ${errors.phone ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                     </div>
                     {errors.phone && <p className="text-destructive text-xs mt-1">{errors.phone}</p>}
@@ -221,14 +378,16 @@ const Signup: React.FC = () => {
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        onChange={(e) => handleInputChange('password', e.target.value)}
                         placeholder="••••••••"
-                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.password ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        disabled={isSubmitting}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -257,14 +416,16 @@ const Signup: React.FC = () => {
                       <input
                         type={showConfirmPassword ? 'text' : 'password'}
                         value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
                         placeholder="••••••••"
-                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors`}
+                        disabled={isSubmitting}
+                        className={`w-full h-12 pl-12 pr-12 rounded-lg bg-background text-foreground border ${errors.confirmPassword ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed`}
                       />
                       <button
                         type="button"
                         onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        disabled={isSubmitting}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors disabled:opacity-50"
                       >
                         {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
@@ -277,8 +438,12 @@ const Signup: React.FC = () => {
                       type="checkbox"
                       id="terms"
                       checked={agreedToTerms}
-                      onChange={(e) => setAgreedToTerms(e.target.checked)}
-                      className="w-4 h-4 mt-0.5 rounded border-border text-primary focus:ring-accent"
+                      onChange={(e) => {
+                        setAgreedToTerms(e.target.checked);
+                        if (errors.terms) setErrors({ ...errors, terms: '' });
+                      }}
+                      disabled={isSubmitting}
+                      className="w-4 h-4 mt-0.5 rounded border-border text-primary focus:ring-accent disabled:opacity-50"
                     />
                     <label htmlFor="terms" className="text-sm text-muted-foreground">
                       {language === 'bn' ? 'আমি ' : 'I agree to the '}
@@ -294,8 +459,14 @@ const Signup: React.FC = () => {
                   </div>
                   {errors.terms && <p className="text-destructive text-xs">{errors.terms}</p>}
 
-                  <Button variant="hero" size="xl" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
+                  <Button 
+                    type="submit"
+                    variant="hero" 
+                    size="xl" 
+                    className="w-full" 
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
                       <span className="flex items-center gap-2">
                         <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin"></span>
                         {language === 'bn' ? 'অ্যাকাউন্ট তৈরি হচ্ছে...' : 'Creating account...'}
@@ -324,21 +495,8 @@ const Signup: React.FC = () => {
                   type="button"
                   variant="outline" 
                   className="w-full h-12 gap-3"
-                  onClick={async () => {
-                    const { error } = await supabase.auth.signInWithOAuth({
-                      provider: 'google',
-                      options: {
-                        redirectTo: `${window.location.origin}/client`,
-                      },
-                    });
-                    if (error) {
-                      toast({
-                        title: language === 'bn' ? 'Google সাইন আপ ব্যর্থ' : 'Google Sign Up Failed',
-                        description: error.message,
-                        variant: 'destructive',
-                      });
-                    }
-                  }}
+                  onClick={handleGoogleSignup}
+                  disabled={isSubmitting}
                 >
                   <svg className="h-5 w-5" viewBox="0 0 24 24">
                     <path
@@ -363,7 +521,7 @@ const Signup: React.FC = () => {
 
                 <p className="text-center text-muted-foreground mt-6">
                   {language === 'bn' ? 'ইতিমধ্যে অ্যাকাউন্ট আছে?' : 'Already have an account?'}{' '}
-                  <Link to="/login" className="text-accent font-medium hover:underline">
+                  <Link to="/auth/login" className="text-accent font-medium hover:underline">
                     {language === 'bn' ? 'লগইন করুন' : 'Login'}
                   </Link>
                 </p>
@@ -375,5 +533,55 @@ const Signup: React.FC = () => {
     </Layout>
   );
 };
+
+// Helper function to get user-friendly error messages
+function getErrorMessage(error: string, language: string): string {
+  const errorMap: Record<string, { en: string; bn: string }> = {
+    'User already registered': {
+      en: 'An account with this email already exists.',
+      bn: 'এই ইমেইল দিয়ে ইতিমধ্যে একটি অ্যাকাউন্ট আছে।',
+    },
+    'Email already registered': {
+      en: 'This email is already registered. Try logging in.',
+      bn: 'এই ইমেইল ইতিমধ্যে নিবন্ধিত। লগইন করুন।',
+    },
+    'Password should be at least': {
+      en: 'Password must be at least 8 characters.',
+      bn: 'পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।',
+    },
+    'Invalid email': {
+      en: 'Please enter a valid email address.',
+      bn: 'একটি বৈধ ইমেইল ঠিকানা দিন।',
+    },
+    'Too many requests': {
+      en: 'Too many attempts. Please wait and try again.',
+      bn: 'অনেক বেশি চেষ্টা। কিছুক্ষণ অপেক্ষা করে আবার চেষ্টা করুন।',
+    },
+    'Network request failed': {
+      en: 'Network error. Please check your connection.',
+      bn: 'নেটওয়ার্ক সমস্যা। আপনার কানেকশন চেক করুন।',
+    },
+    'Failed to fetch': {
+      en: 'Connection failed. Please check your internet.',
+      bn: 'কানেকশন ব্যর্থ। আপনার ইন্টারনেট চেক করুন।',
+    },
+    'Signup requires a valid password': {
+      en: 'Please enter a valid password.',
+      bn: 'একটি বৈধ পাসওয়ার্ড দিন।',
+    },
+  };
+
+  // Find matching error
+  for (const [key, messages] of Object.entries(errorMap)) {
+    if (error.toLowerCase().includes(key.toLowerCase())) {
+      return language === 'bn' ? messages.bn : messages.en;
+    }
+  }
+
+  // Default message
+  return language === 'bn' 
+    ? 'একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।' 
+    : 'Something went wrong. Please try again.';
+}
 
 export default Signup;
