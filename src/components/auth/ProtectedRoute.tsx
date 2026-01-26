@@ -1,55 +1,52 @@
-import React from 'react';
+import React, { useMemo, forwardRef } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { 
+  AuthLoadingSkeleton
+} from '@/components/common/DashboardSkeletons';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requireAdmin?: boolean;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requireAdmin = false }) => {
-  const { user, loading, isAdmin, role } = useAuth();
-  const location = useLocation();
+const ProtectedRoute = forwardRef<HTMLDivElement, ProtectedRouteProps>(
+  ({ children, requireAdmin = false }, ref) => {
+    const { user, loading, authReady, isAdmin, role } = useAuth();
+    const location = useLocation();
 
-  // Show loading while auth is initializing
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+    // Determine which skeleton to show based on route
+    const skeletonType = useMemo(() => {
+      return location.pathname.startsWith('/admin') ? 'admin' : 'client';
+    }, [location.pathname]);
 
-  // Redirect to login if not authenticated
-  if (!user) {
-    return <Navigate to="/auth/login" state={{ from: location }} replace />;
-  }
-
-  // For admin routes, wait for role to be loaded before checking
-  if (requireAdmin) {
-    // If role is still null but user exists, role might still be loading
-    if (role === null) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm text-muted-foreground">Verifying access...</p>
-          </div>
-        </div>
-      );
+    // Show skeleton while auth is initializing
+    if (loading || !authReady) {
+      return <AuthLoadingSkeleton type={skeletonType} />;
     }
-    
-    // Role loaded but not admin
-    if (!isAdmin) {
-      return <Navigate to="/dashboard" replace />;
-    }
-  }
 
-  return <>{children}</>;
-};
+    // Redirect to login if not authenticated
+    if (!user) {
+      return <Navigate to="/auth/login" state={{ from: location }} replace />;
+    }
+
+    // For admin routes, check role
+    if (requireAdmin) {
+      // If role is still loading (null but user exists)
+      if (role === null && user) {
+        return <AuthLoadingSkeleton type="admin" />;
+      }
+      
+      // Role loaded but not admin
+      if (!isAdmin) {
+        return <Navigate to="/dashboard" replace />;
+      }
+    }
+
+    return <div ref={ref}>{children}</div>;
+  }
+);
+
+ProtectedRoute.displayName = 'ProtectedRoute';
 
 export default ProtectedRoute;

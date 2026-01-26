@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo, Suspense } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Server, Globe, HardDrive, Gauge, CreditCard, Activity,
-  ArrowRight, Plus, ExternalLink, AlertCircle
+  ArrowRight, Plus, ExternalLink, RefreshCw
 } from 'lucide-react';
 import DashboardLayout from '@/components/client-dashboard/DashboardLayout';
 import StatCard from '@/components/client-dashboard/StatCard';
@@ -13,13 +13,17 @@ import ResourceMonitor from '@/components/client-dashboard/ResourceMonitor';
 import SSLInstaller from '@/components/client-dashboard/SSLInstaller';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useHostingAccounts } from '@/hooks/useHostingAccounts';
+import { 
+  StatCardSkeleton, 
+  EmptyState, 
+  ErrorState 
+} from '@/components/common/DashboardSkeletons';
 
 const ClientDashboard: React.FC = () => {
   const { language } = useLanguage();
@@ -176,7 +180,7 @@ const ClientDashboard: React.FC = () => {
               {ordersLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map(i => (
-                    <Skeleton key={i} className="h-16 w-full" />
+                    <div key={i} className="h-16 w-full bg-muted/50 rounded-lg animate-pulse" />
                   ))}
                 </div>
               ) : orders && orders.filter(o => o.status === 'completed').length > 0 ? (
@@ -252,7 +256,7 @@ const ClientDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               {invoicesLoading ? (
-                <Skeleton className="h-20 w-full" />
+                <div className="h-20 w-full bg-muted/50 rounded-lg animate-pulse" />
               ) : nextInvoice ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
