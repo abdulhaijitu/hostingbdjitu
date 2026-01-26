@@ -6,7 +6,7 @@ import {
 } from 'recharts';
 import { 
   TrendingUp, TrendingDown, DollarSign, ShoppingCart, 
-  Package, Users, Calendar, ArrowLeft
+  Package, Users, Calendar, ArrowLeft, UserCheck, UserX, Heart
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import Layout from '@/components/layout/Layout';
@@ -17,7 +17,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { useOrders } from '@/hooks/useOrders';
 import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
-import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from 'date-fns';
+import { format, subDays, startOfMonth, endOfMonth, eachDayOfInterval, parseISO, differenceInDays, differenceInMonths } from 'date-fns';
 
 const COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(var(--success))', 'hsl(var(--warning))', 'hsl(var(--destructive))'];
 
@@ -65,6 +65,83 @@ const AnalyticsDashboard: React.FC = () => {
       pendingOrders: orders.filter(o => o.status === 'pending').length,
       completedOrders: orders.filter(o => o.status === 'completed').length,
       cancelledOrders: orders.filter(o => o.status === 'cancelled').length,
+    };
+  }, [orders, payments]);
+
+  // Customer Analytics Metrics
+  const customerMetrics = useMemo(() => {
+    if (!orders || !payments) return null;
+
+    // Get unique customers
+    const allCustomerIds = [...new Set(orders.map(o => o.user_id))];
+    const totalCustomers = allCustomerIds.length;
+
+    // Customers with multiple orders (retained)
+    const customerOrderCounts = orders.reduce((acc, order) => {
+      acc[order.user_id] = (acc[order.user_id] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const repeatCustomers = Object.values(customerOrderCounts).filter(count => count > 1).length;
+    const retentionRate = totalCustomers > 0 ? (repeatCustomers / totalCustomers) * 100 : 0;
+
+    // Churn calculation - customers who made purchase 60+ days ago but no orders in last 30 days
+    const thirtyDaysAgo = subDays(new Date(), 30);
+    const sixtyDaysAgo = subDays(new Date(), 60);
+    
+    const recentCustomers = new Set(
+      orders
+        .filter(o => new Date(o.created_at) > thirtyDaysAgo)
+        .map(o => o.user_id)
+    );
+    
+    const olderCustomers = new Set(
+      orders
+        .filter(o => {
+          const date = new Date(o.created_at);
+          return date <= thirtyDaysAgo && date > sixtyDaysAgo;
+        })
+        .map(o => o.user_id)
+    );
+    
+    const churnedCustomers = [...olderCustomers].filter(id => !recentCustomers.has(id)).length;
+    const churnRate = olderCustomers.size > 0 ? (churnedCustomers / olderCustomers.size) * 100 : 0;
+
+    // Customer Lifetime Value (CLV) - Average revenue per customer
+    const completedPayments = payments.filter(p => p.status === 'completed');
+    const totalRevenue = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+    const averageLTV = totalCustomers > 0 ? totalRevenue / totalCustomers : 0;
+
+    // Revenue per customer breakdown
+    const customerRevenue: Record<string, number> = {};
+    completedPayments.forEach(p => {
+      customerRevenue[p.user_id] = (customerRevenue[p.user_id] || 0) + Number(p.amount);
+    });
+    
+    const revenueValues = Object.values(customerRevenue);
+    const maxLTV = Math.max(...revenueValues, 0);
+    const minLTV = Math.min(...revenueValues.filter(v => v > 0), 0);
+
+    // New vs Returning customers
+    const newCustomersLast30 = [...recentCustomers].filter(id => {
+      const firstOrder = orders
+        .filter(o => o.user_id === id)
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
+      return firstOrder && new Date(firstOrder.created_at) > thirtyDaysAgo;
+    }).length;
+
+    const returningCustomersLast30 = recentCustomers.size - newCustomersLast30;
+
+    return {
+      totalCustomers,
+      repeatCustomers,
+      retentionRate,
+      churnRate,
+      averageLTV,
+      maxLTV,
+      minLTV,
+      newCustomersLast30,
+      returningCustomersLast30,
     };
   }, [orders, payments]);
 
@@ -249,6 +326,185 @@ const AnalyticsDashboard: React.FC = () => {
                 )}
               </CardContent>
             </Card>
+          </div>
+
+          {/* Customer Analytics Section */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              {language === 'bn' ? 'গ্রাহক বিশ্লেষণ' : 'Customer Analytics'}
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              {/* Total Customers */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {language === 'bn' ? 'মোট গ্রাহক' : 'Total Customers'}
+                  </CardTitle>
+                  <Users className="h-5 w-5 text-accent" />
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold">{customerMetrics?.totalCustomers}</div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {customerMetrics?.repeatCustomers} {language === 'bn' ? 'পুনরাবৃত্তি' : 'repeat'}
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Retention Rate */}
+              <Card className="bg-gradient-to-br from-success/10 to-success/5 border-success/20">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {language === 'bn' ? 'রিটেনশন রেট' : 'Retention Rate'}
+                  </CardTitle>
+                  <UserCheck className="h-5 w-5 text-success" />
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-success">
+                        {customerMetrics?.retentionRate.toFixed(1)}%
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === 'bn' ? 'পুনরাবৃত্তি গ্রাহক' : 'Customers who ordered again'}
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Churn Rate */}
+              <Card className="bg-gradient-to-br from-destructive/10 to-destructive/5 border-destructive/20">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {language === 'bn' ? 'চার্ন রেট' : 'Churn Rate'}
+                  </CardTitle>
+                  <UserX className="h-5 w-5 text-destructive" />
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-16" />
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-destructive">
+                        {customerMetrics?.churnRate.toFixed(1)}%
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === 'bn' ? 'গত ৩০ দিনে নিষ্ক্রিয়' : 'Inactive in last 30 days'}
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Lifetime Value */}
+              <Card className="bg-gradient-to-br from-primary/10 to-accent/5 border-primary/20">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    {language === 'bn' ? 'গড় লাইফটাইম ভ্যালু' : 'Avg. Lifetime Value'}
+                  </CardTitle>
+                  <Heart className="h-5 w-5 text-primary" />
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <Skeleton className="h-8 w-24" />
+                  ) : (
+                    <>
+                      <div className="text-3xl font-bold text-primary">
+                        ৳{customerMetrics?.averageLTV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {language === 'bn' ? 'প্রতি গ্রাহক গড় রেভিনিউ' : 'Average revenue per customer'}
+                      </p>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* New vs Returning Customers */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{language === 'bn' ? 'নতুন বনাম ফিরে আসা গ্রাহক' : 'New vs Returning Customers'}</CardTitle>
+                  <CardDescription>{language === 'bn' ? 'গত ৩০ দিনে' : 'Last 30 days'}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <Skeleton className="h-[200px] w-full" />
+                  ) : (
+                    <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: language === 'bn' ? 'নতুন' : 'New', value: customerMetrics?.newCustomersLast30 || 0 },
+                            { name: language === 'bn' ? 'ফিরে আসা' : 'Returning', value: customerMetrics?.returningCustomersLast30 || 0 },
+                          ]}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        >
+                          <Cell fill="hsl(var(--accent))" />
+                          <Cell fill="hsl(var(--primary))" />
+                        </Pie>
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px'
+                          }}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base">{language === 'bn' ? 'লাইফটাইম ভ্যালু সারাংশ' : 'Lifetime Value Summary'}</CardTitle>
+                  <CardDescription>{language === 'bn' ? 'গ্রাহক প্রতি রেভিনিউ পরিসীমা' : 'Revenue range per customer'}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {isLoading ? (
+                    <Skeleton className="h-[200px] w-full" />
+                  ) : (
+                    <div className="space-y-6 py-4">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">{language === 'bn' ? 'সর্বোচ্চ LTV' : 'Highest LTV'}</span>
+                        <span className="text-2xl font-bold text-success">
+                          ৳{customerMetrics?.maxLTV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">{language === 'bn' ? 'গড় LTV' : 'Average LTV'}</span>
+                        <span className="text-2xl font-bold text-primary">
+                          ৳{customerMetrics?.averageLTV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm text-muted-foreground">{language === 'bn' ? 'সর্বনিম্ন LTV' : 'Lowest LTV'}</span>
+                        <span className="text-2xl font-bold text-muted-foreground">
+                          ৳{customerMetrics?.minLTV.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
           {/* Charts Row 1 */}
