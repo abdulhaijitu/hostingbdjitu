@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, ExternalLink, Shield, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import chostLogo from '@/assets/chost-logo.png';
 
 const Footer: React.FC = () => {
   const { t } = useLanguage();
@@ -44,14 +45,12 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-accent">
-                <span className="text-xl font-bold text-accent-foreground">C</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold font-display">CHost</span>
-                <span className="text-[10px] text-primary-foreground/60 tracking-wider uppercase">Secure.Fast.Online</span>
-              </div>
+            <Link to="/" className="inline-block mb-6">
+              <img 
+                src={chostLogo} 
+                alt="CHost - Secure.Fast.Online" 
+                className="h-12 w-auto brightness-0 invert"
+              />
             </Link>
             <p className="text-primary-foreground/70 mb-6 max-w-sm">
               Your trusted partner for reliable, secure, and lightning-fast web hosting solutions. Serving businesses locally and globally.
