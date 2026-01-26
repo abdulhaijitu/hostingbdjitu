@@ -14,6 +14,7 @@ import { useOrders } from '@/hooks/useOrders';
 import { usePayments } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
 import { Skeleton } from '@/components/ui/skeleton';
+import { NotificationBell } from '@/components/client-dashboard/NotificationSystem';
 
 const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
@@ -65,10 +66,13 @@ const AdminDashboard: React.FC = () => {
                 {language === 'bn' ? 'সাইট পরিচালনা করুন' : 'Manage your site'}
               </p>
             </div>
-            <Button variant="outline" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4 mr-2" />
-              {language === 'bn' ? 'লগআউট' : 'Logout'}
-            </Button>
+            <div className="flex items-center gap-3">
+              <NotificationBell />
+              <Button variant="outline" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                {language === 'bn' ? 'লগআউট' : 'Logout'}
+              </Button>
+            </div>
           </div>
 
           {/* Stats Cards */}
