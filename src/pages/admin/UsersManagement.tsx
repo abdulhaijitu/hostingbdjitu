@@ -20,6 +20,7 @@ import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
 import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
+import { auditUser } from '@/lib/auditLogger';
 
 interface UserWithProfile {
   id: string;
@@ -163,6 +164,7 @@ const UsersManagement: React.FC = () => {
     }
 
     setIsUpdatingRole(true);
+    const oldRole = roleChangeUser.role;
     try {
       const { error } = await supabase
         .from('user_roles')
@@ -170,6 +172,9 @@ const UsersManagement: React.FC = () => {
         .eq('user_id', roleChangeUser.id);
 
       if (error) throw error;
+
+      // Log audit event for role change
+      auditUser.roleChange(roleChangeUser.id, oldRole, newRole);
 
       setUsers(prev => prev.map(u => 
         u.id === roleChangeUser.id ? { ...u, role: newRole } : u
