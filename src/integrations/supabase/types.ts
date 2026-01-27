@@ -238,6 +238,51 @@ export type Database = {
         }
         Relationships: []
       }
+      email_logs: {
+        Row: {
+          created_at: string
+          email_type: string
+          error_message: string | null
+          id: string
+          recipient_email: string
+          related_id: string | null
+          related_type: string | null
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          error_message?: string | null
+          id?: string
+          recipient_email: string
+          related_id?: string | null
+          related_type?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          error_message?: string | null
+          id?: string
+          recipient_email?: string
+          related_id?: string | null
+          related_type?: string | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       error_logs: {
         Row: {
           context: Json | null
@@ -841,6 +886,42 @@ export type Database = {
           rule_name?: string
           updated_at?: string
           window_seconds?: number
+        }
+        Relationships: []
+      }
+      scheduled_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          job_name: string
+          job_type: string
+          metadata: Json | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_name: string
+          job_type: string
+          metadata?: Json | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_name?: string
+          job_type?: string
+          metadata?: Json | null
+          started_at?: string | null
+          status?: string
         }
         Relationships: []
       }
