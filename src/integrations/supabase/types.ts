@@ -199,6 +199,387 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_announcements: {
+        Row: {
+          announcement_type: string | null
+          background_color: string | null
+          created_at: string
+          cta_label: string | null
+          cta_label_bn: string | null
+          cta_url: string | null
+          display_location: string | null
+          end_date: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          is_dismissible: boolean | null
+          priority: number | null
+          short_description: string | null
+          short_description_bn: string | null
+          start_date: string | null
+          text_color: string | null
+          title: string
+          title_bn: string | null
+          updated_at: string
+        }
+        Insert: {
+          announcement_type?: string | null
+          background_color?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_label_bn?: string | null
+          cta_url?: string | null
+          display_location?: string | null
+          end_date?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_dismissible?: boolean | null
+          priority?: number | null
+          short_description?: string | null
+          short_description_bn?: string | null
+          start_date?: string | null
+          text_color?: string | null
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Update: {
+          announcement_type?: string | null
+          background_color?: string | null
+          created_at?: string
+          cta_label?: string | null
+          cta_label_bn?: string | null
+          cta_url?: string | null
+          display_location?: string | null
+          end_date?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_dismissible?: boolean | null
+          priority?: number | null
+          short_description?: string | null
+          short_description_bn?: string | null
+          start_date?: string | null
+          text_color?: string | null
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_blog_posts: {
+        Row: {
+          author_name: string | null
+          category: string | null
+          content: string
+          content_bn: string | null
+          created_at: string
+          excerpt: string | null
+          excerpt_bn: string | null
+          featured_image_url: string | null
+          id: string
+          published_at: string | null
+          read_time_minutes: number | null
+          seo_description: string | null
+          seo_title: string | null
+          slug: string
+          status: string
+          tags: Json | null
+          title: string
+          title_bn: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_name?: string | null
+          category?: string | null
+          content: string
+          content_bn?: string | null
+          created_at?: string
+          excerpt?: string | null
+          excerpt_bn?: string | null
+          featured_image_url?: string | null
+          id?: string
+          published_at?: string | null
+          read_time_minutes?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug: string
+          status?: string
+          tags?: Json | null
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_name?: string | null
+          category?: string | null
+          content?: string
+          content_bn?: string | null
+          created_at?: string
+          excerpt?: string | null
+          excerpt_bn?: string | null
+          featured_image_url?: string | null
+          id?: string
+          published_at?: string | null
+          read_time_minutes?: number | null
+          seo_description?: string | null
+          seo_title?: string | null
+          slug?: string
+          status?: string
+          tags?: Json | null
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_faqs: {
+        Row: {
+          answer: string
+          answer_bn: string | null
+          category: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          page_slug: string | null
+          question: string
+          question_bn: string | null
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          answer: string
+          answer_bn?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          page_slug?: string | null
+          question: string
+          question_bn?: string | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          answer?: string
+          answer_bn?: string | null
+          category?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          page_slug?: string | null
+          question?: string
+          question_bn?: string | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_global_settings: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_editable: boolean | null
+          setting_key: string
+          setting_type: string | null
+          setting_value: string | null
+          setting_value_json: Json | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_editable?: boolean | null
+          setting_key: string
+          setting_type?: string | null
+          setting_value?: string | null
+          setting_value_json?: Json | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_editable?: boolean | null
+          setting_key?: string
+          setting_type?: string | null
+          setting_value?: string | null
+          setting_value_json?: Json | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_pages: {
+        Row: {
+          created_at: string
+          id: string
+          is_published: boolean | null
+          page_type: string
+          sections: Json | null
+          seo_description: string | null
+          seo_description_bn: string | null
+          seo_keywords: string | null
+          seo_title: string | null
+          seo_title_bn: string | null
+          slug: string
+          sort_order: number | null
+          title: string
+          title_bn: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          page_type?: string
+          sections?: Json | null
+          seo_description?: string | null
+          seo_description_bn?: string | null
+          seo_keywords?: string | null
+          seo_title?: string | null
+          seo_title_bn?: string | null
+          slug: string
+          sort_order?: number | null
+          title: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_published?: boolean | null
+          page_type?: string
+          sections?: Json | null
+          seo_description?: string | null
+          seo_description_bn?: string | null
+          seo_keywords?: string | null
+          seo_title?: string | null
+          seo_title_bn?: string | null
+          slug?: string
+          sort_order?: number | null
+          title?: string
+          title_bn?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      cms_pricing_display: {
+        Row: {
+          billing_cycle_label: string | null
+          category: string
+          created_at: string
+          discount_label: string | null
+          display_price: string
+          display_price_bn: string | null
+          features: Json | null
+          features_bn: Json | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          original_price: string | null
+          plan_name: string
+          plan_name_bn: string | null
+          sort_order: number | null
+          updated_at: string
+          whmcs_pid: string | null
+          whmcs_redirect_url: string | null
+        }
+        Insert: {
+          billing_cycle_label?: string | null
+          category: string
+          created_at?: string
+          discount_label?: string | null
+          display_price: string
+          display_price_bn?: string | null
+          features?: Json | null
+          features_bn?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          original_price?: string | null
+          plan_name: string
+          plan_name_bn?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          whmcs_pid?: string | null
+          whmcs_redirect_url?: string | null
+        }
+        Update: {
+          billing_cycle_label?: string | null
+          category?: string
+          created_at?: string
+          discount_label?: string | null
+          display_price?: string
+          display_price_bn?: string | null
+          features?: Json | null
+          features_bn?: Json | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          original_price?: string | null
+          plan_name?: string
+          plan_name_bn?: string | null
+          sort_order?: number | null
+          updated_at?: string
+          whmcs_pid?: string | null
+          whmcs_redirect_url?: string | null
+        }
+        Relationships: []
+      }
+      cms_testimonials: {
+        Row: {
+          avatar_url: string | null
+          client_name: string
+          client_name_bn: string | null
+          company_name: string | null
+          created_at: string
+          feedback: string
+          feedback_bn: string | null
+          id: string
+          is_active: boolean | null
+          is_featured: boolean | null
+          rating: number | null
+          sort_order: number | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          client_name: string
+          client_name_bn?: string | null
+          company_name?: string | null
+          created_at?: string
+          feedback: string
+          feedback_bn?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          rating?: number | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          client_name?: string
+          client_name_bn?: string | null
+          company_name?: string | null
+          created_at?: string
+          feedback?: string
+          feedback_bn?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_featured?: boolean | null
+          rating?: number | null
+          sort_order?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       domain_expiry_notifications: {
         Row: {
           created_at: string
