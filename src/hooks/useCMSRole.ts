@@ -40,19 +40,29 @@ export const useCMSAdmins = () => {
   return useQuery({
     queryKey: ['cms-admins'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First get all CMS admin roles
+      const { data: roles, error: rolesError } = await supabase
         .from('cms_admin_roles')
-        .select(`
-          *,
-          profiles:user_id (
-            email,
-            full_name
-          )
-        `)
+        .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
-      return data;
+      if (rolesError) throw rolesError;
+      if (!roles || roles.length === 0) return [];
+      
+      // Then get profiles for those users
+      const userIds = roles.map(r => r.user_id);
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, email, full_name')
+        .in('user_id', userIds);
+      
+      if (profilesError) throw profilesError;
+      
+      // Combine the data
+      return roles.map(role => ({
+        ...role,
+        profiles: profiles?.find(p => p.user_id === role.user_id) || { email: 'Unknown', full_name: 'Unknown' }
+      }));
     },
   });
 };
