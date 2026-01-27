@@ -23,3 +23,15 @@ verify_jwt = false
 
 [functions.log-audit]
 verify_jwt = false
+
+[functions.send-invoice-email]
+verify_jwt = false
+
+[functions.generate-admin-report]
+verify_jwt = false
+
+[functions.cron-monthly-invoices]
+verify_jwt = false
+
+[functions.cron-service-expiry]
+verify_jwt = false
