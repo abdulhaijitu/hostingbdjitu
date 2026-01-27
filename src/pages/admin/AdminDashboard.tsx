@@ -24,8 +24,9 @@ import {
 import { cn } from '@/lib/utils';
 import { useAnalyticsDashboard } from '@/hooks/useAnalyticsDashboard';
 
-// Lazy load KPI cards for better performance
+// Lazy load components for better performance
 const AnalyticsKPICards = lazy(() => import('@/components/admin/analytics/AnalyticsKPICards'));
+const SecurityAlertsPanel = lazy(() => import('@/components/admin/security/SecurityAlertsPanel'));
 
 const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
@@ -152,14 +153,17 @@ const AdminDashboard: React.FC = () => {
           ))}
         </div>
 
-        {/* Server Health Monitoring - Hide on mobile for performance */}
+        {/* Server Health & Security Monitoring - Hide on mobile for performance */}
         {!isMobile && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
             <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
               <ServerHealthMonitor />
             </Suspense>
             <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
               <PerformanceMonitor />
+            </Suspense>
+            <Suspense fallback={<div className="h-64 bg-card rounded-xl border animate-pulse" />}>
+              <SecurityAlertsPanel language={language as 'en' | 'bn'} />
             </Suspense>
           </div>
         )}

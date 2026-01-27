@@ -112,6 +112,7 @@ const AnnouncementsManagement = lazy(() => import('./pages/admin/AnnouncementsMa
 const SettingsManagement = lazy(() => import('./pages/admin/SettingsManagement'));
 const AuditLogsManagement = lazy(() => import('./pages/admin/AuditLogsManagement'));
 const ErrorLogsManagement = lazy(() => import('./pages/admin/ErrorLogsManagement'));
+const SecurityMonitoringPage = lazy(() => import('./pages/admin/SecurityMonitoringPage'));
 
 // Configure React Query with optimized global settings
 // Key principles:
@@ -259,6 +260,7 @@ const App = () => (
                   <Route path="/admin/settings" element={<AdminRoute><LazyAdminPage><SettingsManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/audit-logs" element={<AdminRoute><LazyAdminPage><AuditLogsManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/error-logs" element={<AdminRoute><LazyAdminPage><ErrorLogsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/security" element={<AdminRoute><LazyAdminPage><SecurityMonitoringPage /></LazyAdminPage></AdminRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

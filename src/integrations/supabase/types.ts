@@ -14,6 +14,51 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_action_logs: {
+        Row: {
+          action_type: string
+          admin_user_id: string
+          cooldown_until: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          reauth_verified: boolean | null
+          requires_reauth: boolean | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          admin_user_id: string
+          cooldown_until?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          reauth_verified?: boolean | null
+          requires_reauth?: boolean | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          admin_user_id?: string
+          cooldown_until?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          reauth_verified?: boolean | null
+          requires_reauth?: boolean | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       api_activity_logs: {
         Row: {
           action: string
@@ -760,6 +805,87 @@ export type Database = {
           },
         ]
       }
+      rate_limit_rules: {
+        Row: {
+          applies_to: string
+          created_at: string
+          endpoint_pattern: string
+          id: string
+          is_active: boolean | null
+          lockout_seconds: number
+          max_requests: number
+          rule_name: string
+          updated_at: string
+          window_seconds: number
+        }
+        Insert: {
+          applies_to?: string
+          created_at?: string
+          endpoint_pattern: string
+          id?: string
+          is_active?: boolean | null
+          lockout_seconds?: number
+          max_requests?: number
+          rule_name: string
+          updated_at?: string
+          window_seconds?: number
+        }
+        Update: {
+          applies_to?: string
+          created_at?: string
+          endpoint_pattern?: string
+          id?: string
+          is_active?: boolean | null
+          lockout_seconds?: number
+          max_requests?: number
+          rule_name?: string
+          updated_at?: string
+          window_seconds?: number
+        }
+        Relationships: []
+      }
+      security_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       support_tickets: {
         Row: {
           assigned_to: string | null
@@ -867,6 +993,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          created_at: string
+          device_info: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          is_active: boolean
+          last_activity_at: string
+          revoked_at: string | null
+          revoked_by: string | null
+          session_token: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          device_info?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          session_token: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          device_info?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean
+          last_activity_at?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          session_token?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
           created_at: string
@@ -961,6 +1132,18 @@ export type Database = {
       }
     }
     Functions: {
+      check_admin_action_cooldown: {
+        Args: {
+          p_action_type: string
+          p_admin_user_id: string
+          p_cooldown_seconds?: number
+        }
+        Returns: {
+          cooldown_remaining_seconds: number
+          is_in_cooldown: boolean
+          last_action_at: string
+        }[]
+      }
       check_rate_limit: {
         Args: {
           p_identifier: string
@@ -975,6 +1158,7 @@ export type Database = {
           message: string
         }[]
       }
+      cleanup_expired_sessions: { Args: never; Returns: number }
       cleanup_old_login_attempts: { Args: never; Returns: number }
       generate_cpanel_username: {
         Args: { domain_name: string }
@@ -1018,6 +1202,31 @@ export type Database = {
           p_stack_trace?: string
           p_url?: string
           p_user_id?: string
+        }
+        Returns: string
+      }
+      log_security_event: {
+        Args: {
+          p_details?: Json
+          p_event_type: string
+          p_ip_address?: string
+          p_severity?: string
+          p_user_agent?: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
+      record_admin_action: {
+        Args: {
+          p_action_type: string
+          p_admin_user_id: string
+          p_ip_address?: string
+          p_metadata?: Json
+          p_reauth_verified?: boolean
+          p_requires_reauth?: boolean
+          p_target_id?: string
+          p_target_type?: string
+          p_user_agent?: string
         }
         Returns: string
       }
