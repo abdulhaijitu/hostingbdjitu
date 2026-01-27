@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Mail, MapPin, Phone, Clock, Send, CheckCircle, MessageSquare, Globe, Shield, Facebook, Twitter, Linkedin, Instagram, ArrowRight, Headphones } from 'lucide-react';
+import { Mail, MapPin, Phone, Clock, Send, CheckCircle, MessageSquare, Globe, Shield, Facebook, Twitter, Linkedin, Instagram, ArrowRight, Headphones, ExternalLink } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { z } from 'zod';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, { message: "Name is too short" }).max(100),
@@ -79,21 +80,28 @@ const Contact: React.FC = () => {
       icon: MessageSquare, 
       title: language === 'bn' ? 'লাইভ চ্যাট' : 'Live Chat', 
       desc: language === 'bn' ? '২৪/৭ অনলাইন সাপোর্ট' : '24/7 Online Support',
-      response: language === 'bn' ? '< ১ মিনিট' : '< 1 min'
+      response: language === 'bn' ? '< ১ মিনিট' : '< 1 min',
+      action: () => redirectToWHMCS(WHMCS_URLS.clientArea)
     },
     { 
       icon: Headphones, 
       title: language === 'bn' ? 'ফোন সাপোর্ট' : 'Phone Support', 
       desc: language === 'bn' ? 'সরাসরি কথা বলুন' : 'Talk Directly',
-      response: language === 'bn' ? 'তাৎক্ষণিক' : 'Instant'
+      response: language === 'bn' ? 'তাৎক্ষণিক' : 'Instant',
+      action: null
     },
     { 
       icon: Mail, 
       title: language === 'bn' ? 'টিকেট সিস্টেম' : 'Ticket System', 
       desc: language === 'bn' ? 'বিস্তারিত সমস্যার জন্য' : 'For Detailed Issues',
-      response: language === 'bn' ? '২-৪ ঘণ্টা' : '2-4 hours'
+      response: language === 'bn' ? '২-৪ ঘণ্টা' : '2-4 hours',
+      action: () => redirectToWHMCS(WHMCS_URLS.submitTicket)
     },
   ];
+
+  const handleOpenTicket = () => {
+    redirectToWHMCS(WHMCS_URLS.submitTicket);
+  };
 
   const socialLinks = [
     { icon: Facebook, href: '#', label: 'Facebook', color: 'hover:bg-blue-600' },
@@ -133,7 +141,11 @@ const Contact: React.FC = () => {
         <div className="container-wide">
           <div className="grid md:grid-cols-3 gap-4">
             {supportChannels.map((channel) => (
-              <div key={channel.title} className="flex items-center gap-4 p-4 bg-background rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all group">
+              <div 
+                key={channel.title} 
+                className={`flex items-center gap-4 p-4 bg-background rounded-xl border border-border hover:border-primary/30 hover:shadow-md transition-all group ${channel.action ? 'cursor-pointer' : ''}`}
+                onClick={channel.action || undefined}
+              >
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
                   <channel.icon className="h-6 w-6 text-primary" />
                 </div>
@@ -141,9 +153,12 @@ const Contact: React.FC = () => {
                   <span className="font-medium block">{channel.title}</span>
                   <span className="text-muted-foreground text-sm">{channel.desc}</span>
                 </div>
-                <span className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-full font-medium">
-                  {channel.response}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs bg-green-500/10 text-green-600 dark:text-green-400 px-2 py-1 rounded-full font-medium">
+                    {channel.response}
+                  </span>
+                  {channel.action && <ExternalLink className="h-4 w-4 text-muted-foreground" />}
+                </div>
               </div>
             ))}
           </div>
@@ -379,9 +394,13 @@ const Contact: React.FC = () => {
                 <Phone className="w-5 h-5" />
                 +880 1234-567890
               </a>
-              <Button variant="outline" className="border-white/30 text-white hover:bg-white/10">
-                <MessageSquare className="w-5 h-5 mr-2" />
-                {language === 'bn' ? 'লাইভ চ্যাট' : 'Live Chat'}
+              <Button 
+                variant="outline" 
+                className="border-white/30 text-white hover:bg-white/10"
+                onClick={handleOpenTicket}
+              >
+                <ExternalLink className="w-5 h-5 mr-2" />
+                {language === 'bn' ? 'টিকেট ওপেন করুন' : 'Open Ticket'}
               </Button>
             </div>
           </div>
