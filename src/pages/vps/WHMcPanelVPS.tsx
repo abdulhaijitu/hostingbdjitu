@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { WHMCS_URLS, redirectToWHMCS, getVPSStoreUrl } from '@/lib/whmcsConfig';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WHMcPanelVPS: React.FC = () => {
@@ -110,7 +111,7 @@ const WHMcPanelVPS: React.FC = () => {
               ? 'WHM এবং cPanel প্রি-ইনস্টলড ম্যানেজড VPS। একাধিক ওয়েবসাইট এবং ক্লায়েন্ট হোস্টিংয়ের জন্য পারফেক্ট।'
               : 'Managed VPS with WHM and cPanel pre-installed. Perfect for hosting multiple websites and clients.'}
           </p>
-          <Button variant="hero" size="xl">
+          <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(getVPSStoreUrl('whm'))}>
             {language === 'bn' ? 'শুরু করুন' : 'Get Started'} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -206,7 +207,7 @@ const WHMcPanelVPS: React.FC = () => {
                     <Check className="h-5 w-5 text-accent" /> cPanel/WHM {language === 'bn' ? 'অন্তর্ভুক্ত' : 'Included'}
                   </li>
                 </ul>
-                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full" onClick={() => redirectToWHMCS(getVPSStoreUrl('whm'))}>
                   {language === 'bn' ? 'অর্ডার করুন' : 'Order Now'}
                 </Button>
               </div>
@@ -276,7 +277,7 @@ const WHMcPanelVPS: React.FC = () => {
                 ? 'WHM/cPanel সহ ম্যানেজড VPS দিয়ে আপনার হোস্টিং বিজনেস বা ওয়েবসাইট পরিচালনা করুন।'
                 : 'Manage your hosting business or websites with managed VPS including WHM/cPanel.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(getVPSStoreUrl('whm'))}>
               {language === 'bn' ? 'প্ল্যান বেছে নিন' : 'Choose a Plan'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>

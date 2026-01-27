@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const EmailHosting: React.FC = () => {
@@ -121,7 +122,7 @@ const EmailHosting: React.FC = () => {
               ? 'আপনার নিজের ডোমেইনে প্রফেশনাল ইমেইল হোস্টিং। সুরক্ষিত, নির্ভরযোগ্য এবং সহজে ম্যানেজ করুন।'
               : 'Professional email hosting with your own domain. Secure, reliable, and easy to manage.'}
           </p>
-          <Button variant="hero" size="xl">
+          <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(`${WHMCS_URLS.billingHome}?rp=/store/email-hosting`)}>
             {language === 'bn' ? 'শুরু করুন' : 'Get Started'} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -242,7 +243,7 @@ const EmailHosting: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full" onClick={() => redirectToWHMCS(`${WHMCS_URLS.billingHome}?rp=/store/email-hosting`)}>
                   {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
                 </Button>
               </div>
@@ -312,7 +313,7 @@ const EmailHosting: React.FC = () => {
                 ? 'আপনার ব্র্যান্ডের জন্য প্রফেশনাল ইমেইল অ্যাড্রেস সেটআপ করুন আজই।'
                 : 'Set up professional email addresses for your brand today.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(`${WHMCS_URLS.billingHome}?rp=/store/email-hosting`)}>
               {language === 'bn' ? 'এখনই শুরু করুন' : 'Get Started Now'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
