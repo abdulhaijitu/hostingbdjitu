@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Check, X, ArrowRight, Shield, Zap, Clock, Server, HardDrive, Globe, Mail, Database, Headphones, Award } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
+import { WHMCS_URLS, getHostingStoreUrl, redirectToWHMCS } from '@/lib/whmcsConfig';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const WebHosting: React.FC = () => {
@@ -318,6 +318,7 @@ const WebHosting: React.FC = () => {
                     variant={plan.featured ? 'accent' : 'hero'}
                     size="lg"
                     className="w-full"
+                    onClick={() => redirectToWHMCS(getHostingStoreUrl('web'))}
                   >
                     {language === 'bn' ? 'এখনই শুরু করুন' : 'Get Started'}
                     <ArrowRight className="ml-2 h-4 w-4" />

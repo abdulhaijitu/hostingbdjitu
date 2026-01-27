@@ -1,45 +1,13 @@
-import React, { useState } from 'react';
-import { ArrowRight, DollarSign, Users, TrendingUp, Gift, Check, Star, Award, Zap, CreditCard, BarChart3, Clock } from 'lucide-react';
+import React from 'react';
+import { ArrowRight, DollarSign, Users, TrendingUp, Gift, Star, Zap, BarChart3, Award } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { z } from 'zod';
 import SEOHead from '@/components/common/SEOHead';
-
-const affiliateSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  email: z.string().email('Invalid email address'),
-  website: z.string().url('Invalid URL').optional().or(z.literal('')),
-  experience: z.string().min(1, 'Please select your experience'),
-});
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const Affiliate: React.FC = () => {
   const { language } = useLanguage();
-  const [formSubmitted, setFormSubmitted] = useState(false);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    website: '',
-    experience: '',
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      affiliateSchema.parse(formData);
-      setFormSubmitted(true);
-      setErrors({});
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        const newErrors: Record<string, string> = {};
-        error.errors.forEach((err) => {
-          if (err.path[0]) newErrors[err.path[0] as string] = err.message;
-        });
-        setErrors(newErrors);
-      }
-    }
-  };
 
   const benefits = [
     { icon: DollarSign, title: language === 'bn' ? '৫০% পর্যন্ত কমিশন' : 'Up to 50% Commission', desc: language === 'bn' ? 'প্রতিটি রেফারেলে উচ্চ কমিশন আয় করুন' : 'Earn generous commissions on every referral' },
@@ -84,12 +52,9 @@ const Affiliate: React.FC = () => {
     },
   ];
 
-  const experienceOptions = [
-    { value: 'beginner', label: language === 'bn' ? 'নতুন (অভিজ্ঞতা নেই)' : 'Beginner (No experience)' },
-    { value: 'intermediate', label: language === 'bn' ? 'মধ্যম (কিছু অভিজ্ঞতা)' : 'Intermediate (Some experience)' },
-    { value: 'advanced', label: language === 'bn' ? 'অ্যাডভান্সড (অভিজ্ঞ)' : 'Advanced (Experienced)' },
-    { value: 'expert', label: language === 'bn' ? 'এক্সপার্ট (প্রফেশনাল)' : 'Expert (Professional)' },
-  ];
+  const handleJoinAffiliate = () => {
+    redirectToWHMCS(WHMCS_URLS.affiliates);
+  };
 
   return (
     <Layout>
@@ -115,11 +80,13 @@ const Affiliate: React.FC = () => {
               : 'Join our affiliate program and earn up to 50% commission on every sale you refer. No limits on earnings!'}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={handleJoinAffiliate}>
               {language === 'bn' ? 'এখনই যোগ দিন' : 'Join Now'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="xl">
-              {language === 'bn' ? 'আরও জানুন' : 'Learn More'}
+            <Button variant="outline" size="xl" asChild>
+              <a href="#how-it-works">
+                {language === 'bn' ? 'আরও জানুন' : 'Learn More'}
+              </a>
             </Button>
           </div>
         </div>
@@ -197,7 +164,7 @@ const Affiliate: React.FC = () => {
       </section>
 
       {/* How It Works */}
-      <section className="section-padding">
+      <section id="how-it-works" className="section-padding">
         <div className="container-wide">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold font-display mb-4">
@@ -257,97 +224,19 @@ const Affiliate: React.FC = () => {
         </div>
       </section>
 
-      {/* Sign Up Form */}
+      {/* Join CTA Section */}
       <section className="section-padding">
         <div className="container-wide">
-          <div className="max-w-2xl mx-auto">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold font-display mb-4">
-                {language === 'bn' ? 'আজই যোগ দিন' : 'Join Today'}
-              </h2>
-              <p className="text-muted-foreground">
-                {language === 'bn' ? 'বিনামূল্যে অ্যাফিলিয়েট অ্যাকাউন্ট তৈরি করুন এবং আয় শুরু করুন' : 'Create a free affiliate account and start earning'}
-              </p>
-            </div>
-
-            {formSubmitted ? (
-              <div className="bg-success/10 border border-success/20 rounded-2xl p-8 text-center">
-                <Check className="h-16 w-16 text-success mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">
-                  {language === 'bn' ? 'আবেদন জমা হয়েছে!' : 'Application Submitted!'}
-                </h3>
-                <p className="text-muted-foreground">
-                  {language === 'bn' 
-                    ? 'আমরা শীঘ্রই আপনার সাথে যোগাযোগ করব।'
-                    : "We'll get back to you soon."}
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="bg-card rounded-2xl border border-border p-8 space-y-6">
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {language === 'bn' ? 'আপনার নাম' : 'Your Name'} *
-                    </label>
-                    <input
-                      type="text"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      className={`w-full h-12 px-4 rounded-lg bg-background text-foreground border ${errors.name ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent`}
-                      placeholder={language === 'bn' ? 'আপনার নাম' : 'Your name'}
-                    />
-                    {errors.name && <p className="text-destructive text-xs mt-1">{errors.name}</p>}
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      {language === 'bn' ? 'ইমেইল' : 'Email'} *
-                    </label>
-                    <input
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      className={`w-full h-12 px-4 rounded-lg bg-background text-foreground border ${errors.email ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent`}
-                      placeholder="you@example.com"
-                    />
-                    {errors.email && <p className="text-destructive text-xs mt-1">{errors.email}</p>}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {language === 'bn' ? 'ওয়েবসাইট (ঐচ্ছিক)' : 'Website (Optional)'}
-                  </label>
-                  <input
-                    type="url"
-                    value={formData.website}
-                    onChange={(e) => setFormData({ ...formData, website: e.target.value })}
-                    className="w-full h-12 px-4 rounded-lg bg-background text-foreground border border-border focus:outline-none focus:ring-2 focus:ring-accent"
-                    placeholder="https://yourwebsite.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    {language === 'bn' ? 'অ্যাফিলিয়েট মার্কেটিং অভিজ্ঞতা' : 'Affiliate Marketing Experience'} *
-                  </label>
-                  <select
-                    value={formData.experience}
-                    onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                    className={`w-full h-12 px-4 rounded-lg bg-background text-foreground border ${errors.experience ? 'border-destructive' : 'border-border'} focus:outline-none focus:ring-2 focus:ring-accent`}
-                  >
-                    <option value="">{language === 'bn' ? 'নির্বাচন করুন' : 'Select'}</option>
-                    {experienceOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>{opt.label}</option>
-                    ))}
-                  </select>
-                  {errors.experience && <p className="text-destructive text-xs mt-1">{errors.experience}</p>}
-                </div>
-
-                <Button variant="hero" size="xl" type="submit" className="w-full">
-                  {language === 'bn' ? 'অ্যাফিলিয়েট হিসেবে যোগ দিন' : 'Join as Affiliate'} <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </form>
-            )}
+          <div className="max-w-2xl mx-auto text-center">
+            <h2 className="text-3xl font-bold font-display mb-4">
+              {language === 'bn' ? 'আজই যোগ দিন' : 'Join Today'}
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              {language === 'bn' ? 'বিনামূল্যে অ্যাফিলিয়েট অ্যাকাউন্ট তৈরি করুন এবং আয় শুরু করুন' : 'Create a free affiliate account and start earning'}
+            </p>
+            <Button variant="hero" size="xl" onClick={handleJoinAffiliate}>
+              {language === 'bn' ? 'অ্যাফিলিয়েট হিসেবে যোগ দিন' : 'Join as Affiliate'} <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </section>
@@ -365,7 +254,7 @@ const Affiliate: React.FC = () => {
                 ? 'হাজার হাজার অ্যাফিলিয়েট ইতিমধ্যে আমাদের প্রোগ্রাম থেকে আয় করছে। আপনিও যোগ দিন!'
                 : 'Thousands of affiliates are already earning from our program. Join them today!'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={handleJoinAffiliate}>
               {language === 'bn' ? 'বিনামূল্যে যোগ দিন' : 'Join for Free'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
