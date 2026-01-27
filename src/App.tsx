@@ -110,6 +110,8 @@ const ResellersManagement = lazy(() => import('./pages/admin/ResellersManagement
 const AffiliatesManagement = lazy(() => import('./pages/admin/AffiliatesManagement'));
 const AnnouncementsManagement = lazy(() => import('./pages/admin/AnnouncementsManagement'));
 const SettingsManagement = lazy(() => import('./pages/admin/SettingsManagement'));
+const AuditLogsManagement = lazy(() => import('./pages/admin/AuditLogsManagement'));
+const ErrorLogsManagement = lazy(() => import('./pages/admin/ErrorLogsManagement'));
 
 // Configure React Query with optimized global settings
 // Key principles:
@@ -255,6 +257,8 @@ const App = () => (
                   <Route path="/admin/affiliates" element={<AdminRoute><LazyAdminPage><AffiliatesManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/announcements" element={<AdminRoute><LazyAdminPage><AnnouncementsManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/settings" element={<AdminRoute><LazyAdminPage><SettingsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/audit-logs" element={<AdminRoute><LazyAdminPage><AuditLogsManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/error-logs" element={<AdminRoute><LazyAdminPage><ErrorLogsManagement /></LazyAdminPage></AdminRoute>} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>

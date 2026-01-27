@@ -70,6 +70,45 @@ export type Database = {
           },
         ]
       }
+      audit_logs: {
+        Row: {
+          action_type: string
+          actor_id: string | null
+          actor_role: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          target_id: string | null
+          target_type: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action_type: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action_type?: string
+          actor_id?: string | null
+          actor_role?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          target_id?: string | null
+          target_type?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       canned_responses: {
         Row: {
           category: string
@@ -151,6 +190,48 @@ export type Database = {
           sort_order?: number | null
           transfer_price?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      error_logs: {
+        Row: {
+          context: Json | null
+          created_at: string
+          error_code: string
+          id: string
+          message: string
+          session_id: string | null
+          severity: string
+          source: string
+          stack_trace: string | null
+          url: string | null
+          user_id: string | null
+        }
+        Insert: {
+          context?: Json | null
+          created_at?: string
+          error_code: string
+          id?: string
+          message: string
+          session_id?: string | null
+          severity?: string
+          source?: string
+          stack_trace?: string | null
+          url?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          context?: Json | null
+          created_at?: string
+          error_code?: string
+          id?: string
+          message?: string
+          session_id?: string | null
+          severity?: string
+          source?: string
+          stack_trace?: string | null
+          url?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -912,6 +993,33 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_audit_event: {
+        Args: {
+          p_action_type: string
+          p_actor_id: string
+          p_actor_role: string
+          p_ip_address?: string
+          p_metadata?: Json
+          p_target_id?: string
+          p_target_type?: string
+          p_user_agent?: string
+        }
+        Returns: string
+      }
+      log_error: {
+        Args: {
+          p_context?: Json
+          p_error_code: string
+          p_message: string
+          p_session_id?: string
+          p_severity?: string
+          p_source?: string
+          p_stack_trace?: string
+          p_url?: string
+          p_user_id?: string
+        }
+        Returns: string
       }
       record_login_attempt: {
         Args: {
