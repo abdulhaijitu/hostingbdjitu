@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle, ShieldCheck, Activity, BarChart3, Globe } from 'lucide-react';
+import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle, ShieldCheck, Activity, BarChart3, Globe, FileEdit, Tag, HelpCircle, Quote, PanelTop } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -73,7 +73,10 @@ export const mobileBottomNavItems: BottomNavItem[] = [
 // "More" sheet items
 export const mobileMoreSheetItems: NavItem[] = [
   { label: 'Tickets', labelBn: 'সাপোর্ট টিকেট', href: '/admin/tickets', icon: MessageSquare },
-  { label: 'Announcements', labelBn: 'ঘোষণা', href: '/admin/announcements', icon: Megaphone },
+  { label: 'CMS Settings', labelBn: 'CMS সেটিংস', href: '/admin/cms/settings', icon: Settings },
+  { label: 'Pricing Display', labelBn: 'প্রাইসিং', href: '/admin/cms/pricing', icon: Tag },
+  { label: 'FAQ', labelBn: 'FAQ', href: '/admin/cms/faq', icon: HelpCircle },
+  { label: 'Blog', labelBn: 'ব্লগ', href: '/admin/cms/blog', icon: FileEdit },
   { label: 'Webhooks', labelBn: 'ওয়েবহুক লগ', href: '/admin/webhooks', icon: Webhook },
   { label: 'Audit Logs', labelBn: 'অডিট লগ', href: '/admin/audit-logs', icon: Shield },
   { label: 'Error Logs', labelBn: 'এরর লগ', href: '/admin/error-logs', icon: AlertTriangle },
@@ -126,10 +129,20 @@ export const sidebarNavSections: NavSection[] = [
     ],
   },
   {
+    label: 'CMS',
+    items: [
+      { label: 'WHMCS Settings', labelBn: 'WHMCS সেটিংস', href: '/admin/cms/settings', icon: Settings },
+      { label: 'Pricing Display', labelBn: 'প্রাইসিং ডিসপ্লে', href: '/admin/cms/pricing', icon: Tag },
+      { label: 'FAQ', labelBn: 'FAQ', href: '/admin/cms/faq', icon: HelpCircle },
+      { label: 'Testimonials', labelBn: 'টেস্টিমোনিয়াল', href: '/admin/cms/testimonials', icon: Quote },
+      { label: 'Announcements', labelBn: 'অ্যানাউন্সমেন্ট', href: '/admin/cms/announcements', icon: Megaphone },
+      { label: 'Blog Posts', labelBn: 'ব্লগ পোস্ট', href: '/admin/cms/blog', icon: FileEdit },
+    ],
+  },
+  {
     label: 'SYSTEM',
     items: [
       { label: 'Tickets', labelBn: 'টিকেট', href: '/admin/tickets', icon: MessageSquare },
-      { label: 'Announcements', labelBn: 'ঘোষণা', href: '/admin/announcements', icon: Megaphone },
       { label: 'Webhooks', labelBn: 'ওয়েবহুক লগ', href: '/admin/webhooks', icon: FileBarChart },
       { label: 'Audit Logs', labelBn: 'অডিট লগ', href: '/admin/audit-logs', icon: Shield },
       { label: 'Error Logs', labelBn: 'এরর লগ', href: '/admin/error-logs', icon: AlertTriangle },
