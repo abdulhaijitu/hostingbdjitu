@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
+import PreloadLink from '@/components/common/PreloadLink';
+import {
   Server, 
   Cloud, 
   Globe, 
@@ -308,14 +309,14 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ category, isActive, onClose, langua
                 <p className="text-xs text-muted-foreground mb-3">
                   {language === 'bn' ? 'সাহায্য দরকার?' : 'Need help choosing?'}
                 </p>
-                <Link
+                <PreloadLink
                   to="/support"
                   onClick={onClose}
                   className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-accent transition-colors"
                 >
                   <span>{language === 'bn' ? 'আমাদের সাথে যোগাযোগ করুন' : 'Contact Us'}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
+                </PreloadLink>
               </div>
             </div>
           )}

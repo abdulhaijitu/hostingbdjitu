@@ -3,6 +3,7 @@ import { ArrowRight, Shield, Zap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { WHMCS_URLS } from '@/lib/whmcsConfig';
+import OptimizedImage from '@/components/common/OptimizedImage';
 import heroDashboard from '@/assets/hero-dashboard.png';
 
 const HeroSection: React.FC = () => {
@@ -123,12 +124,14 @@ const HeroSection: React.FC = () => {
                 <div className="w-80 h-80 lg:w-96 lg:h-96 bg-gradient-to-br from-accent/20 to-primary/20 rounded-full blur-3xl animate-pulse-slow" />
               </div>
               
-              {/* Main Image */}
+              {/* Main Image - Optimized */}
               <div className="relative animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
-                <img 
+                <OptimizedImage 
                   src={heroDashboard} 
                   alt="CHost Dashboard - cPanel with Email, SSL, Database, WordPress features" 
-                  className="w-full max-w-lg lg:max-w-xl xl:max-w-2xl h-auto object-contain drop-shadow-2xl animate-float"
+                  className="w-full max-w-lg lg:max-w-xl xl:max-w-2xl h-auto drop-shadow-2xl animate-float rounded-lg"
+                  priority={true}
+                  blur={true}
                   style={{ animationDuration: '6s' }}
                 />
                 
