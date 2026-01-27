@@ -2084,6 +2084,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_cms_super_admin: { Args: { _user_id: string }; Returns: boolean }
       log_audit_event: {
         Args: {
           p_action_type: string
