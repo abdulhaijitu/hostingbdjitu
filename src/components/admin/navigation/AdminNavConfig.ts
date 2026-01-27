@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle } from 'lucide-react';
+import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle, ShieldCheck, Activity } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -77,6 +77,7 @@ export const mobileMoreSheetItems: NavItem[] = [
   { label: 'Webhooks', labelBn: 'ওয়েবহুক লগ', href: '/admin/webhooks', icon: Webhook },
   { label: 'Audit Logs', labelBn: 'অডিট লগ', href: '/admin/audit-logs', icon: Shield },
   { label: 'Error Logs', labelBn: 'এরর লগ', href: '/admin/error-logs', icon: AlertTriangle },
+  { label: 'Security', labelBn: 'নিরাপত্তা', href: '/admin/security', icon: ShieldCheck },
   { label: 'Analytics', labelBn: 'অ্যানালিটিক্স', href: '/admin/analytics', icon: FileBarChart },
   { label: 'Credentials', labelBn: 'API ক্রেডেনশিয়াল', href: '/admin/server-credentials', icon: Settings },
   { label: 'Settings', labelBn: 'সেটিংস', href: '/admin/settings', icon: Settings },
@@ -124,6 +125,7 @@ export const sidebarNavSections: NavSection[] = [
       { label: 'Webhooks', labelBn: 'ওয়েবহুক লগ', href: '/admin/webhooks', icon: FileBarChart },
       { label: 'Audit Logs', labelBn: 'অডিট লগ', href: '/admin/audit-logs', icon: Shield },
       { label: 'Error Logs', labelBn: 'এরর লগ', href: '/admin/error-logs', icon: AlertTriangle },
+      { label: 'Security', labelBn: 'নিরাপত্তা', href: '/admin/security', icon: ShieldCheck },
       { label: 'Credentials', labelBn: 'API ক্রেডেনশিয়াল', href: '/admin/server-credentials', icon: Settings },
       { label: 'Settings', labelBn: 'সেটিংস', href: '/admin/settings', icon: Settings },
     ],
