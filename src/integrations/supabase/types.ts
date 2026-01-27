@@ -229,6 +229,30 @@ export type Database = {
         }
         Relationships: []
       }
+      cms_admin_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["cms_role"]
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["cms_role"]
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["cms_role"]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cms_announcements: {
         Row: {
           announcement_type: string | null
@@ -2026,6 +2050,10 @@ export type Database = {
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
+      get_cms_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["cms_role"]
+      }
       get_domains_expiring_soon: {
         Args: { days_threshold?: number }
         Returns: {
@@ -2041,6 +2069,13 @@ export type Database = {
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_cms_permission: {
+        Args: {
+          _required_role: Database["public"]["Enums"]["cms_role"]
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {
@@ -2115,6 +2150,7 @@ export type Database = {
     Enums: {
       app_role: "customer" | "admin"
       billing_cycle: "monthly" | "yearly" | "lifetime"
+      cms_role: "super_admin" | "editor" | "viewer"
       domain_status:
         | "pending_registration"
         | "active"
@@ -2266,6 +2302,7 @@ export const Constants = {
     Enums: {
       app_role: ["customer", "admin"],
       billing_cycle: ["monthly", "yearly", "lifetime"],
+      cms_role: ["super_admin", "editor", "viewer"],
       domain_status: [
         "pending_registration",
         "active",

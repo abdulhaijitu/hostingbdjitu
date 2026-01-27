@@ -11,28 +11,43 @@ import {
   Mail, 
   Facebook,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  AlertTriangle,
+  Shield
 } from 'lucide-react';
 import { useCMSSettings, useUpdateCMSSetting } from '@/hooks/useCMSSettings';
+import CMSPermissionGate from '@/components/cms/CMSPermissionGate';
+import CMSConfirmDialog from '@/components/cms/CMSConfirmDialog';
 
 const CMSSettingsManagement: React.FC = () => {
   const { data: settings, isLoading } = useCMSSettings();
   const updateSetting = useUpdateCMSSetting();
   const [editedValues, setEditedValues] = useState<Record<string, string>>({});
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [pendingSave, setPendingSave] = useState<{ id: string; value: string } | null>(null);
 
   const handleValueChange = (id: string, value: string) => {
     setEditedValues(prev => ({ ...prev, [id]: value }));
   };
 
-  const handleSave = (id: string, originalValue: string | null) => {
+  const handleSaveRequest = (id: string, originalValue: string | null) => {
     const newValue = editedValues[id];
     if (newValue !== undefined && newValue !== originalValue) {
-      updateSetting.mutate({ id, setting_value: newValue });
+      setPendingSave({ id, value: newValue });
+      setConfirmDialogOpen(true);
+    }
+  };
+
+  const handleConfirmSave = () => {
+    if (pendingSave) {
+      updateSetting.mutate({ id: pendingSave.id, setting_value: pendingSave.value });
       setEditedValues(prev => {
         const updated = { ...prev };
-        delete updated[id];
+        delete updated[pendingSave.id];
         return updated;
       });
+      setPendingSave(null);
+      setConfirmDialogOpen(false);
     }
   };
 
@@ -82,86 +97,122 @@ const CMSSettingsManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">CMS সেটিংস</h1>
-          <p className="text-muted-foreground mt-1">
-            WHMCS URLs এবং সাইট কনফিগারেশন পরিচালনা করুন
-          </p>
-        </div>
-      </div>
-
-      {/* Important Notice */}
-      <Card className="border-amber-500/30 bg-amber-500/5">
-        <CardContent className="py-4">
-          <div className="flex items-start gap-3">
-            <ExternalLink className="h-5 w-5 text-amber-400 mt-0.5" />
-            <div>
-              <p className="font-medium text-amber-200">গুরুত্বপূর্ণ নোটিশ</p>
-              <p className="text-sm text-amber-200/70 mt-1">
-                এই সেটিংস শুধুমাত্র ফ্রন্টেন্ড কন্টেন্ট পরিচালনার জন্য। বিলিং, পেমেন্ট, 
-                এবং হোস্টিং অপারেশন সম্পূর্ণভাবে WHMCS দ্বারা পরিচালিত হয়।
-              </p>
-            </div>
+    <CMSPermissionGate requiredRole="super_admin">
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Shield className="h-6 w-6 text-amber-500" />
+              গ্লোবাল সেটিংস
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              WHMCS URLs এবং সাইট কনফিগারেশন পরিচালনা করুন
+            </p>
           </div>
-        </CardContent>
-      </Card>
+          <Badge variant="outline" className="text-amber-500 border-amber-500/50">
+            Super Admin Only
+          </Badge>
+        </div>
 
-      {groupedSettings && Object.entries(groupedSettings).map(([category, categorySettings]) => (
-        <Card key={category}>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-3">
-              <Badge className={getCategoryColor(category)}>
-                {getCategoryIcon(category)}
-                <span className="ml-1.5">{categoryLabels[category] || category}</span>
-              </Badge>
+        {/* Critical Warning */}
+        <Card className="border-red-500/30 bg-red-500/5">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-red-400 mt-0.5" />
+              <div>
+                <p className="font-semibold text-red-300">⚠️ সতর্কতা: লাইভ সাইট প্রভাবিত হবে</p>
+                <p className="text-sm text-red-200/70 mt-1">
+                  এই সেটিংস পরিবর্তন করলে সরাসরি লাইভ সাইটের রিডাইরেক্ট এবং কনফিগারেশন প্রভাবিত হবে। 
+                  পরিবর্তন করার আগে সাবধানে যাচাই করুন।
+                </p>
+              </div>
             </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {categorySettings?.map((setting) => {
-              const currentValue = editedValues[setting.id] ?? setting.setting_value ?? '';
-              const hasChanges = editedValues[setting.id] !== undefined && 
-                                editedValues[setting.id] !== setting.setting_value;
-              
-              return (
-                <div key={setting.id} className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-foreground mb-1">
-                      {setting.description || setting.setting_key}
-                    </label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={currentValue}
-                        onChange={(e) => handleValueChange(setting.id, e.target.value)}
-                        placeholder={setting.setting_key}
-                        className="flex-1"
-                        disabled={setting.is_editable === false}
-                      />
-                      <Button
-                        size="sm"
-                        onClick={() => handleSave(setting.id, setting.setting_value)}
-                        disabled={!hasChanges || updateSetting.isPending}
-                        className={hasChanges ? 'bg-primary hover:bg-primary/90' : ''}
-                      >
-                        {updateSetting.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Save className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Key: <code className="bg-muted px-1 rounded">{setting.setting_key}</code>
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
           </CardContent>
         </Card>
-      ))}
-    </div>
+
+        {/* Important Notice */}
+        <Card className="border-amber-500/30 bg-amber-500/5">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <ExternalLink className="h-5 w-5 text-amber-400 mt-0.5" />
+              <div>
+                <p className="font-medium text-amber-200">গুরুত্বপূর্ণ নোটিশ</p>
+                <p className="text-sm text-amber-200/70 mt-1">
+                  এই সেটিংস শুধুমাত্র ফ্রন্টেন্ড কন্টেন্ট পরিচালনার জন্য। বিলিং, পেমেন্ট, 
+                  এবং হোস্টিং অপারেশন সম্পূর্ণভাবে WHMCS দ্বারা পরিচালিত হয়।
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {groupedSettings && Object.entries(groupedSettings).map(([category, categorySettings]) => (
+          <Card key={category}>
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <Badge className={getCategoryColor(category)}>
+                  {getCategoryIcon(category)}
+                  <span className="ml-1.5">{categoryLabels[category] || category}</span>
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {categorySettings?.map((setting) => {
+                const currentValue = editedValues[setting.id] ?? setting.setting_value ?? '';
+                const hasChanges = editedValues[setting.id] !== undefined && 
+                                  editedValues[setting.id] !== setting.setting_value;
+                
+                return (
+                  <div key={setting.id} className="flex items-center gap-4">
+                    <div className="flex-1">
+                      <label className="block text-sm font-medium text-foreground mb-1">
+                        {setting.description || setting.setting_key}
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={currentValue}
+                          onChange={(e) => handleValueChange(setting.id, e.target.value)}
+                          placeholder={setting.setting_key}
+                          className="flex-1"
+                          disabled={setting.is_editable === false}
+                        />
+                        <Button
+                          size="sm"
+                          onClick={() => handleSaveRequest(setting.id, setting.setting_value)}
+                          disabled={!hasChanges || updateSetting.isPending}
+                          className={hasChanges ? 'bg-primary hover:bg-primary/90' : ''}
+                        >
+                          {updateSetting.isPending ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Save className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Key: <code className="bg-muted px-1 rounded">{setting.setting_key}</code>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* Confirmation Dialog */}
+        <CMSConfirmDialog
+          open={confirmDialogOpen}
+          onOpenChange={setConfirmDialogOpen}
+          onConfirm={handleConfirmSave}
+          title="সেটিং পরিবর্তন নিশ্চিত করুন"
+          description="এই পরিবর্তন সরাসরি লাইভ সাইটকে প্রভাবিত করবে। আপনি কি নিশ্চিত?"
+          actionType="settings"
+          confirmLabel="পরিবর্তন সেভ করুন"
+          isLoading={updateSetting.isPending}
+        />
+      </div>
+    </CMSPermissionGate>
   );
 };
 
