@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.get-user-role]
 verify_jwt = false
+
+[functions.log-audit]
+verify_jwt = false
