@@ -92,6 +92,7 @@ import CheckoutCancel from "./pages/checkout/CheckoutCancel";
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const HostingPlansManagement = lazy(() => import('./pages/admin/HostingPlansManagement'));
 const DomainPricingManagement = lazy(() => import('./pages/admin/DomainPricingManagement'));
+const DomainsManagement = lazy(() => import('./pages/admin/DomainsManagement'));
 const UsersManagement = lazy(() => import('./pages/admin/UsersManagement'));
 const TicketsManagement = lazy(() => import('./pages/admin/TicketsManagement'));
 const AnalyticsDashboard = lazy(() => import('./pages/admin/AnalyticsDashboard'));
@@ -240,6 +241,7 @@ const App = () => (
                   <Route path="/admin" element={<AdminRoute><LazyAdminPage><AdminDashboard /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/hosting-plans" element={<AdminRoute><LazyAdminPage><HostingPlansManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/domain-pricing" element={<AdminRoute><LazyAdminPage><DomainPricingManagement /></LazyAdminPage></AdminRoute>} />
+                  <Route path="/admin/domains" element={<AdminRoute><LazyAdminPage><DomainsManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/users" element={<AdminRoute><LazyAdminPage><UsersManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/tickets" element={<AdminRoute><LazyAdminPage><TicketsManagement /></LazyAdminPage></AdminRoute>} />
                   <Route path="/admin/canned-responses" element={<AdminRoute><LazyAdminPage><CannedResponsesManagement /></LazyAdminPage></AdminRoute>} />
