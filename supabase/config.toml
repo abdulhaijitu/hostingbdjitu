@@ -53,3 +53,12 @@ verify_jwt = false
 
 [functions.domain-sync]
 verify_jwt = false
+
+[functions.domain-generate-authcode]
+verify_jwt = false
+
+[functions.domain-transfer-out]
+verify_jwt = false
+
+[functions.domain-transfer-in]
+verify_jwt = false

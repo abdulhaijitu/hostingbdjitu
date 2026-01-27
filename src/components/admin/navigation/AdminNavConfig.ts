@@ -1,4 +1,4 @@
-import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle, ShieldCheck, Activity, BarChart3 } from 'lucide-react';
+import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle, ShieldCheck, Activity, BarChart3, Globe } from 'lucide-react';
 
 export interface NavItem {
   label: string;
@@ -99,6 +99,13 @@ export const sidebarNavSections: NavSection[] = [
       { label: 'Servers', labelBn: 'সার্ভার', href: '/admin/servers', icon: Server },
       { label: 'WHM / cPanel', labelBn: 'WHM / cPanel', href: '/admin/package-mapping', icon: MonitorCog },
       { label: 'Provisioning', labelBn: 'প্রভিশনিং', href: '/admin/provisioning', icon: ListTodo },
+    ],
+  },
+  {
+    label: 'DOMAINS',
+    items: [
+      { label: 'All Domains', labelBn: 'সকল ডোমেইন', href: '/admin/domains', icon: Globe },
+      { label: 'Domain Pricing', labelBn: 'ডোমেইন মূল্য', href: '/admin/domain-pricing', icon: Receipt },
     ],
   },
   {
