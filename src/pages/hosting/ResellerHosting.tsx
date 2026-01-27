@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS, getHostingStoreUrl } from '@/lib/whmcsConfig';
 
 const ResellerHosting: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -218,7 +219,7 @@ const ResellerHosting: React.FC = () => {
               ? 'আমাদের হোয়াইট-লেবেল রিসেলার হোস্টিং সল্যুশন দিয়ে আপনার নিজের ওয়েব হোস্টিং ব্যবসা শুরু করুন।'
               : 'Start your own web hosting business with our white-label reseller hosting solutions.'}
           </p>
-          <Button variant="hero" size="xl">
+          <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(getHostingStoreUrl('reseller'))}>
             {language === 'bn' ? 'প্ল্যান দেখুন' : 'View Plans'} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -320,7 +321,7 @@ const ResellerHosting: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full" onClick={() => redirectToWHMCS(getHostingStoreUrl('reseller'))}>
                   {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
                 </Button>
               </div>
@@ -412,7 +413,7 @@ const ResellerHosting: React.FC = () => {
                 ? 'আমাদের সম্পূর্ণ টুলস এবং সাপোর্ট দিয়ে আপনার ওয়েব হোস্টিং ব্যবসা গড়ে তুলুন।'
                 : 'Build your web hosting business with our complete tools and support.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(getHostingStoreUrl('reseller'))}>
               {language === 'bn' ? 'শুরু করুন' : 'Get Started'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>

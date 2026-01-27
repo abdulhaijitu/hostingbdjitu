@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { redirectToWHMCS, getHostingStoreUrl } from '@/lib/whmcsConfig';
 
 const WordPressHosting: React.FC = () => {
   const { language } = useLanguage();
@@ -240,7 +241,7 @@ const WordPressHosting: React.FC = () => {
                     <li className={cn('flex items-center gap-2', plan.featured ? 'text-primary-foreground' : '')}><RefreshCw className="h-4 w-4 text-accent" /> {language === 'bn' ? 'অটো আপডেট' : 'Auto Updates'}</li>
                     <li className={cn('flex items-center gap-2', plan.featured ? 'text-primary-foreground' : '')}><Shield className="h-4 w-4 text-accent" /> LiteSpeed Cache</li>
                   </ul>
-                  <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                  <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full" onClick={() => redirectToWHMCS(getHostingStoreUrl('wordpress'))}>
                     {language === 'bn' ? 'এখনই শুরু করুন' : 'Get Started'}
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
@@ -347,11 +348,9 @@ const WordPressHosting: React.FC = () => {
               ? '১-ক্লিক ইনস্টল দিয়ে মাত্র কয়েক মিনিটে আপনার ওয়ার্ডপ্রেস সাইট চালু করুন।'
               : 'Launch your WordPress site in minutes with 1-click installation.'}
           </p>
-          <Button variant="accent" size="xl" asChild>
-            <a href="#pricing">
-              {language === 'bn' ? 'এখনই শুরু করুন' : 'Get Started Now'}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </a>
+          <Button variant="accent" size="xl" onClick={() => redirectToWHMCS(getHostingStoreUrl('wordpress'))}>
+            {language === 'bn' ? 'এখনই শুরু করুন' : 'Get Started Now'}
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </section>
