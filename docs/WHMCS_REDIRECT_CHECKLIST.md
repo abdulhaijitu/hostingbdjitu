@@ -222,3 +222,87 @@ WHMCS_URLS = {
 ---
 
 *Last Updated: January 2026*
+
+---
+
+# Performance Optimizations
+
+## ✅ Implemented Optimizations
+
+### Code Splitting (Lazy Loading)
+- All non-critical pages are lazy loaded using `React.lazy()`
+- Only Home and 404 pages load immediately
+- Suspense fallback shows a loading spinner during chunk load
+- **File**: `src/App.tsx`
+
+### Route Preloading
+- Routes preload on link hover/focus for faster navigation
+- `usePreloadRoute` hook handles chunk preloading
+- `PreloadLink` component wraps React Router's Link
+- **Files**: `src/hooks/usePreloadRoute.ts`, `src/components/common/PreloadLink.tsx`
+
+### Image Optimization
+- `OptimizedImage` component with:
+  - Intersection Observer for lazy loading
+  - Blur placeholder while loading
+  - Error fallback handling
+  - Native lazy loading support
+- **File**: `src/components/common/OptimizedImage.tsx`
+
+### Performance Utilities
+- Debounce/throttle for scroll handlers
+- Image preloading utilities
+- Connection speed detection
+- Deferred non-critical operations
+- **File**: `src/lib/performanceOptimizations.ts`
+
+### React Query Optimization
+- Stale time: 60 seconds
+- GC time: 10 minutes
+- Offline-first network mode
+- Smart retry with exponential backoff
+
+### Service Worker
+- Offline support enabled
+- Registered after initial render (deferred)
+- **File**: `src/lib/registerServiceWorker.ts`
+
+---
+
+## Usage Examples
+
+### OptimizedImage
+```tsx
+import OptimizedImage from '@/components/common/OptimizedImage';
+
+<OptimizedImage
+  src="/hero-image.jpg"
+  alt="Hero image"
+  aspectRatio="video"
+  priority={true}  // Load immediately for above-fold images
+/>
+```
+
+### PreloadLink
+```tsx
+import PreloadLink from '@/components/common/PreloadLink';
+
+<PreloadLink to="/hosting/web">
+  Web Hosting
+</PreloadLink>
+```
+
+### Performance Utilities
+```tsx
+import { debounce, throttle, deferNonCritical } from '@/lib/performanceOptimizations';
+
+// Debounce scroll handler
+const handleScroll = debounce(() => {
+  // Handle scroll
+}, 100);
+
+// Defer analytics
+deferNonCritical(() => {
+  // Initialize analytics
+});
+```
