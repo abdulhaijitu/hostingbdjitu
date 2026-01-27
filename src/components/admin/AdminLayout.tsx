@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, memo } from 'react';
+import React, { useState, useEffect, useCallback, memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { TooltipProvider } from '@/components/ui/tooltip';
 
@@ -96,6 +96,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
     }
   }, [isTablet, isDesktop, collapsed]);
 
+  // PERFORMANCE: Memoized handlers to prevent child re-renders
   const handleToggle = useCallback(() => {
     setCollapsed(prev => {
       const newState = !prev;
@@ -107,6 +108,20 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
   const handleMoreClick = useCallback(() => {
     setMoreSheetOpen(true);
   }, []);
+
+  const handleMoreSheetChange = useCallback((open: boolean) => {
+    setMoreSheetOpen(open);
+  }, []);
+
+  // PERFORMANCE: Memoized main content styles
+  const mainContentStyle = useMemo(() => ({
+    paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))', // 64px + safe area
+  }), []);
+
+  const desktopMainClass = useMemo(() => cn(
+    'min-h-screen transition-all duration-300 ease-out overflow-x-hidden',
+    collapsed ? 'ml-[72px]' : 'ml-[280px]'
+  ), [collapsed]);
 
   // Prevent layout shift before hydration
   if (!mounted) {
@@ -122,12 +137,13 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
   // ═══════════════════════════════════════════
   // MOBILE LAYOUT (≤768px)
   // Bottom nav + top bar, NO sidebar
+  // PERFORMANCE: Layout renders instantly
   // ═══════════════════════════════════════════
   if (isMobile) {
     return (
       <TooltipProvider>
         <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
-          {/* Mobile Top Bar - Sticky */}
+          {/* Mobile Top Bar - Sticky, renders immediately */}
           <MobileTopBar />
           
           {/* Mobile Tab Navigation (for Hosting, Billing, Users) */}
@@ -136,20 +152,18 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
           {/* Main Content - With bottom padding for nav */}
           <main 
             className="flex-1 overflow-x-hidden"
-            style={{
-              paddingBottom: 'calc(4rem + env(safe-area-inset-bottom))', // 64px + safe area
-            }}
+            style={mainContentStyle}
           >
             <div className="animate-fade-in">
               {children}
             </div>
           </main>
           
-          {/* Mobile Bottom Navigation - Fixed */}
+          {/* Mobile Bottom Navigation - Fixed, always visible */}
           <MobileBottomNav onMoreClick={handleMoreClick} />
           
           {/* More Sheet - Action sheet, NOT modal */}
-          <MobileMoreSheet open={moreSheetOpen} onOpenChange={setMoreSheetOpen} />
+          <MobileMoreSheet open={moreSheetOpen} onOpenChange={handleMoreSheetChange} />
         </div>
       </TooltipProvider>
     );
@@ -158,6 +172,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
   // ═══════════════════════════════════════════
   // TABLET/DESKTOP LAYOUT (>768px)
   // Sidebar (collapsed on tablet, full on desktop)
+  // PERFORMANCE: Sidebar renders instantly
   // ═══════════════════════════════════════════
   return (
     <TooltipProvider>
@@ -169,12 +184,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = memo(({ children }) => {
         />
         
         {/* Main Content */}
-        <main
-          className={cn(
-            'min-h-screen transition-all duration-300 ease-out overflow-x-hidden',
-            collapsed ? 'ml-[72px]' : 'ml-[280px]'
-          )}
-        >
+        <main className={desktopMainClass}>
           <div className="animate-fade-in">
             {children}
           </div>

@@ -29,8 +29,63 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Cache for role to prevent refetching
+// ═══════════════════════════════════════════════════════════════
+// PERFORMANCE OPTIMIZATION: Persistent role cache
+// Role is cached in memory AND sessionStorage to survive page reloads
+// This eliminates role re-fetching on navigation
+// ═══════════════════════════════════════════════════════════════
+const ROLE_CACHE_KEY = 'chost_role_cache';
+
+// In-memory cache for instant access
 const roleCache = new Map<string, AppRole>();
+
+// Load cache from sessionStorage on init
+const loadCachedRole = (userId: string): AppRole | null => {
+  // Check memory first (fastest)
+  if (roleCache.has(userId)) {
+    return roleCache.get(userId)!;
+  }
+  
+  // Check sessionStorage
+  try {
+    const cached = sessionStorage.getItem(ROLE_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed.userId === userId && parsed.role) {
+        // Populate memory cache
+        roleCache.set(userId, parsed.role);
+        return parsed.role;
+      }
+    }
+  } catch {
+    // Silent fail for storage errors
+  }
+  return null;
+};
+
+// Save role to both caches
+const saveRoleCache = (userId: string, role: AppRole) => {
+  roleCache.set(userId, role);
+  try {
+    sessionStorage.setItem(ROLE_CACHE_KEY, JSON.stringify({ userId, role }));
+  } catch {
+    // Silent fail for storage errors
+  }
+};
+
+// Clear role cache
+const clearRoleCache = (userId?: string) => {
+  if (userId) {
+    roleCache.delete(userId);
+  } else {
+    roleCache.clear();
+  }
+  try {
+    sessionStorage.removeItem(ROLE_CACHE_KEY);
+  } catch {
+    // Silent fail
+  }
+};
 
 // Session refresh interval (45 minutes - before 1 hour expiry)
 const SESSION_REFRESH_INTERVAL = 45 * 60 * 1000;
@@ -77,14 +132,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = role === 'admin';
 
   // Fetch role via secure edge function with exponential backoff
+  // PERFORMANCE: Uses persistent cache to eliminate re-fetches on navigation
   const fetchUserRole = useCallback(async (accessToken: string, userId: string, forceRefresh = false): Promise<AppRole | null> => {
-    // Check cache first (unless force refresh)
-    if (!forceRefresh && roleCache.has(userId)) {
-      const cachedRole = roleCache.get(userId)!;
-      if (mountedRef.current) {
-        setRoleState({ status: 'resolved', role: cachedRole });
+    // Check persistent cache first (unless force refresh)
+    // This makes role resolution instant on navigation
+    if (!forceRefresh) {
+      const cachedRole = loadCachedRole(userId);
+      if (cachedRole) {
+        if (mountedRef.current) {
+          setRoleState({ status: 'resolved', role: cachedRole });
+        }
+        console.log(`[Auth] Role loaded from cache: ${cachedRole}`);
+        return cachedRole;
       }
-      return cachedRole;
     }
 
     // Skip if already fetching for this user (unless force refresh)
@@ -129,15 +189,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (data.role) {
           const userRole: AppRole = data.role;
           
-          // Cache the result
-          roleCache.set(userId, userRole);
+          // Cache the result in both memory and sessionStorage
+          saveRoleCache(userId, userRole);
           setRoleState({ status: 'resolved', role: userRole });
           currentFetchRef.current = null;
           
           if (attempt > 0) {
-            console.log(`Role fetch succeeded on attempt ${attempt + 1}: ${userRole}`);
+            console.log(`[Auth] Role fetch succeeded on attempt ${attempt + 1}: ${userRole}`);
           } else {
-            console.log(`Role resolved: ${userRole}`);
+            console.log(`[Auth] Role resolved: ${userRole}`);
           }
           
           return userRole;
@@ -158,10 +218,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else {
           // No role found, default to customer
           const defaultRole: AppRole = 'customer';
-          roleCache.set(userId, defaultRole);
+          saveRoleCache(userId, defaultRole);
           setRoleState({ status: 'resolved', role: defaultRole });
           currentFetchRef.current = null;
-          console.log('No role found, defaulting to customer');
+          console.log('[Auth] No role found, defaulting to customer');
           return defaultRole;
         }
       } catch (error) {
@@ -196,7 +256,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user?.id || !session?.access_token) return;
     
     // Clear cache for this user
-    roleCache.delete(user.id);
+    clearRoleCache(user.id);
     currentFetchRef.current = null;
     
     await fetchUserRole(session.access_token, user.id, true);
@@ -390,10 +450,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signOut = useCallback(async () => {
-    // Clear role cache on sign out
-    if (user?.id) {
-      roleCache.delete(user.id);
-    }
+    // Clear all role caches on sign out
+    clearRoleCache(user?.id);
     
     currentFetchRef.current = null;
     
