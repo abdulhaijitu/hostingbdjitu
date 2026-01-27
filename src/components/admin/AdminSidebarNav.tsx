@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink } from '@/components/NavLink';
-import { ChevronDown, LucideIcon } from 'lucide-react';
+import { ChevronDown, LucideIcon, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
@@ -13,6 +13,7 @@ export interface NavItem {
   href?: string;
   icon: LucideIcon;
   children?: NavItem[];
+  restricted?: boolean; // For Super Admin only items
 }
 
 export interface NavSection {
@@ -107,7 +108,12 @@ const NavMenuItem: React.FC<{
         <div className="relative">
           <Icon className="h-[18px] w-[18px] shrink-0 text-slate-500 group-hover:text-primary transition-colors duration-200" />
         </div>
-        {!collapsed && <span className="tracking-wide">{item.label}</span>}
+        {!collapsed && (
+          <span className="tracking-wide flex items-center gap-2">
+            {item.label}
+            {item.restricted && <Lock className="h-3 w-3 text-amber-500/70" />}
+          </span>
+        )}
       </div>
     </NavLink>
   );
