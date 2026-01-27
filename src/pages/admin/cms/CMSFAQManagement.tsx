@@ -10,8 +10,13 @@ import {
   Trash2, 
   HelpCircle,
   Loader2,
-  Search
+  Search,
+  AlertCircle,
+  RefreshCcw
 } from 'lucide-react';
+import CMSPermissionGate from '@/components/cms/CMSPermissionGate';
+import CMSConfirmDialog from '@/components/cms/CMSConfirmDialog';
+import { useCMSPermission } from '@/components/cms/CMSPermissionGate';
 import { 
   useCMSFAQs, 
   useCreateCMSFAQ, 

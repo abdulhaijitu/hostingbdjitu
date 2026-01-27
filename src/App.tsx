@@ -71,6 +71,9 @@ const CMSFAQManagement = lazy(() => import("./pages/admin/cms/CMSFAQManagement")
 const CMSTestimonialsManagement = lazy(() => import("./pages/admin/cms/CMSTestimonialsManagement"));
 const CMSAnnouncementsManagement = lazy(() => import("./pages/admin/cms/CMSAnnouncementsManagement"));
 const CMSBlogManagement = lazy(() => import("./pages/admin/cms/CMSBlogManagement"));
+const CMSPagesManagement = lazy(() => import("./pages/admin/cms/CMSPagesManagement"));
+const CMSContactMessagesPage = lazy(() => import("./pages/admin/cms/CMSContactMessagesPage"));
+const CMSAdminUsersPage = lazy(() => import("./pages/admin/cms/CMSAdminUsersPage"));
 
 // Configure React Query with optimized global settings
 const queryClient = new QueryClient({
@@ -166,13 +169,16 @@ const App = () => (
                   <Route path="/admin" element={<LazyRoute><AdminRoute><AdminDashboard /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/settings" element={<LazyRoute><AdminRoute><SettingsManagement /></AdminRoute></LazyRoute>} />
                   
-                  {/* Admin CMS Routes */}
-                  <Route path="/admin/cms/settings" element={<LazyRoute><AdminRoute><CMSSettingsManagement /></AdminRoute></LazyRoute>} />
+                  {/* Admin CMS Routes - Content Only */}
+                  <Route path="/admin/cms/pages" element={<LazyRoute><AdminRoute><CMSPagesManagement /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/cms/pricing" element={<LazyRoute><AdminRoute><CMSPricingManagement /></AdminRoute></LazyRoute>} />
+                  <Route path="/admin/cms/blog" element={<LazyRoute><AdminRoute><CMSBlogManagement /></AdminRoute></LazyRoute>} />
+                  <Route path="/admin/cms/announcements" element={<LazyRoute><AdminRoute><CMSAnnouncementsManagement /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/cms/faq" element={<LazyRoute><AdminRoute><CMSFAQManagement /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/cms/testimonials" element={<LazyRoute><AdminRoute><CMSTestimonialsManagement /></AdminRoute></LazyRoute>} />
-                  <Route path="/admin/cms/announcements" element={<LazyRoute><AdminRoute><CMSAnnouncementsManagement /></AdminRoute></LazyRoute>} />
-                  <Route path="/admin/cms/blog" element={<LazyRoute><AdminRoute><CMSBlogManagement /></AdminRoute></LazyRoute>} />
+                  <Route path="/admin/cms/settings" element={<LazyRoute><AdminRoute><CMSSettingsManagement /></AdminRoute></LazyRoute>} />
+                  <Route path="/admin/cms/messages" element={<LazyRoute><AdminRoute><CMSContactMessagesPage /></AdminRoute></LazyRoute>} />
+                  <Route path="/admin/cms/admins" element={<LazyRoute><AdminRoute><CMSAdminUsersPage /></AdminRoute></LazyRoute>} />
                   
                   {/* 404 - Critical route */}
                   <Route path="*" element={<NotFound />} />

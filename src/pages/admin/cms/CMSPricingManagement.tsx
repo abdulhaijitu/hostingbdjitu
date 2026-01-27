@@ -11,8 +11,11 @@ import {
   Tag,
   Loader2,
   Star,
-  ExternalLink
+  ExternalLink,
+  AlertTriangle
 } from 'lucide-react';
+import CMSPermissionGate from '@/components/cms/CMSPermissionGate';
+import CMSConfirmDialog from '@/components/cms/CMSConfirmDialog';
 import { 
   useCMSPricing, 
   useCreateCMSPricing, 

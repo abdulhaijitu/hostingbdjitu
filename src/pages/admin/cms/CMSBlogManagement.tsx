@@ -11,8 +11,12 @@ import {
   Loader2,
   Eye,
   Calendar,
-  Search
+  Search,
+  EyeOff
 } from 'lucide-react';
+import CMSPermissionGate from '@/components/cms/CMSPermissionGate';
+import CMSConfirmDialog from '@/components/cms/CMSConfirmDialog';
+import { useCMSPermission } from '@/components/cms/CMSPermissionGate';
 import { 
   useCMSBlogPosts, 
   useCreateCMSBlogPost, 

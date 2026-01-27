@@ -131,12 +131,15 @@ export const sidebarNavSections: NavSection[] = [
   {
     label: 'CMS',
     items: [
-      { label: 'WHMCS Settings', labelBn: 'WHMCS সেটিংস', href: '/admin/cms/settings', icon: Settings },
-      { label: 'Pricing Display', labelBn: 'প্রাইসিং ডিসপ্লে', href: '/admin/cms/pricing', icon: Tag },
-      { label: 'FAQ', labelBn: 'FAQ', href: '/admin/cms/faq', icon: HelpCircle },
-      { label: 'Testimonials', labelBn: 'টেস্টিমোনিয়াল', href: '/admin/cms/testimonials', icon: Quote },
+      { label: 'Pages', labelBn: 'পেজ', href: '/admin/cms/pages', icon: PanelTop },
+      { label: 'Pricing & Plans', labelBn: 'প্রাইসিং', href: '/admin/cms/pricing', icon: Tag },
+      { label: 'Blog / News', labelBn: 'ব্লগ', href: '/admin/cms/blog', icon: FileEdit },
       { label: 'Announcements', labelBn: 'অ্যানাউন্সমেন্ট', href: '/admin/cms/announcements', icon: Megaphone },
-      { label: 'Blog Posts', labelBn: 'ব্লগ পোস্ট', href: '/admin/cms/blog', icon: FileEdit },
+      { label: 'FAQs', labelBn: 'FAQ', href: '/admin/cms/faq', icon: HelpCircle },
+      { label: 'Testimonials', labelBn: 'টেস্টিমোনিয়াল', href: '/admin/cms/testimonials', icon: Quote },
+      { label: 'Global Settings', labelBn: 'গ্লোবাল সেটিংস', href: '/admin/cms/settings', icon: Settings },
+      { label: 'Contact Messages', labelBn: 'মেসেজ', href: '/admin/cms/messages', icon: MessageSquare },
+      { label: 'CMS Admins', labelBn: 'CMS অ্যাডমিন', href: '/admin/cms/admins', icon: Users },
     ],
   },
   {
