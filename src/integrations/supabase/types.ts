@@ -199,6 +199,60 @@ export type Database = {
         }
         Relationships: []
       }
+      domain_expiry_notifications: {
+        Row: {
+          created_at: string
+          days_before_expiry: number | null
+          domain_id: string
+          email_log_id: string | null
+          error_message: string | null
+          id: string
+          notification_type: string
+          sent_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          days_before_expiry?: number | null
+          domain_id: string
+          email_log_id?: string | null
+          error_message?: string | null
+          id?: string
+          notification_type: string
+          sent_at?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          days_before_expiry?: number | null
+          domain_id?: string
+          email_log_id?: string | null
+          error_message?: string | null
+          id?: string
+          notification_type?: string
+          sent_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_expiry_notifications_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_expiry_notifications_email_log_id_fkey"
+            columns: ["email_log_id"]
+            isOneToOne: false
+            referencedRelation: "email_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       domain_pricing: {
         Row: {
           created_at: string
@@ -237,6 +291,289 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      domain_provisioning_queue: {
+        Row: {
+          action: string
+          attempts: number | null
+          completed_at: string | null
+          created_at: string
+          domain_id: string | null
+          error_message: string | null
+          id: string
+          last_attempt_at: string | null
+          max_attempts: number | null
+          next_retry_at: string | null
+          order_id: string | null
+          priority: number | null
+          request_data: Json | null
+          response_data: Json | null
+          scheduled_at: string | null
+          started_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          attempts?: number | null
+          completed_at?: string | null
+          created_at?: string
+          domain_id?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          max_attempts?: number | null
+          next_retry_at?: string | null
+          order_id?: string | null
+          priority?: number | null
+          request_data?: Json | null
+          response_data?: Json | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          attempts?: number | null
+          completed_at?: string | null
+          created_at?: string
+          domain_id?: string | null
+          error_message?: string | null
+          id?: string
+          last_attempt_at?: string | null
+          max_attempts?: number | null
+          next_retry_at?: string | null
+          order_id?: string | null
+          priority?: number | null
+          request_data?: Json | null
+          response_data?: Json | null
+          scheduled_at?: string | null
+          started_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_provisioning_queue_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_provisioning_queue_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_renewals: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string | null
+          domain_id: string
+          failure_reason: string | null
+          id: string
+          new_expiry_date: string | null
+          payment_id: string | null
+          previous_expiry_date: string | null
+          processed_at: string | null
+          renewal_period: number | null
+          renewal_type: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string | null
+          domain_id: string
+          failure_reason?: string | null
+          id?: string
+          new_expiry_date?: string | null
+          payment_id?: string | null
+          previous_expiry_date?: string | null
+          processed_at?: string | null
+          renewal_period?: number | null
+          renewal_type: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string | null
+          domain_id?: string
+          failure_reason?: string | null
+          id?: string
+          new_expiry_date?: string | null
+          payment_id?: string | null
+          previous_expiry_date?: string | null
+          processed_at?: string | null
+          renewal_period?: number | null
+          renewal_type?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_renewals_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "domain_renewals_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domain_sync_logs: {
+        Row: {
+          created_at: string
+          domain_id: string | null
+          error_message: string | null
+          id: string
+          local_data: Json | null
+          mismatches: Json | null
+          registrar_data: Json | null
+          status: string
+          sync_type: string
+        }
+        Insert: {
+          created_at?: string
+          domain_id?: string | null
+          error_message?: string | null
+          id?: string
+          local_data?: Json | null
+          mismatches?: Json | null
+          registrar_data?: Json | null
+          status: string
+          sync_type: string
+        }
+        Update: {
+          created_at?: string
+          domain_id?: string | null
+          error_message?: string | null
+          id?: string
+          local_data?: Json | null
+          mismatches?: Json | null
+          registrar_data?: Json | null
+          status?: string
+          sync_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domain_sync_logs_domain_id_fkey"
+            columns: ["domain_id"]
+            isOneToOne: false
+            referencedRelation: "domains"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      domains: {
+        Row: {
+          auth_code: string | null
+          auto_renew: boolean | null
+          auto_renew_failed_at: string | null
+          auto_renew_failure_reason: string | null
+          created_at: string
+          dns_records: Json | null
+          domain_name: string
+          expiry_date: string | null
+          extension: string
+          grace_period_ends_at: string | null
+          id: string
+          last_renewed_at: string | null
+          last_synced_at: string | null
+          metadata: Json | null
+          nameserver_status: string | null
+          nameservers: Json | null
+          order_id: string | null
+          redemption_ends_at: string | null
+          registrar_domain_id: string | null
+          registrar_name: string | null
+          registration_date: string | null
+          status: Database["public"]["Enums"]["domain_status"]
+          sync_error: string | null
+          sync_status: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          auth_code?: string | null
+          auto_renew?: boolean | null
+          auto_renew_failed_at?: string | null
+          auto_renew_failure_reason?: string | null
+          created_at?: string
+          dns_records?: Json | null
+          domain_name: string
+          expiry_date?: string | null
+          extension: string
+          grace_period_ends_at?: string | null
+          id?: string
+          last_renewed_at?: string | null
+          last_synced_at?: string | null
+          metadata?: Json | null
+          nameserver_status?: string | null
+          nameservers?: Json | null
+          order_id?: string | null
+          redemption_ends_at?: string | null
+          registrar_domain_id?: string | null
+          registrar_name?: string | null
+          registration_date?: string | null
+          status?: Database["public"]["Enums"]["domain_status"]
+          sync_error?: string | null
+          sync_status?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          auth_code?: string | null
+          auto_renew?: boolean | null
+          auto_renew_failed_at?: string | null
+          auto_renew_failure_reason?: string | null
+          created_at?: string
+          dns_records?: Json | null
+          domain_name?: string
+          expiry_date?: string | null
+          extension?: string
+          grace_period_ends_at?: string | null
+          id?: string
+          last_renewed_at?: string | null
+          last_synced_at?: string | null
+          metadata?: Json | null
+          nameserver_status?: string | null
+          nameservers?: Json | null
+          order_id?: string | null
+          redemption_ends_at?: string | null
+          registrar_domain_id?: string | null
+          registrar_name?: string | null
+          registration_date?: string | null
+          status?: Database["public"]["Enums"]["domain_status"]
+          sync_error?: string | null
+          sync_status?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "domains_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_logs: {
         Row: {
@@ -1248,6 +1585,18 @@ export type Database = {
       generate_invoice_number: { Args: never; Returns: string }
       generate_order_number: { Args: never; Returns: string }
       generate_ticket_number: { Args: never; Returns: string }
+      get_domains_expiring_soon: {
+        Args: { days_threshold?: number }
+        Returns: {
+          auto_renew: boolean
+          days_until_expiry: number
+          domain_id: string
+          domain_name: string
+          expiry_date: string
+          status: Database["public"]["Enums"]["domain_status"]
+          user_id: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -1320,10 +1669,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      update_domain_expiry_status: { Args: never; Returns: number }
     }
     Enums: {
       app_role: "customer" | "admin"
       billing_cycle: "monthly" | "yearly" | "lifetime"
+      domain_status:
+        | "pending_registration"
+        | "active"
+        | "pending_renewal"
+        | "expired"
+        | "grace_period"
+        | "redemption"
+        | "cancelled"
+        | "transfer_in"
+        | "transfer_out"
       order_status:
         | "pending"
         | "processing"
@@ -1465,6 +1825,17 @@ export const Constants = {
     Enums: {
       app_role: ["customer", "admin"],
       billing_cycle: ["monthly", "yearly", "lifetime"],
+      domain_status: [
+        "pending_registration",
+        "active",
+        "pending_renewal",
+        "expired",
+        "grace_period",
+        "redemption",
+        "cancelled",
+        "transfer_in",
+        "transfer_out",
+      ],
       order_status: [
         "pending",
         "processing",

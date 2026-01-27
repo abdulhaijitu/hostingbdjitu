@@ -35,3 +35,21 @@ verify_jwt = false
 
 [functions.cron-service-expiry]
 verify_jwt = false
+
+[functions.domain-register]
+verify_jwt = false
+
+[functions.domain-renew]
+verify_jwt = false
+
+[functions.domain-update-nameservers]
+verify_jwt = false
+
+[functions.domain-toggle-autorenew]
+verify_jwt = false
+
+[functions.cron-domain-expiry]
+verify_jwt = false
+
+[functions.domain-sync]
+verify_jwt = false
