@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { WHMCS_URLS, redirectToWHMCS, getVPSStoreUrl } from '@/lib/whmcsConfig';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
 
 const CustomVPS: React.FC = () => {
@@ -234,7 +235,7 @@ const CustomVPS: React.FC = () => {
                   </div>
                 </div>
 
-                <Button variant="hero" size="lg" className="w-full mb-4">
+                <Button variant="hero" size="lg" className="w-full mb-4" onClick={() => redirectToWHMCS(getVPSStoreUrl('custom'))}>
                   <Send className="mr-2 h-5 w-5" />
                   {language === 'bn' ? 'কোট রিকোয়েস্ট করুন' : 'Request Quote'}
                 </Button>
@@ -303,7 +304,7 @@ const CustomVPS: React.FC = () => {
                 ? 'আমাদের সেলস টিমের সাথে যোগাযোগ করুন এবং আপনার নির্দিষ্ট প্রয়োজন অনুযায়ী কাস্টম কোট পান।'
                 : 'Contact our sales team and get a custom quote tailored to your specific needs.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(WHMCS_URLS.submitTicket)}>
               {language === 'bn' ? 'সেলস টিমে যোগাযোগ করুন' : 'Contact Sales'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
