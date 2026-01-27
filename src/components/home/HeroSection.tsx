@@ -1,14 +1,13 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, Zap, Globe, LayoutDashboard } from 'lucide-react';
+import { ArrowRight, Shield, Zap, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { WHMCS_URLS } from '@/lib/whmcsConfig';
 import heroDashboard from '@/assets/hero-dashboard.png';
 
 const HeroSection: React.FC = () => {
   const { t, language } = useLanguage();
-  const { user } = useAuth();
+
   return (
     <section className="relative overflow-hidden bg-gradient-hero">
       {/* Background Decoration */}
@@ -59,35 +58,29 @@ const HeroSection: React.FC = () => {
                 {t('hero.subtitle')}
               </p>
 
-              {/* CTA Buttons */}
+              {/* CTA Buttons - All redirect to WHMCS */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 mb-8 animate-fade-in-up" style={{ animationDelay: '0.35s' }}>
-                {user ? (
-                  // Show Dashboard button for logged-in users
-                  <Button variant="hero" size="lg" asChild className="group relative overflow-hidden">
-                    <Link to="/client">
-                      <span className="relative z-10 flex items-center">
-                        <LayoutDashboard className="mr-2 h-4 w-4" />
-                        {language === 'bn' ? 'ড্যাশবোর্ডে যান' : 'Go to Dashboard'}
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button variant="hero" size="lg" asChild className="group relative overflow-hidden">
-                    <Link to="/hosting/web">
-                      <span className="relative z-10 flex items-center">
-                        {t('hero.getStarted')}
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                      </span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </Link>
-                  </Button>
-                )}
-                <Button variant="heroOutline" size="lg" asChild className="group">
-                  <Link to="/hosting">
-                    <span className="group-hover:text-accent transition-colors">{t('hero.viewPlans')}</span>
-                  </Link>
+                <Button 
+                  variant="hero" 
+                  size="lg" 
+                  className="group relative overflow-hidden"
+                  onClick={() => window.location.href = WHMCS_URLS.billingHome}
+                >
+                  <span className="relative z-10 flex items-center">
+                    {t('hero.getStarted')}
+                    <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                  </span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-accent to-primary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Button>
+                <Button 
+                  variant="heroOutline" 
+                  size="lg" 
+                  className="group"
+                  onClick={() => window.location.href = WHMCS_URLS.clientArea}
+                >
+                  <span className="group-hover:text-accent transition-colors">
+                    {language === 'bn' ? 'লগইন করুন' : 'Login'}
+                  </span>
                 </Button>
               </div>
 

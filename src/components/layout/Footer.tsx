@@ -2,32 +2,34 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, MapPin, ExternalLink, Shield, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { WHMCS_URLS } from '@/lib/whmcsConfig';
 import chostLogo from '@/assets/chost-logo.png';
 
 const Footer: React.FC = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   const footerLinks = {
     company: [
-      { label: t('footer.aboutUs'), href: '/about' },
-      { label: t('footer.contactUs'), href: '/contact' },
-      { label: t('footer.blog'), href: '/blog' },
+      { label: t('footer.aboutUs'), href: '/about', external: false },
+      { label: t('footer.contactUs'), href: '/contact', external: false },
+      { label: t('footer.blog'), href: '/blog', external: false },
     ],
     services: [
-      { label: t('nav.webHosting'), href: '/hosting/web' },
-      { label: t('nav.cloudVps'), href: '/vps/cloud' },
-      { label: t('nav.dedicatedServer'), href: '/servers/dedicated' },
-      { label: t('nav.domainRegistration'), href: '/domain/register' },
+      { label: t('nav.webHosting'), href: '/hosting/web', external: false },
+      { label: t('nav.cloudVps'), href: '/vps/cloud', external: false },
+      { label: t('nav.dedicatedServer'), href: '/servers/dedicated', external: false },
+      { label: t('nav.domainRegistration'), href: WHMCS_URLS.domainSearch, external: true },
     ],
     legal: [
-      { label: t('footer.refundPolicy'), href: '/refund-policy' },
-      { label: t('footer.privacyPolicy'), href: '/privacy-policy' },
-      { label: t('footer.termsOfService'), href: '/terms-of-service' },
+      { label: t('footer.refundPolicy'), href: '/refund-policy', external: false },
+      { label: t('footer.privacyPolicy'), href: '/privacy-policy', external: false },
+      { label: t('footer.termsOfService'), href: '/terms-of-service', external: false },
     ],
     support: [
-      { label: t('footer.helpCenter'), href: '/support' },
-      { label: t('footer.knowledgeBase'), href: '/knowledge-base' },
-      { label: t('footer.systemStatus'), href: '/status' },
+      { label: language === 'bn' ? 'ক্লায়েন্ট এরিয়া' : 'Client Area', href: WHMCS_URLS.clientArea, external: true },
+      { label: language === 'bn' ? 'বিলিং' : 'Billing', href: WHMCS_URLS.billingHome, external: true },
+      { label: language === 'bn' ? 'সাপোর্ট টিকেট' : 'Support Ticket', href: WHMCS_URLS.submitTicket, external: true },
+      { label: language === 'bn' ? 'ডোমেইন সার্চ' : 'Domain Search', href: WHMCS_URLS.domainSearch, external: true },
     ],
   };
 
@@ -37,6 +39,30 @@ const Footer: React.FC = () => {
     { icon: Linkedin, href: 'https://linkedin.com', label: 'LinkedIn' },
     { icon: Instagram, href: 'https://instagram.com', label: 'Instagram' },
   ];
+
+  const renderLink = (link: { label: string; href: string; external: boolean }) => {
+    if (link.external) {
+      return (
+        <a
+          href={link.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-sm text-primary-foreground/70 hover:text-accent transition-colors inline-flex items-center gap-1"
+        >
+          {link.label}
+          <ExternalLink className="h-3 w-3" />
+        </a>
+      );
+    }
+    return (
+      <Link
+        to={link.href}
+        className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
+      >
+        {link.label}
+      </Link>
+    );
+  };
 
   return (
     <footer className="bg-primary text-primary-foreground">
@@ -95,14 +121,7 @@ const Footer: React.FC = () => {
             <h4 className="font-semibold font-display mb-4">{t('footer.company')}</h4>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.label}>{renderLink(link)}</li>
               ))}
             </ul>
           </div>
@@ -111,14 +130,7 @@ const Footer: React.FC = () => {
             <h4 className="font-semibold font-display mb-4">{t('footer.services')}</h4>
             <ul className="space-y-3">
               {footerLinks.services.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.label}>{renderLink(link)}</li>
               ))}
             </ul>
           </div>
@@ -127,28 +139,14 @@ const Footer: React.FC = () => {
             <h4 className="font-semibold font-display mb-4">{t('footer.legal')}</h4>
             <ul className="space-y-3">
               {footerLinks.legal.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.label}>{renderLink(link)}</li>
               ))}
             </ul>
             
             <h4 className="font-semibold font-display mt-6 mb-4">{t('footer.support')}</h4>
             <ul className="space-y-3">
               {footerLinks.support.map((link) => (
-                <li key={link.label}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
+                <li key={link.label}>{renderLink(link)}</li>
               ))}
             </ul>
           </div>
