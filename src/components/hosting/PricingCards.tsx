@@ -1,12 +1,11 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Check, ArrowRight, Award, HardDrive, Globe, Zap, Mail, Shield, Clock, Loader2 } from 'lucide-react';
+import { ArrowRight, Award, HardDrive, Globe, Zap, Mail, Shield, Clock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useHostingPlans, HostingPlan } from '@/hooks/useHostingPlans';
 import { cn } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getHostingStoreUrl, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 interface PricingCardsProps {
   category?: string;
@@ -44,7 +43,8 @@ const PricingCards: React.FC<PricingCardsProps> = ({ category = 'web', isYearly 
           key={plan.id} 
           plan={plan} 
           isYearly={isYearly} 
-          language={language} 
+          language={language}
+          category={category}
         />
       ))}
     </div>
@@ -55,12 +55,16 @@ interface PlanCardProps {
   plan: HostingPlan;
   isYearly: boolean;
   language: string;
+  category: string;
 }
 
-const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, language }) => {
-  const price = isYearly ? plan.yearly_price : plan.monthly_price;
+const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, language, category }) => {
   const monthlyEquivalent = isYearly ? Math.round(plan.yearly_price / 12) : plan.monthly_price;
-  const checkoutUrl = `/checkout?plan=${plan.id}&billing=${isYearly ? 'yearly' : 'monthly'}`;
+
+  const handleOrderClick = () => {
+    const whmcsUrl = getHostingStoreUrl(category);
+    redirectToWHMCS(whmcsUrl);
+  };
 
   return (
     <div
@@ -150,12 +154,10 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, language }) => {
           variant={plan.is_featured ? 'accent' : 'hero'}
           size="lg"
           className="w-full"
-          asChild
+          onClick={handleOrderClick}
         >
-          <Link to={checkoutUrl}>
-            {language === 'bn' ? 'অর্ডার করুন' : 'Order Now'}
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </Link>
+          {language === 'bn' ? 'অর্ডার করুন' : 'Order Now'}
+          <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
     </div>

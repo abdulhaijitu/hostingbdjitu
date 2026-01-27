@@ -21,7 +21,15 @@ export const WHMCS_URLS = {
   viewTickets: `${WHMCS_BASE_URL}/supporttickets.php`,
   knowledgeBase: `${WHMCS_BASE_URL}/knowledgebase.php`,
   
-  // Orders
+  // Hosting Store Pages
+  hosting: {
+    web: `${WHMCS_BASE_URL}/index.php?rp=/store/web-hosting`,
+    premium: `${WHMCS_BASE_URL}/index.php?rp=/store/premium-hosting`,
+    wordpress: `${WHMCS_BASE_URL}/index.php?rp=/store/wordpress-hosting`,
+    reseller: `${WHMCS_BASE_URL}/index.php?rp=/store/reseller-hosting`,
+  },
+  
+  // Legacy cart URLs (kept for reference)
   cart: `${WHMCS_BASE_URL}/cart.php`,
   orderHosting: (productId: number) => `${WHMCS_BASE_URL}/cart.php?a=add&pid=${productId}`,
   
@@ -39,40 +47,18 @@ export const WHMCS_URLS = {
 } as const;
 
 /**
- * Product IDs for hosting plans
- * These should match your WHMCS product configuration
+ * Get WHMCS hosting store URL by category
  */
-export const WHMCS_PRODUCT_IDS = {
-  // Shared Hosting
-  sharedStarter: 1,
-  sharedBusiness: 2,
-  sharedEnterprise: 3,
+export const getHostingStoreUrl = (category: string): string => {
+  const categoryMap: Record<string, string> = {
+    web: WHMCS_URLS.hosting.web,
+    premium: WHMCS_URLS.hosting.premium,
+    wordpress: WHMCS_URLS.hosting.wordpress,
+    reseller: WHMCS_URLS.hosting.reseller,
+  };
   
-  // WordPress Hosting
-  wpStarter: 4,
-  wpBusiness: 5,
-  wpEnterprise: 6,
-  
-  // Premium Hosting
-  premiumStarter: 7,
-  premiumBusiness: 8,
-  premiumEnterprise: 9,
-  
-  // Reseller Hosting
-  resellerStarter: 10,
-  resellerBusiness: 11,
-  resellerEnterprise: 12,
-  
-  // VPS
-  vpsCloud: 13,
-  vpsWHM: 14,
-  vpsCustom: 15,
-  
-  // Dedicated Servers
-  dedicatedStarter: 16,
-  dedicatedBusiness: 17,
-  dedicatedEnterprise: 18,
-} as const;
+  return categoryMap[category] || WHMCS_URLS.hosting.web;
+};
 
 /**
  * Helper function to redirect to WHMCS
