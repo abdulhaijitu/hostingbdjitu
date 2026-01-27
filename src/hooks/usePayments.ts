@@ -19,12 +19,16 @@ export interface Payment {
   updated_at: string;
 }
 
-// Cache durations for optimized performance
+// ═══════════════════════════════════════════════════════════════
+// OPTIMIZED CACHE CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
 const QUERY_CONFIG = {
-  staleTime: 30 * 1000, // Data is fresh for 30 seconds
-  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  staleTime: 60 * 1000, // Data fresh for 1 minute
+  gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   refetchOnWindowFocus: false,
+  refetchOnMount: false as const, // Use cached data if available
   retry: 2,
+  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 10000),
 };
 
 export const usePayments = () => {

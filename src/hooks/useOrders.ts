@@ -6,12 +6,17 @@ import type { Tables, TablesInsert } from '@/integrations/supabase/types';
 export type Order = Tables<'orders'>;
 export type OrderInsert = TablesInsert<'orders'>;
 
-// Cache durations for optimized performance
+// ═══════════════════════════════════════════════════════════════
+// OPTIMIZED CACHE CONFIGURATION
+// Orders change frequently but we still cache to prevent re-fetches
+// ═══════════════════════════════════════════════════════════════
 const QUERY_CONFIG = {
-  staleTime: 30 * 1000, // Data is fresh for 30 seconds
-  gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+  staleTime: 60 * 1000, // Data considered fresh for 1 minute
+  gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   refetchOnWindowFocus: false,
+  refetchOnMount: false as const, // Use cached data if available
   retry: 2,
+  retryDelay: (attemptIndex: number) => Math.min(1000 * 2 ** attemptIndex, 10000),
 };
 
 export const useOrders = () => {

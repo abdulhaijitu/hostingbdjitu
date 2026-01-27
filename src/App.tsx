@@ -111,17 +111,27 @@ const AffiliatesManagement = lazy(() => import('./pages/admin/AffiliatesManageme
 const AnnouncementsManagement = lazy(() => import('./pages/admin/AnnouncementsManagement'));
 const SettingsManagement = lazy(() => import('./pages/admin/SettingsManagement'));
 
-// Configure React Query with global error handling
+// Configure React Query with optimized global settings
+// Key principles:
+// - Aggressive caching to prevent refetches
+// - No refetch on window focus (manual invalidation only)
+// - Fast retries with backoff
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 2,
-      staleTime: 30 * 1000, // 30 seconds
-      gcTime: 5 * 60 * 1000, // 5 minutes cache
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
+      staleTime: 60 * 1000, // 1 minute - data considered fresh
+      gcTime: 10 * 60 * 1000, // 10 minutes cache retention
       refetchOnWindowFocus: false,
+      refetchOnReconnect: true,
+      refetchOnMount: false, // Don't refetch if data exists
+      networkMode: 'offlineFirst', // Use cache first
     },
     mutations: {
       retry: 1,
+      retryDelay: 1000,
+      networkMode: 'offlineFirst',
     },
   },
 });

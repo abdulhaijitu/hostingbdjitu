@@ -6,6 +6,18 @@ export type HostingPlan = Tables<'hosting_plans'>;
 export type HostingPlanInsert = TablesInsert<'hosting_plans'>;
 export type HostingPlanUpdate = TablesUpdate<'hosting_plans'>;
 
+// ═══════════════════════════════════════════════════════════════
+// OPTIMIZED CACHE CONFIGURATION
+// Hosting plans rarely change - cache aggressively
+// ═══════════════════════════════════════════════════════════════
+const QUERY_CONFIG = {
+  staleTime: 5 * 60 * 1000, // Data fresh for 5 minutes (plans don't change often)
+  gcTime: 30 * 60 * 1000, // Keep in cache for 30 minutes
+  refetchOnWindowFocus: false,
+  refetchOnMount: false as const, // Use cached data if available
+  retry: 2,
+};
+
 export const useHostingPlans = (activeOnly = false) => {
   return useQuery({
     queryKey: ['hosting_plans', activeOnly],
@@ -23,8 +35,7 @@ export const useHostingPlans = (activeOnly = false) => {
       if (error) throw error;
       return data as HostingPlan[];
     },
-    staleTime: 60 * 1000, // 1 minute
-    gcTime: 5 * 60 * 1000, // 5 minutes
+    ...QUERY_CONFIG,
   });
 };
 
