@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Search, ArrowRight, Globe, Shield, Zap, CheckCircle, Tag, Star } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const DomainPricing: React.FC = () => {
   const { language } = useLanguage();
@@ -46,6 +46,10 @@ const DomainPricing: React.FC = () => {
   });
 
   const formatPrice = (price: number) => `৳${price.toLocaleString('en-IN')}`;
+
+  const handleRegisterClick = () => {
+    redirectToWHMCS(WHMCS_URLS.domainSearch);
+  };
 
   return (
     <Layout>
@@ -172,8 +176,8 @@ const DomainPricing: React.FC = () => {
                         <div className="font-semibold">{formatPrice(domain.transfer)}</div>
                       </td>
                       <td className="p-4 text-center">
-                        <Button variant="hero" size="sm" asChild>
-                          <Link to="/domain/register">{language === 'bn' ? 'রেজিস্টার' : 'Register'}</Link>
+                        <Button variant="hero" size="sm" onClick={handleRegisterClick}>
+                          {language === 'bn' ? 'রেজিস্টার' : 'Register'}
                         </Button>
                       </td>
                     </tr>
@@ -231,10 +235,8 @@ const DomainPricing: React.FC = () => {
                 ? 'বিনামূল্যে WHOIS প্রাইভেসি এবং DNS ম্যানেজমেন্ট সহ আজই আপনার ডোমেইন সুরক্ষিত করুন।'
                 : 'Secure your domain today with free WHOIS privacy and DNS management.'}
             </p>
-            <Button variant="hero" size="xl" asChild>
-              <Link to="/domain/register">
-                {language === 'bn' ? 'ডোমেইন সার্চ করুন' : 'Search Domains'} <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
+            <Button variant="hero" size="xl" onClick={handleRegisterClick}>
+              {language === 'bn' ? 'ডোমেইন সার্চ করুন' : 'Search Domains'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </div>

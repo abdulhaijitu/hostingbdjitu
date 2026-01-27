@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const DomainRegistration: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -101,6 +102,16 @@ const DomainRegistration: React.FC = () => {
     },
   ];
 
+  const handleDomainSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Redirect to WHMCS domain search
+    redirectToWHMCS(WHMCS_URLS.domainSearch);
+  };
+
+  const handleRegisterClick = () => {
+    redirectToWHMCS(WHMCS_URLS.domainSearch);
+  };
+
   return (
     <Layout>
       <SEOHead
@@ -142,7 +153,7 @@ const DomainRegistration: React.FC = () => {
               : 'Register your domain name with free WHOIS privacy, DNS management, and 24/7 support.'}
           </p>
 
-          <form className="max-w-3xl mx-auto mb-8" onSubmit={(e) => e.preventDefault()}>
+          <form className="max-w-3xl mx-auto mb-8" onSubmit={handleDomainSearch}>
             <div className="relative flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -220,7 +231,7 @@ const DomainRegistration: React.FC = () => {
                 <div className="text-sm text-muted-foreground mb-4">
                   {language === 'bn' ? 'রিনিউ' : 'Renews at'} {item.renewal}/{language === 'bn' ? 'বছর' : 'yr'}
                 </div>
-                <Button variant="outline" size="sm" className="w-full">
+                <Button variant="outline" size="sm" className="w-full" onClick={handleRegisterClick}>
                   {language === 'bn' ? 'রেজিস্টার করুন' : 'Register'}
                 </Button>
               </div>
@@ -304,7 +315,7 @@ const DomainRegistration: React.FC = () => {
                 ? 'বিনামূল্যে WHOIS প্রাইভেসি এবং DNS ম্যানেজমেন্ট সহ আপনার পারফেক্ট ডোমেইন খুঁজুন।'
                 : 'Find your perfect domain with free WHOIS privacy and DNS management.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={handleRegisterClick}>
               {language === 'bn' ? 'ডোমেইন সার্চ করুন' : 'Search Domains'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
