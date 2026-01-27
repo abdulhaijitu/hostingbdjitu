@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 const WebsiteDesign: React.FC = () => {
   const { language } = useLanguage();
@@ -320,10 +321,10 @@ const WebsiteDesign: React.FC = () => {
             {filteredPortfolio.map((item) => (
               <div key={item.title} className="group cursor-pointer">
                 <div className="relative overflow-hidden rounded-2xl mb-4">
-                  <img 
+                  <OptimizedImage 
                     src={item.image} 
                     alt={item.title}
-                    className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
+                    className="w-full h-56 group-hover:scale-105 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-primary/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <Button variant="accent" size="sm">

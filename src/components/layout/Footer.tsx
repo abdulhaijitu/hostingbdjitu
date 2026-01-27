@@ -1,9 +1,9 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { Mail, MapPin, ExternalLink, Shield, Facebook, Twitter, Linkedin, Instagram } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { WHMCS_URLS } from '@/lib/whmcsConfig';
 import chostLogo from '@/assets/chost-logo.png';
+import PreloadLink from '@/components/common/PreloadLink';
 
 const Footer: React.FC = () => {
   const { t, language } = useLanguage();
@@ -55,12 +55,12 @@ const Footer: React.FC = () => {
       );
     }
     return (
-      <Link
+      <PreloadLink
         to={link.href}
         className="text-sm text-primary-foreground/70 hover:text-accent transition-colors"
       >
         {link.label}
-      </Link>
+      </PreloadLink>
     );
   };
 
@@ -71,13 +71,13 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
           {/* Brand Column */}
           <div className="lg:col-span-2">
-            <Link to="/" className="inline-block mb-6">
+            <PreloadLink to="/" className="inline-block mb-6">
               <img 
                 src={chostLogo} 
                 alt="CHost - Secure.Fast.Online" 
                 className="h-12 w-auto brightness-0 invert"
               />
-            </Link>
+            </PreloadLink>
             <p className="text-primary-foreground/70 mb-6 max-w-sm">
               Your trusted partner for reliable, secure, and lightning-fast web hosting solutions. Serving businesses locally and globally.
             </p>
