@@ -60,9 +60,8 @@ const Login = lazy(() => import("./pages/auth/Login"));
 // Admin Route Wrapper
 const AdminRoute = lazy(() => import("./components/auth/AdminRoute"));
 
-// Admin Pages
-const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
-const SettingsManagement = lazy(() => import("./pages/admin/SettingsManagement"));
+// CMS Dashboard (Content-Only)
+const CMSDashboard = lazy(() => import("./pages/admin/CMSDashboard"));
 
 // Admin CMS Pages
 const CMSSettingsManagement = lazy(() => import("./pages/admin/cms/CMSSettingsManagement"));
@@ -165,11 +164,8 @@ const App = () => (
                   <Route path="/login" element={<LazyRoute><Login /></LazyRoute>} />
                   <Route path="/signup" element={<LazyRoute><Login /></LazyRoute>} />
 
-                  {/* Admin Routes - Protected */}
-                  <Route path="/admin" element={<LazyRoute><AdminRoute><AdminDashboard /></AdminRoute></LazyRoute>} />
-                  <Route path="/admin/settings" element={<LazyRoute><AdminRoute><SettingsManagement /></AdminRoute></LazyRoute>} />
-                  
                   {/* Admin CMS Routes - Content Only */}
+                  <Route path="/admin" element={<LazyRoute><AdminRoute><CMSDashboard /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/cms/pages" element={<LazyRoute><AdminRoute><CMSPagesManagement /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/cms/pricing" element={<LazyRoute><AdminRoute><CMSPricingManagement /></AdminRoute></LazyRoute>} />
                   <Route path="/admin/cms/blog" element={<LazyRoute><AdminRoute><CMSBlogManagement /></AdminRoute></LazyRoute>} />
