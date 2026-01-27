@@ -10,6 +10,7 @@ import chostLogo from '@/assets/chost-logo.png';
 import SiteSearch from '@/components/common/SiteSearch';
 import PromoBanner from './PromoBanner';
 import MegaMenu from './MegaMenu';
+import PreloadLink from '@/components/common/PreloadLink';
 
 interface MenuItem {
   label: string;
@@ -244,13 +245,13 @@ const Header: React.FC = () => {
         <div className="container-wide">
           <div className="flex h-16 lg:h-[72px] items-center justify-between">
             {/* Logo */}
-            <Link to="/" className="flex items-center flex-shrink-0">
+            <PreloadLink to="/" className="flex items-center flex-shrink-0">
               <img 
                 src={chostLogo} 
                 alt="CHost - Secure.Fast.Online" 
                 className="h-10 sm:h-12 w-auto"
               />
-            </Link>
+            </PreloadLink>
 
             {/* Desktop Navigation - Centered */}
             <nav className="hidden lg:flex items-center justify-center flex-1 mx-8">
@@ -262,7 +263,7 @@ const Header: React.FC = () => {
                     onMouseEnter={() => setActiveMenu(item.key || item.label)}
                     onMouseLeave={() => setActiveMenu(null)}
                   >
-                    <Link
+                    <PreloadLink
                       to={item.href}
                       className={cn(
                         "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium text-foreground/70 hover:text-primary transition-all duration-200 rounded-lg group",
@@ -282,7 +283,7 @@ const Header: React.FC = () => {
                           activeMenu === (item.key || item.label) && "rotate-180 text-primary"
                         )} />
                       )}
-                    </Link>
+                    </PreloadLink>
 
                     {/* Mega Menu Dropdown */}
                     {item.key && item.children && (
@@ -353,25 +354,25 @@ const Header: React.FC = () => {
               <div className="space-y-1 pt-2">
                 {mainMenuItems.map((item) => (
                   <div key={item.label}>
-                    <Link
+                    <PreloadLink
                       to={item.href}
                       className="flex items-center justify-between px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary hover:bg-primary/5 rounded-xl transition-colors"
                       onClick={() => !item.children && setIsOpen(false)}
                     >
                       {item.label}
                       {item.children && <ChevronDown className="h-4 w-4" />}
-                    </Link>
+                    </PreloadLink>
                     {item.children && (
                       <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/20 pl-4">
                         {item.children.map((child) => (
-                          <Link
+                          <PreloadLink
                             key={child.label}
                             to={child.href}
                             className="block px-4 py-2.5 text-sm text-muted-foreground hover:text-primary hover:bg-primary/5 rounded-lg transition-colors"
                             onClick={() => setIsOpen(false)}
                           >
                             {child.label}
-                          </Link>
+                          </PreloadLink>
                         ))}
                       </div>
                     )}
