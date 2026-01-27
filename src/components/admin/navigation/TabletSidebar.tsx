@@ -1,11 +1,12 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { Crown, PanelLeft, LogOut, Settings, Sun, Moon } from 'lucide-react';
+import { Crown, PanelLeft, LogOut, Settings, Sun, Moon, Lock } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { cn } from '@/lib/utils';
-import { sidebarNavSections } from './AdminNavConfig';
+import { sidebarNavSections, type NavSection } from './AdminNavConfig';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCMSRole } from '@/hooks/useCMSRole';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -23,9 +24,30 @@ const TabletSidebar: React.FC<TabletSidebarProps> = ({ collapsed, onToggle }) =>
   const { language } = useLanguage();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { data: cmsRole } = useCMSRole();
   
   const initials = user?.email?.charAt(0).toUpperCase() || 'A';
+  const isSuperAdmin = cmsRole?.role === 'super_admin';
+  
+  // Filter out restricted items for non-super-admins
+  const filteredNavSections: NavSection[] = useMemo(() => {
+    return sidebarNavSections.map(section => ({
+      ...section,
+      items: section.items.filter(item => !item.restricted || isSuperAdmin)
+    })).filter(section => section.items.length > 0);
+  }, [isSuperAdmin]);
+  
   const isDark = theme === 'dark';
+  
+  // Get role display info
+  const roleLabel = useMemo(() => {
+    switch (cmsRole?.role) {
+      case 'super_admin': return { title: 'Super Admin', subtitle: 'Full Access' };
+      case 'editor': return { title: 'Editor', subtitle: 'Content Editor' };
+      case 'viewer': return { title: 'Viewer', subtitle: 'Read Only' };
+      default: return { title: 'CMS Admin', subtitle: 'CHost CMS' };
+    }
+  }, [cmsRole?.role]);
 
   const isActive = (href: string) => {
     if (href === '/admin') {
@@ -66,7 +88,7 @@ const TabletSidebar: React.FC<TabletSidebarProps> = ({ collapsed, onToggle }) =>
                 <Crown className="h-5 w-5 text-white" />
               </div>
             </TooltipTrigger>
-            <TooltipContent side="right">Super Admin</TooltipContent>
+            <TooltipContent side="right">{roleLabel.title}</TooltipContent>
           </Tooltip>
         ) : (
           <>
@@ -75,8 +97,8 @@ const TabletSidebar: React.FC<TabletSidebarProps> = ({ collapsed, onToggle }) =>
                 <Crown className="h-5 w-5 text-white" />
               </div>
               <div>
-                <h2 className="font-bold text-white text-sm">Super Admin</h2>
-                <p className="text-xs text-slate-400">CHost Control</p>
+                <h2 className="font-bold text-white text-sm">{roleLabel.title}</h2>
+                <p className="text-xs text-slate-400">CHost CMS</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -115,7 +137,7 @@ const TabletSidebar: React.FC<TabletSidebarProps> = ({ collapsed, onToggle }) =>
       {/* Navigation */}
       <ScrollArea className="flex-1 px-3 py-4">
         <nav className="space-y-6">
-          {sidebarNavSections.map((section, index) => (
+          {filteredNavSections.map((section, index) => (
             <div key={section.label}>
               {!collapsed && (
                 <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.15em] text-slate-600">
@@ -246,7 +268,7 @@ const TabletSidebar: React.FC<TabletSidebarProps> = ({ collapsed, onToggle }) =>
             </Avatar>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-white truncate">{user?.email}</p>
-              <p className="text-xs text-slate-400">Super Admin</p>
+              <p className="text-xs text-slate-400">{roleLabel.title}</p>
             </div>
             <div className="flex gap-1">
               <Button

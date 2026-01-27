@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LogOut } from 'lucide-react';
+import { LogOut, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { mobileMoreSheetItems } from './AdminNavConfig';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCMSRole } from '@/hooks/useCMSRole';
 import {
   Drawer,
   DrawerContent,
@@ -23,6 +24,14 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { signOut } = useAuth();
+  const { data: cmsRole } = useCMSRole();
+  
+  const isSuperAdmin = cmsRole?.role === 'super_admin';
+  
+  // Filter out restricted items for non-super-admins
+  const filteredItems = useMemo(() => {
+    return mobileMoreSheetItems.filter(item => !item.restricted || isSuperAdmin);
+  }, [isSuperAdmin]);
   
   const isActive = (href: string) => {
     return location.pathname === href || location.pathname.startsWith(href + '/');
@@ -56,7 +65,7 @@ const MobileMoreSheet: React.FC<MobileMoreSheetProps> = ({ open, onOpenChange })
         {/* Navigation Items */}
         <div className="px-4 py-2">
           <div className="grid grid-cols-3 gap-3">
-            {mobileMoreSheetItems.map((item) => {
+            {filteredItems.map((item) => {
               const IconComponent = item.icon;
               const active = isActive(item.href);
               
