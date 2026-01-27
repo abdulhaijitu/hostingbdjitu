@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Check, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 interface PlanFeature {
   text: string;
@@ -20,6 +20,7 @@ interface Plan {
   featured?: boolean;
   href: string;
   savings?: string;
+  whmcsUrl: string;
 }
 
 const PricingSection: React.FC = () => {
@@ -44,6 +45,7 @@ const PricingSection: React.FC = () => {
         { text: language === 'bn' ? 'প্রায়োরিটি সাপোর্ট' : 'Priority Support', included: false },
       ],
       href: '/hosting/web',
+      whmcsUrl: WHMCS_URLS.hosting.web,
     },
     {
       name: t('pricing.professional'),
@@ -63,6 +65,7 @@ const PricingSection: React.FC = () => {
       ],
       featured: true,
       href: '/hosting/premium',
+      whmcsUrl: WHMCS_URLS.hosting.premium,
     },
     {
       name: t('pricing.business'),
@@ -81,6 +84,7 @@ const PricingSection: React.FC = () => {
         { text: language === 'bn' ? '২৪/৭ প্রায়োরিটি সাপোর্ট' : 'Priority 24/7 Support', included: true },
       ],
       href: '/hosting/premium',
+      whmcsUrl: WHMCS_URLS.hosting.premium,
     },
   ];
 
@@ -227,12 +231,10 @@ const PricingSection: React.FC = () => {
                   variant={plan.featured ? 'accent' : 'hero'}
                   size="lg"
                   className="w-full"
-                  asChild
+                  onClick={() => redirectToWHMCS(plan.whmcsUrl)}
                 >
-                  <Link to={plan.href}>
-                    {t('pricing.getStarted')}
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
+                  {t('pricing.getStarted')}
+                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
