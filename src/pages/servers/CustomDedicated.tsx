@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS, getServerStoreUrl } from '@/lib/whmcsConfig';
 
 const CustomDedicated: React.FC = () => {
   const { language } = useLanguage();
@@ -308,7 +309,7 @@ const CustomDedicated: React.FC = () => {
                   </div>
                 </div>
 
-                <Button variant="hero" size="lg" className="w-full mb-4">
+                <Button variant="hero" size="lg" className="w-full mb-4" onClick={() => redirectToWHMCS(getServerStoreUrl('custom'))}>
                   <Send className="mr-2 h-5 w-5" />
                   {language === 'bn' ? 'কোট রিকোয়েস্ট করুন' : 'Request Quote'}
                 </Button>
@@ -377,7 +378,7 @@ const CustomDedicated: React.FC = () => {
                 ? 'বড় প্রজেক্টের জন্য আমাদের এন্টারপ্রাইজ টিমের সাথে যোগাযোগ করুন। কাস্টম SLA এবং ডেডিকেটেড সাপোর্ট পান।'
                 : 'Contact our enterprise team for large projects. Get custom SLA and dedicated support.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(WHMCS_URLS.submitTicket)}>
               {language === 'bn' ? 'এন্টারপ্রাইজ টিমে যোগাযোগ' : 'Contact Enterprise Team'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>

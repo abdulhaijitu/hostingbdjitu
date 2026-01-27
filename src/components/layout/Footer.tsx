@@ -15,9 +15,9 @@ const Footer: React.FC = () => {
       { label: t('footer.blog'), href: '/blog', external: false },
     ],
     services: [
-      { label: t('nav.webHosting'), href: '/hosting/web', external: false },
-      { label: t('nav.cloudVps'), href: '/vps/cloud', external: false },
-      { label: t('nav.dedicatedServer'), href: '/servers/dedicated', external: false },
+      { label: t('nav.webHosting'), href: WHMCS_URLS.hosting.web, external: true },
+      { label: t('nav.cloudVps'), href: WHMCS_URLS.vps.cloud, external: true },
+      { label: t('nav.dedicatedServer'), href: WHMCS_URLS.servers.dedicated, external: true },
       { label: t('nav.domainRegistration'), href: WHMCS_URLS.domainSearch, external: true },
     ],
     legal: [

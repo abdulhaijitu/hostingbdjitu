@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS, getServerStoreUrl } from '@/lib/whmcsConfig';
 
 const WHMcPanelDedicated: React.FC = () => {
   const [isYearly, setIsYearly] = useState(false);
@@ -115,7 +116,7 @@ const WHMcPanelDedicated: React.FC = () => {
               ? 'WHM এবং cPanel সহ সম্পূর্ণ ম্যানেজড ডেডিকেটেড সার্ভার। হোস্টিং এজেন্সি এবং বড় ডিপ্লয়মেন্টের জন্য পারফেক্ট।'
               : 'Fully managed dedicated servers with WHM and cPanel. Perfect for hosting agencies and large-scale deployments.'}
           </p>
-          <Button variant="hero" size="xl">
+          <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(getServerStoreUrl('whm'))}>
             {language === 'bn' ? 'প্ল্যান দেখুন' : 'View Plans'} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -211,7 +212,7 @@ const WHMcPanelDedicated: React.FC = () => {
                     <Check className="h-5 w-5 text-accent" /> cPanel/WHM {language === 'bn' ? 'লাইসেন্স' : 'License'}
                   </li>
                 </ul>
-                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full" onClick={() => redirectToWHMCS(getServerStoreUrl('whm'))}>
                   {language === 'bn' ? 'অর্ডার করুন' : 'Order Now'}
                 </Button>
               </div>
@@ -281,7 +282,7 @@ const WHMcPanelDedicated: React.FC = () => {
                 ? 'আমাদের সেলস টিমের সাথে যোগাযোগ করুন আপনার নির্দিষ্ট চাহিদা অনুযায়ী কাস্টম সার্ভার পেতে।'
                 : 'Contact our sales team to get a custom server tailored to your specific needs.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(WHMCS_URLS.submitTicket)}>
               {language === 'bn' ? 'সেলস টিমে যোগাযোগ করুন' : 'Contact Sales'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
