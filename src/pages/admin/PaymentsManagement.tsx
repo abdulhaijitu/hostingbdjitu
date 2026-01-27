@@ -24,18 +24,11 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { usePayments, Payment } from '@/hooks/usePayments';
 import SEOHead from '@/components/common/SEOHead';
 import { format } from 'date-fns';
+import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
 
 interface LocalPayment {
   id: string;
@@ -113,7 +106,67 @@ const PaymentsManagement: React.FC = () => {
   const completedPayments = payments?.filter(p => p.status === 'completed') || [];
   const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
   const totalRevenue = completedPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const pendingRevenue = pendingPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+  // Columns for ResponsiveAdminTable
+  const columns = [
+    {
+      key: 'transaction_id',
+      label: language === 'bn' ? 'ট্রানজেকশন আইডি' : 'Transaction ID',
+      mobileLabel: language === 'bn' ? 'ট্রানজেকশন' : 'Transaction',
+      render: (payment: LocalPayment) => (
+        <span className="font-mono text-sm">{payment.transaction_id || 'N/A'}</span>
+      ),
+    },
+    {
+      key: 'amount',
+      label: language === 'bn' ? 'মূল্য' : 'Amount',
+      highlight: true,
+      render: (payment: LocalPayment) => (
+        <div>
+          <span className="font-medium">৳{Number(payment.amount).toLocaleString()}</span>
+          {payment.fee && payment.fee > 0 && (
+            <span className="text-xs text-muted-foreground ml-1">
+              (fee: ৳{Number(payment.fee).toLocaleString()})
+            </span>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'payment_method',
+      label: language === 'bn' ? 'মেথড' : 'Method',
+      hideOnMobile: true,
+      render: (payment: LocalPayment) => (
+        <span className="capitalize">{payment.payment_method || 'N/A'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      label: language === 'bn' ? 'স্ট্যাটাস' : 'Status',
+      render: (payment: LocalPayment) => getStatusBadge(payment.status),
+    },
+    {
+      key: 'created_at',
+      label: language === 'bn' ? 'তারিখ' : 'Date',
+      hideOnMobile: true,
+      render: (payment: LocalPayment) => (
+        <span className="text-muted-foreground">
+          {format(new Date(payment.created_at), 'dd MMM yyyy, HH:mm')}
+        </span>
+      ),
+    },
+  ];
+
+  const actions = [
+    {
+      label: language === 'bn' ? 'বিস্তারিত' : 'Details',
+      icon: <Eye className="h-4 w-4" />,
+      onClick: (payment: LocalPayment) => {
+        setSelectedPayment(payment);
+        setShowDetails(true);
+      },
+    },
+  ];
 
   return (
     <>
@@ -123,281 +176,242 @@ const PaymentsManagement: React.FC = () => {
         canonicalUrl="/admin/payments"
       />
       
-      <div className="p-6 lg:p-8">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <Button variant="ghost" size="sm" className="mb-2" asChild>
-                <Link to="/admin">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  {language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}
-                </Link>
-              </Button>
-              <h1 className="text-3xl font-bold font-display flex items-center gap-3">
-                <CreditCard className="h-8 w-8 text-primary" />
-                {language === 'bn' ? 'পেমেন্ট ম্যানেজমেন্ট' : 'Payment Management'}
-              </h1>
-            </div>
+      <div className="p-4 md:p-6 lg:p-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <Button variant="ghost" size="sm" className="mb-2 hidden md:inline-flex" asChild>
+              <Link to="/admin">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                {language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}
+              </Link>
+            </Button>
+            <h1 className="text-2xl md:text-3xl font-bold font-display flex items-center gap-3">
+              <CreditCard className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+              {language === 'bn' ? 'পেমেন্ট ম্যানেজমেন্ট' : 'Payment Management'}
+            </h1>
           </div>
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <CreditCard className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    {isLoading ? (
-                      <>
-                        <Skeleton className="h-7 w-12 mb-1" />
-                        <Skeleton className="h-3 w-16" />
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">{totalPayments}</p>
-                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট পেমেন্ট' : 'Total Payments'}</p>
-                      </>
-                    )}
-                  </div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4 mb-6">
+          <Card>
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <CreditCard className="h-4 w-4 md:h-5 md:w-5 text-primary" />
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-success/10">
-                    <DollarSign className="h-5 w-5 text-success" />
-                  </div>
-                  <div>
-                    {isLoading ? (
-                      <>
-                        <Skeleton className="h-7 w-24 mb-1" />
-                        <Skeleton className="h-3 w-12" />
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
-                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট আয়' : 'Total Revenue'}</p>
-                      </>
-                    )}
-                  </div>
+                <div>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-6 md:h-7 w-10 md:w-12 mb-1" />
+                      <Skeleton className="h-3 w-14 md:w-16" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xl md:text-2xl font-bold">{totalPayments}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'মোট' : 'Total'}</p>
+                    </>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-warning/10">
-                    <Clock className="h-5 w-5 text-warning" />
-                  </div>
-                  <div>
-                    {isLoading ? (
-                      <>
-                        <Skeleton className="h-7 w-12 mb-1" />
-                        <Skeleton className="h-3 w-12" />
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">{pendingPayments.length}</p>
-                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-accent/10">
-                    <CheckCircle className="h-5 w-5 text-accent" />
-                  </div>
-                  <div>
-                    {isLoading ? (
-                      <>
-                        <Skeleton className="h-7 w-12 mb-1" />
-                        <Skeleton className="h-3 w-12" />
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-2xl font-bold">{completedPayments.length}</p>
-                        <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</p>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Filters */}
-          <Card className="mb-6">
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder={language === 'bn' ? 'ট্রানজেকশন আইডি খুঁজুন...' : 'Search transaction ID...'}
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[180px]">
-                    <Filter className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">{language === 'bn' ? 'সব স্ট্যাটাস' : 'All Status'}</SelectItem>
-                    <SelectItem value="pending">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</SelectItem>
-                    <SelectItem value="completed">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</SelectItem>
-                    <SelectItem value="failed">{language === 'bn' ? 'ব্যর্থ' : 'Failed'}</SelectItem>
-                    <SelectItem value="cancelled">{language === 'bn' ? 'বাতিল' : 'Cancelled'}</SelectItem>
-                    <SelectItem value="refunded">{language === 'bn' ? 'রিফান্ড' : 'Refunded'}</SelectItem>
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
           </Card>
-
-          {/* Payments Table */}
           <Card>
-            <CardHeader>
-              <CardTitle>{language === 'bn' ? 'পেমেন্ট তালিকা' : 'Payments List'}</CardTitle>
-              <CardDescription>
-                {language === 'bn' ? `${filteredPayments?.length || 0}টি পেমেন্ট পাওয়া গেছে` : `${filteredPayments?.length || 0} payments found`}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-success/10">
+                  <DollarSign className="h-4 w-4 md:h-5 md:w-5 text-success" />
                 </div>
-              ) : filteredPayments && filteredPayments.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{language === 'bn' ? 'ট্রানজেকশন আইডি' : 'Transaction ID'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'মূল্য' : 'Amount'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'মেথড' : 'Method'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'তারিখ' : 'Date'}</TableHead>
-                        <TableHead className="text-right">{language === 'bn' ? 'অ্যাকশন' : 'Actions'}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredPayments.map((payment) => (
-                        <TableRow key={payment.id}>
-                          <TableCell className="font-mono text-sm">
-                            {payment.transaction_id || 'N/A'}
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            ৳{Number(payment.amount).toLocaleString()}
-                            {payment.fee && payment.fee > 0 && (
-                              <span className="text-xs text-muted-foreground ml-1">
-                                (fee: ৳{Number(payment.fee).toLocaleString()})
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell className="capitalize">
-                            {payment.payment_method || 'N/A'}
-                          </TableCell>
-                          <TableCell>{getStatusBadge(payment.status)}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {format(new Date(payment.created_at), 'dd MMM yyyy, HH:mm')}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => { setSelectedPayment(payment); setShowDetails(true); }}
-                            >
-                              <Eye className="h-4 w-4 mr-2" />
-                              {language === 'bn' ? 'বিস্তারিত' : 'Details'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <div>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-6 md:h-7 w-16 md:w-24 mb-1" />
+                      <Skeleton className="h-3 w-10 md:w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xl md:text-2xl font-bold">৳{totalRevenue.toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'আয়' : 'Revenue'}</p>
+                    </>
+                  )}
                 </div>
-              ) : (
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-warning/10">
+                  <Clock className="h-4 w-4 md:h-5 md:w-5 text-warning" />
+                </div>
+                <div>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-6 md:h-7 w-10 md:w-12 mb-1" />
+                      <Skeleton className="h-3 w-10 md:w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xl md:text-2xl font-bold">{pendingPayments.length}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 md:p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/10">
+                  <CheckCircle className="h-4 w-4 md:h-5 md:w-5 text-accent" />
+                </div>
+                <div>
+                  {isLoading ? (
+                    <>
+                      <Skeleton className="h-6 md:h-7 w-10 md:w-12 mb-1" />
+                      <Skeleton className="h-3 w-10 md:w-12" />
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-xl md:text-2xl font-bold">{completedPayments.length}</p>
+                      <p className="text-xs text-muted-foreground">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filters */}
+        <Card className="mb-6">
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={language === 'bn' ? 'ট্রানজেকশন আইডি খুঁজুন...' : 'Search transaction ID...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{language === 'bn' ? 'সব স্ট্যাটাস' : 'All Status'}</SelectItem>
+                  <SelectItem value="pending">{language === 'bn' ? 'পেন্ডিং' : 'Pending'}</SelectItem>
+                  <SelectItem value="completed">{language === 'bn' ? 'সম্পন্ন' : 'Completed'}</SelectItem>
+                  <SelectItem value="failed">{language === 'bn' ? 'ব্যর্থ' : 'Failed'}</SelectItem>
+                  <SelectItem value="cancelled">{language === 'bn' ? 'বাতিল' : 'Cancelled'}</SelectItem>
+                  <SelectItem value="refunded">{language === 'bn' ? 'রিফান্ড' : 'Refunded'}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Payments Table */}
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle>{language === 'bn' ? 'পেমেন্ট তালিকা' : 'Payments List'}</CardTitle>
+            <CardDescription>
+              {language === 'bn' ? `${filteredPayments?.length || 0}টি পেমেন্ট পাওয়া গেছে` : `${filteredPayments?.length || 0} payments found`}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6 md:pt-0">
+            <ResponsiveAdminTable
+              data={filteredPayments || []}
+              columns={columns}
+              actions={actions}
+              keyExtractor={(payment) => payment.id}
+              isLoading={isLoading}
+              getTitle={(payment) => payment.transaction_id || 'N/A'}
+              getSubtitle={(payment) => `৳${Number(payment.amount).toLocaleString()}`}
+              getBadge={(payment) => {
+                const variantMap: Record<string, 'success' | 'warning' | 'destructive' | 'secondary'> = {
+                  completed: 'success',
+                  pending: 'warning',
+                  failed: 'destructive',
+                  cancelled: 'secondary',
+                  refunded: 'secondary',
+                };
+                return {
+                  text: payment.status.charAt(0).toUpperCase() + payment.status.slice(1),
+                  variant: variantMap[payment.status] || 'secondary',
+                };
+              }}
+              language={language as 'en' | 'bn'}
+              mobileExpandable={true}
+              emptyState={
                 <div className="text-center py-12">
                   <CreditCard className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                   <p className="text-muted-foreground">
                     {language === 'bn' ? 'কোন পেমেন্ট পাওয়া যায়নি' : 'No payments found'}
                   </p>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              }
+            />
+          </CardContent>
+        </Card>
 
-          {/* Payment Details Dialog */}
-          <Dialog open={showDetails} onOpenChange={setShowDetails}>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>{language === 'bn' ? 'পেমেন্ট বিস্তারিত' : 'Payment Details'}</DialogTitle>
-                <DialogDescription>{selectedPayment?.transaction_id || 'N/A'}</DialogDescription>
-              </DialogHeader>
-              {selectedPayment && (
-                <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'ট্রানজেকশন আইডি' : 'Transaction ID'}</p>
-                      <p className="font-mono font-medium">{selectedPayment.transaction_id || 'N/A'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'অর্ডার আইডি' : 'Order ID'}</p>
-                      <p className="font-mono font-medium text-sm">{selectedPayment.order_id}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'মূল্য' : 'Amount'}</p>
-                      <p className="font-medium text-lg">৳{Number(selectedPayment.amount).toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'ফি' : 'Fee'}</p>
-                      <p className="font-medium">৳{Number(selectedPayment.fee || 0).toLocaleString()}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'কারেন্সি' : 'Currency'}</p>
-                      <p className="font-medium">{selectedPayment.currency}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'পেমেন্ট মেথড' : 'Payment Method'}</p>
-                      <p className="font-medium capitalize">{selectedPayment.payment_method || 'N/A'}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</p>
-                      {getStatusBadge(selectedPayment.status)}
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'তারিখ' : 'Date'}</p>
-                      <p className="font-medium">{format(new Date(selectedPayment.created_at), 'dd MMM yyyy, HH:mm:ss')}</p>
-                    </div>
-                    {selectedPayment.paid_at && (
-                      <div className="space-y-1 col-span-2">
-                        <p className="text-sm text-muted-foreground">{language === 'bn' ? 'পেমেন্ট সময়' : 'Paid At'}</p>
-                        <p className="font-medium">{format(new Date(selectedPayment.paid_at), 'dd MMM yyyy, HH:mm:ss')}</p>
-                      </div>
-                    )}
-                    {selectedPayment.metadata && (
-                      <div className="col-span-2">
-                        <p className="text-sm text-muted-foreground mb-2">{language === 'bn' ? 'মেটাডাটা' : 'Metadata'}</p>
-                        <pre className="text-xs bg-muted p-3 rounded-lg overflow-x-auto">
-                          {JSON.stringify(selectedPayment.metadata, null, 2)}
-                        </pre>
-                      </div>
-                    )}
+        {/* Payment Details Dialog */}
+        <Dialog open={showDetails} onOpenChange={setShowDetails}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>{language === 'bn' ? 'পেমেন্ট বিস্তারিত' : 'Payment Details'}</DialogTitle>
+              <DialogDescription>{selectedPayment?.transaction_id || 'N/A'}</DialogDescription>
+            </DialogHeader>
+            {selectedPayment && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'ট্রানজেকশন আইডি' : 'Transaction ID'}</p>
+                    <p className="font-mono font-medium">{selectedPayment.transaction_id || 'N/A'}</p>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'অর্ডার আইডি' : 'Order ID'}</p>
+                    <p className="font-mono font-medium text-sm">{selectedPayment.order_id}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'মূল্য' : 'Amount'}</p>
+                    <p className="font-medium text-lg">৳{Number(selectedPayment.amount).toLocaleString()}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'ফি' : 'Fee'}</p>
+                    <p className="font-medium">৳{Number(selectedPayment.fee || 0).toLocaleString()}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'কারেন্সি' : 'Currency'}</p>
+                    <p className="font-medium">{selectedPayment.currency}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'পেমেন্ট মেথড' : 'Payment Method'}</p>
+                    <p className="font-medium capitalize">{selectedPayment.payment_method || 'N/A'}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</p>
+                    {getStatusBadge(selectedPayment.status)}
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm text-muted-foreground">{language === 'bn' ? 'তারিখ' : 'Date'}</p>
+                    <p className="font-medium">{format(new Date(selectedPayment.created_at), 'dd MMM yyyy, HH:mm:ss')}</p>
+                  </div>
+                  {selectedPayment.paid_at && (
+                    <div className="space-y-1 col-span-2">
+                      <p className="text-sm text-muted-foreground">{language === 'bn' ? 'পেমেন্ট সময়' : 'Paid At'}</p>
+                      <p className="font-medium">{format(new Date(selectedPayment.paid_at), 'dd MMM yyyy, HH:mm:ss')}</p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </DialogContent>
+              </div>
+            )}
+          </DialogContent>
         </Dialog>
       </div>
     </>

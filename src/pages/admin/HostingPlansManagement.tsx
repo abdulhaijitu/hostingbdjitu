@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Star, Package, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
 import { ErrorState } from '@/components/common/DashboardSkeletons';
+import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -153,6 +153,65 @@ const HostingPlansManagement: React.FC = () => {
     }
   };
 
+  // Columns for ResponsiveAdminTable
+  const columns = [
+    {
+      key: 'name',
+      label: language === 'bn' ? 'নাম' : 'Name',
+      render: (plan: HostingPlan) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{plan.name}</span>
+          {plan.is_featured && <Star className="h-4 w-4 text-accent fill-accent" />}
+        </div>
+      ),
+    },
+    {
+      key: 'category',
+      label: language === 'bn' ? 'ক্যাটেগরি' : 'Category',
+      hideOnMobile: true,
+      render: (plan: HostingPlan) => (
+        <span className="capitalize">{plan.category}</span>
+      ),
+    },
+    {
+      key: 'monthly_price',
+      label: language === 'bn' ? 'মাসিক' : 'Monthly',
+      render: (plan: HostingPlan) => `৳${plan.monthly_price}`,
+    },
+    {
+      key: 'yearly_price',
+      label: language === 'bn' ? 'বাৎসরিক' : 'Yearly',
+      highlight: true,
+      render: (plan: HostingPlan) => `৳${plan.yearly_price}`,
+    },
+    {
+      key: 'is_active',
+      label: language === 'bn' ? 'স্ট্যাটাস' : 'Status',
+      render: (plan: HostingPlan) => (
+        <Badge variant={plan.is_active ? 'default' : 'secondary'}>
+          {plan.is_active ? (language === 'bn' ? 'সক্রিয়' : 'Active') : (language === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive')}
+        </Badge>
+      ),
+    },
+  ];
+
+  const actions = [
+    {
+      label: language === 'bn' ? 'এডিট' : 'Edit',
+      icon: <Edit className="h-4 w-4" />,
+      onClick: (plan: HostingPlan) => openEditDialog(plan),
+    },
+    {
+      label: language === 'bn' ? 'ডিলিট' : 'Delete',
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: (plan: HostingPlan) => {
+        setDeletingPlan(plan);
+        setIsDeleteDialogOpen(true);
+      },
+      variant: 'destructive' as const,
+    },
+  ];
+
   return (
     <>
       <SEOHead 
@@ -161,87 +220,66 @@ const HostingPlansManagement: React.FC = () => {
         canonicalUrl="/admin/hosting-plans"
       />
       
-      <div className="p-6 lg:p-8">
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold font-display flex items-center gap-3">
-                <Package className="h-8 w-8 text-primary" />
-                {language === 'bn' ? 'হোস্টিং প্ল্যান ম্যানেজমেন্ট' : 'Hosting Plans Management'}
-              </h1>
-            </div>
-            <Button onClick={openCreateDialog}>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+            <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold font-display flex items-center gap-3">
+              <Package className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+              {language === 'bn' ? 'হোস্টিং প্ল্যান' : 'Hosting Plans'}
+            </h1>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={openCreateDialog} size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              {language === 'bn' ? 'নতুন প্ল্যান' : 'New Plan'}
+              {language === 'bn' ? 'নতুন' : 'New'}
             </Button>
             <Button variant="outline" size="icon" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{language === 'bn' ? 'সকল প্ল্যান' : 'All Plans'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isError ? (
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle>{language === 'bn' ? 'সকল প্ল্যান' : 'All Plans'}</CardTitle>
+            <CardDescription>
+              {plans?.length || 0} {language === 'bn' ? 'টি প্ল্যান' : 'plans'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6 md:pt-0">
+            {isError ? (
+              <div className="p-4">
                 <ErrorState 
                   title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
                   onRetry={() => refetch()}
                 />
-              ) : isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : plans && plans.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'bn' ? 'নাম' : 'Name'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'ক্যাটেগরি' : 'Category'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'মাসিক মূল্য' : 'Monthly'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'বাৎসরিক মূল্য' : 'Yearly'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</TableHead>
-                      <TableHead className="text-right">{language === 'bn' ? 'অ্যাকশন' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {plans.map(plan => (
-                      <TableRow key={plan.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {plan.name}
-                            {plan.is_featured && <Star className="h-4 w-4 text-accent fill-accent" />}
-                          </div>
-                        </TableCell>
-                        <TableCell className="capitalize">{plan.category}</TableCell>
-                        <TableCell>৳{plan.monthly_price}</TableCell>
-                        <TableCell>৳{plan.yearly_price}</TableCell>
-                        <TableCell>
-                          <Badge variant={plan.is_active ? 'default' : 'secondary'}>
-                            {plan.is_active ? (language === 'bn' ? 'সক্রিয়' : 'Active') : (language === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(plan)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setDeletingPlan(plan); setIsDeleteDialogOpen(true); }}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  {language === 'bn' ? 'কোন প্ল্যান নেই' : 'No plans found'}
-                </p>
-              )}
-            </CardContent>
+              </div>
+            ) : (
+              <ResponsiveAdminTable
+                data={plans || []}
+                columns={columns}
+                actions={actions}
+                keyExtractor={(plan) => plan.id}
+                isLoading={isLoading}
+                getTitle={(plan) => plan.name}
+                getSubtitle={(plan) => plan.category}
+                getBadge={(plan) => ({
+                  text: plan.is_active ? 'Active' : 'Inactive',
+                  variant: plan.is_active ? 'success' : 'secondary',
+                })}
+                language={language as 'en' | 'bn'}
+                mobileExpandable={true}
+                emptyState={
+                  <p className="text-center text-muted-foreground py-8">
+                    {language === 'bn' ? 'কোন প্ল্যান নেই' : 'No plans found'}
+                  </p>
+                }
+              />
+            )}
+          </CardContent>
         </Card>
 
       {/* Create/Edit Dialog */}
@@ -262,7 +300,7 @@ const HostingPlansManagement: React.FC = () => {
             </p>
           </DialogHeader>
           
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>{language === 'bn' ? 'নাম (ইংরেজি)' : 'Name (English)'}</Label>
               <Input value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} />
@@ -321,11 +359,11 @@ const HostingPlansManagement: React.FC = () => {
               <Label>Sort Order</Label>
               <Input type="number" value={formData.sort_order} onChange={e => setFormData({ ...formData, sort_order: Number(e.target.value) })} />
             </div>
-            <div className="col-span-2 space-y-2">
+            <div className="col-span-1 md:col-span-2 space-y-2">
               <Label>{language === 'bn' ? 'বিবরণ (ইংরেজি)' : 'Description (English)'}</Label>
               <Textarea value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} />
             </div>
-            <div className="col-span-2 space-y-2">
+            <div className="col-span-1 md:col-span-2 space-y-2">
               <Label>{language === 'bn' ? 'বিবরণ (বাংলা)' : 'Description (Bangla)'}</Label>
               <Textarea value={formData.description_bn} onChange={e => setFormData({ ...formData, description_bn: e.target.value })} />
             </div>

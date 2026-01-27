@@ -3,9 +3,8 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Edit, Trash2, Globe, Star, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,9 +12,9 @@ import { Switch } from '@/components/ui/switch';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useDomainPricing, useCreateDomainPrice, useUpdateDomainPrice, useDeleteDomainPrice, DomainPrice } from '@/hooks/useDomainPricing';
 import { useToast } from '@/hooks/use-toast';
-import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
 import { ErrorState } from '@/components/common/DashboardSkeletons';
+import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -116,6 +115,62 @@ const DomainPricingManagement: React.FC = () => {
     }
   };
 
+  // Columns for ResponsiveAdminTable
+  const columns = [
+    {
+      key: 'extension',
+      label: language === 'bn' ? 'এক্সটেনশন' : 'Extension',
+      render: (price: DomainPrice) => (
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{price.extension}</span>
+          {price.is_popular && <Star className="h-4 w-4 text-accent fill-accent" />}
+        </div>
+      ),
+    },
+    {
+      key: 'registration_price',
+      label: language === 'bn' ? 'রেজিস্ট্রেশন' : 'Registration',
+      render: (price: DomainPrice) => `৳${price.registration_price}`,
+    },
+    {
+      key: 'renewal_price',
+      label: language === 'bn' ? 'রিনিউয়াল' : 'Renewal',
+      render: (price: DomainPrice) => `৳${price.renewal_price}`,
+    },
+    {
+      key: 'transfer_price',
+      label: language === 'bn' ? 'ট্রান্সফার' : 'Transfer',
+      hideOnMobile: true,
+      render: (price: DomainPrice) => `৳${price.transfer_price}`,
+    },
+    {
+      key: 'is_active',
+      label: language === 'bn' ? 'স্ট্যাটাস' : 'Status',
+      render: (price: DomainPrice) => (
+        <Badge variant={price.is_active ? 'default' : 'secondary'}>
+          {price.is_active ? (language === 'bn' ? 'সক্রিয়' : 'Active') : (language === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive')}
+        </Badge>
+      ),
+    },
+  ];
+
+  const actions = [
+    {
+      label: language === 'bn' ? 'এডিট' : 'Edit',
+      icon: <Edit className="h-4 w-4" />,
+      onClick: (price: DomainPrice) => openEditDialog(price),
+    },
+    {
+      label: language === 'bn' ? 'ডিলিট' : 'Delete',
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: (price: DomainPrice) => {
+        setDeletingPrice(price);
+        setIsDeleteDialogOpen(true);
+      },
+      variant: 'destructive' as const,
+    },
+  ];
+
   return (
     <>
       <SEOHead 
@@ -124,88 +179,67 @@ const DomainPricingManagement: React.FC = () => {
         canonicalUrl="/admin/domain-pricing"
       />
       
-      <div className="p-6 lg:p-8">
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
-            </Button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold font-display flex items-center gap-3">
-                <Globe className="h-8 w-8 text-primary" />
-                {language === 'bn' ? 'ডোমেইন প্রাইসিং ম্যানেজমেন্ট' : 'Domain Pricing Management'}
-              </h1>
-            </div>
-            <Button onClick={openCreateDialog}>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+            <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold font-display flex items-center gap-3">
+              <Globe className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+              {language === 'bn' ? 'ডোমেইন প্রাইসিং' : 'Domain Pricing'}
+            </h1>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={openCreateDialog} size="sm">
               <Plus className="h-4 w-4 mr-2" />
-              {language === 'bn' ? 'নতুন এক্সটেনশন' : 'New Extension'}
+              {language === 'bn' ? 'নতুন' : 'New'}
             </Button>
             <Button variant="outline" size="icon" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4" />
             </Button>
           </div>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{language === 'bn' ? 'সকল ডোমেইন এক্সটেনশন' : 'All Domain Extensions'}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {isError ? (
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle>{language === 'bn' ? 'সকল ডোমেইন এক্সটেনশন' : 'All Domain Extensions'}</CardTitle>
+            <CardDescription>
+              {prices?.length || 0} {language === 'bn' ? 'টি এক্সটেনশন' : 'extensions'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6 md:pt-0">
+            {isError ? (
+              <div className="p-4">
                 <ErrorState 
                   title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
                   onRetry={() => refetch()}
                 />
-              ) : isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : prices && prices.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'bn' ? 'এক্সটেনশন' : 'Extension'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'রেজিস্ট্রেশন' : 'Registration'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'রিনিউয়াল' : 'Renewal'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'ট্রান্সফার' : 'Transfer'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</TableHead>
-                      <TableHead className="text-right">{language === 'bn' ? 'অ্যাকশন' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {prices.map(price => (
-                      <TableRow key={price.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-2">
-                            {price.extension}
-                            {price.is_popular && <Star className="h-4 w-4 text-accent fill-accent" />}
-                          </div>
-                        </TableCell>
-                        <TableCell>৳{price.registration_price}</TableCell>
-                        <TableCell>৳{price.renewal_price}</TableCell>
-                        <TableCell>৳{price.transfer_price}</TableCell>
-                        <TableCell>
-                          <Badge variant={price.is_active ? 'default' : 'secondary'}>
-                            {price.is_active ? (language === 'bn' ? 'সক্রিয়' : 'Active') : (language === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button variant="ghost" size="icon" onClick={() => openEditDialog(price)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => { setDeletingPrice(price); setIsDeleteDialogOpen(true); }}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  {language === 'bn' ? 'কোন ডোমেইন প্রাইস নেই' : 'No domain prices found'}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            ) : (
+              <ResponsiveAdminTable
+                data={prices || []}
+                columns={columns}
+                actions={actions}
+                keyExtractor={(price) => price.id}
+                isLoading={isLoading}
+                getTitle={(price) => price.extension}
+                getSubtitle={(price) => `৳${price.registration_price}`}
+                getBadge={(price) => ({
+                  text: price.is_active ? 'Active' : 'Inactive',
+                  variant: price.is_active ? 'success' : 'secondary',
+                })}
+                language={language as 'en' | 'bn'}
+                mobileExpandable={true}
+                emptyState={
+                  <p className="text-center text-muted-foreground py-8">
+                    {language === 'bn' ? 'কোন ডোমেইন প্রাইস নেই' : 'No domain prices found'}
+                  </p>
+                }
+              />
+            )}
+          </CardContent>
+        </Card>
 
       {/* Create/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -228,7 +262,7 @@ const DomainPricingManagement: React.FC = () => {
                 placeholder=".com, .net, .org"
               />
             </div>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label>{language === 'bn' ? 'রেজিস্ট্রেশন (৳)' : 'Registration (৳)'}</Label>
                 <Input 
