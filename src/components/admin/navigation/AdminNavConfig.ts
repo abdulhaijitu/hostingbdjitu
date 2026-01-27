@@ -1,10 +1,11 @@
-import { LucideIcon, LayoutDashboard, Package, Server, MonitorCog, ListTodo, ShoppingCart, CreditCard, FileText, RotateCcw, Users, UserCheck, Gift, MessageSquare, Megaphone, Settings, Menu, LogOut, Receipt, Webhook, FileBarChart, Shield, AlertTriangle, ShieldCheck, Activity, BarChart3, Globe, FileEdit, Tag, HelpCircle, Quote, PanelTop } from 'lucide-react';
+import { LucideIcon, PanelTop, Tag, FileEdit, Megaphone, HelpCircle, Quote, MessageSquare, Settings, Users, Lock } from 'lucide-react';
 
 export interface NavItem {
   label: string;
   labelBn?: string;
   href: string;
   icon: LucideIcon;
+  restricted?: boolean; // For items requiring Super Admin access
 }
 
 export interface NavSection {
@@ -16,120 +17,16 @@ export interface BottomNavItem {
   label: string;
   labelBn?: string;
   icon: LucideIcon;
-  href?: string; // Main route (optional for items with tabs)
-  activeRoutes: string[]; // Routes that mark this tab as active
-  tabs?: NavItem[]; // Sub-tabs for internal navigation
+  href?: string;
+  activeRoutes: string[];
+  tabs?: NavItem[];
 }
 
-// Bottom nav items for mobile (EXACT 5 items)
-export const mobileBottomNavItems: BottomNavItem[] = [
-  {
-    label: 'Dashboard',
-    labelBn: 'ড্যাশবোর্ড',
-    icon: LayoutDashboard,
-    href: '/admin',
-    activeRoutes: ['/admin'],
-  },
-  {
-    label: 'Hosting',
-    labelBn: 'হোস্টিং',
-    icon: Server,
-    href: '/admin/hosting-plans',
-    activeRoutes: ['/admin/hosting-plans', '/admin/servers', '/admin/package-mapping', '/admin/provisioning', '/admin/hosting-accounts', '/admin/server-credentials'],
-    tabs: [
-      { label: 'Plans', labelBn: 'প্ল্যান', href: '/admin/hosting-plans', icon: Package },
-      { label: 'Servers', labelBn: 'সার্ভার', href: '/admin/servers', icon: Server },
-      { label: 'WHM/cPanel', labelBn: 'WHM/cPanel', href: '/admin/package-mapping', icon: MonitorCog },
-      { label: 'Queue', labelBn: 'কিউ', href: '/admin/provisioning', icon: ListTodo },
-    ],
-  },
-  {
-    label: 'Billing',
-    labelBn: 'বিলিং',
-    icon: CreditCard,
-    href: '/admin/orders',
-    activeRoutes: ['/admin/orders', '/admin/payments', '/admin/invoices', '/admin/refunds', '/admin/webhooks'],
-    tabs: [
-      { label: 'Orders', labelBn: 'অর্ডার', href: '/admin/orders', icon: ShoppingCart },
-      { label: 'Payments', labelBn: 'পেমেন্ট', href: '/admin/payments', icon: CreditCard },
-      { label: 'Invoices', labelBn: 'ইনভয়েস', href: '/admin/invoices', icon: FileText },
-      { label: 'Refunds', labelBn: 'রিফান্ড', href: '/admin/refunds', icon: RotateCcw },
-    ],
-  },
-  {
-    label: 'Users',
-    labelBn: 'ইউজার',
-    icon: Users,
-    href: '/admin/users',
-    activeRoutes: ['/admin/users', '/admin/resellers', '/admin/affiliates'],
-    tabs: [
-      { label: 'Customers', labelBn: 'কাস্টমার', href: '/admin/users', icon: Users },
-      { label: 'Resellers', labelBn: 'রিসেলার', href: '/admin/resellers', icon: UserCheck },
-      { label: 'Affiliates', labelBn: 'অ্যাফিলিয়েট', href: '/admin/affiliates', icon: Gift },
-    ],
-  },
-];
-
-// "More" sheet items
-export const mobileMoreSheetItems: NavItem[] = [
-  { label: 'Tickets', labelBn: 'সাপোর্ট টিকেট', href: '/admin/tickets', icon: MessageSquare },
-  { label: 'CMS Settings', labelBn: 'CMS সেটিংস', href: '/admin/cms/settings', icon: Settings },
-  { label: 'Pricing Display', labelBn: 'প্রাইসিং', href: '/admin/cms/pricing', icon: Tag },
-  { label: 'FAQ', labelBn: 'FAQ', href: '/admin/cms/faq', icon: HelpCircle },
-  { label: 'Blog', labelBn: 'ব্লগ', href: '/admin/cms/blog', icon: FileEdit },
-  { label: 'Webhooks', labelBn: 'ওয়েবহুক লগ', href: '/admin/webhooks', icon: Webhook },
-  { label: 'Audit Logs', labelBn: 'অডিট লগ', href: '/admin/audit-logs', icon: Shield },
-  { label: 'Error Logs', labelBn: 'এরর লগ', href: '/admin/error-logs', icon: AlertTriangle },
-  { label: 'Security', labelBn: 'নিরাপত্তা', href: '/admin/security', icon: ShieldCheck },
-  { label: 'Reports', labelBn: 'রিপোর্ট', href: '/admin/reports', icon: BarChart3 },
-  { label: 'Analytics', labelBn: 'অ্যানালিটিক্স', href: '/admin/analytics', icon: FileBarChart },
-  { label: 'Credentials', labelBn: 'API ক্রেডেনশিয়াল', href: '/admin/server-credentials', icon: Settings },
-  { label: 'Settings', labelBn: 'সেটিংস', href: '/admin/settings', icon: Settings },
-];
-
-// Full sidebar sections for tablet/desktop
+// CMS-only sidebar sections - Content management only
+// NO billing, clients, domains, hosting, analytics, or WHMCS operations
 export const sidebarNavSections: NavSection[] = [
   {
-    label: 'MAIN',
-    items: [
-      { label: 'Dashboard', labelBn: 'ড্যাশবোর্ড', href: '/admin', icon: LayoutDashboard },
-    ],
-  },
-  {
-    label: 'HOSTING',
-    items: [
-      { label: 'Hosting Plans', labelBn: 'হোস্টিং প্ল্যান', href: '/admin/hosting-plans', icon: Package },
-      { label: 'Servers', labelBn: 'সার্ভার', href: '/admin/servers', icon: Server },
-      { label: 'WHM / cPanel', labelBn: 'WHM / cPanel', href: '/admin/package-mapping', icon: MonitorCog },
-      { label: 'Provisioning', labelBn: 'প্রভিশনিং', href: '/admin/provisioning', icon: ListTodo },
-    ],
-  },
-  {
-    label: 'DOMAINS',
-    items: [
-      { label: 'All Domains', labelBn: 'সকল ডোমেইন', href: '/admin/domains', icon: Globe },
-      { label: 'Domain Pricing', labelBn: 'ডোমেইন মূল্য', href: '/admin/domain-pricing', icon: Receipt },
-    ],
-  },
-  {
-    label: 'BILLING',
-    items: [
-      { label: 'Orders', labelBn: 'অর্ডার', href: '/admin/orders', icon: ShoppingCart },
-      { label: 'Payments', labelBn: 'পেমেন্ট', href: '/admin/payments', icon: CreditCard },
-      { label: 'Invoices', labelBn: 'ইনভয়েস', href: '/admin/invoices', icon: FileText },
-      { label: 'Refunds', labelBn: 'রিফান্ড', href: '/admin/refunds', icon: RotateCcw },
-    ],
-  },
-  {
-    label: 'USERS',
-    items: [
-      { label: 'Customers', labelBn: 'কাস্টমার', href: '/admin/users', icon: Users },
-      { label: 'Resellers', labelBn: 'রিসেলার', href: '/admin/resellers', icon: UserCheck },
-      { label: 'Affiliates', labelBn: 'অ্যাফিলিয়েট', href: '/admin/affiliates', icon: Gift },
-    ],
-  },
-  {
-    label: 'CMS',
+    label: 'CONTENT',
     items: [
       { label: 'Pages', labelBn: 'পেজ', href: '/admin/cms/pages', icon: PanelTop },
       { label: 'Pricing & Plans', labelBn: 'প্রাইসিং', href: '/admin/cms/pricing', icon: Tag },
@@ -137,24 +34,62 @@ export const sidebarNavSections: NavSection[] = [
       { label: 'Announcements', labelBn: 'অ্যানাউন্সমেন্ট', href: '/admin/cms/announcements', icon: Megaphone },
       { label: 'FAQs', labelBn: 'FAQ', href: '/admin/cms/faq', icon: HelpCircle },
       { label: 'Testimonials', labelBn: 'টেস্টিমোনিয়াল', href: '/admin/cms/testimonials', icon: Quote },
-      { label: 'Global Settings', labelBn: 'গ্লোবাল সেটিংস', href: '/admin/cms/settings', icon: Settings },
-      { label: 'Contact Messages', labelBn: 'মেসেজ', href: '/admin/cms/messages', icon: MessageSquare },
-      { label: 'CMS Admins', labelBn: 'CMS অ্যাডমিন', href: '/admin/cms/admins', icon: Users },
     ],
   },
   {
-    label: 'SYSTEM',
+    label: 'INBOX',
     items: [
-      { label: 'Tickets', labelBn: 'টিকেট', href: '/admin/tickets', icon: MessageSquare },
-      { label: 'Webhooks', labelBn: 'ওয়েবহুক লগ', href: '/admin/webhooks', icon: FileBarChart },
-      { label: 'Audit Logs', labelBn: 'অডিট লগ', href: '/admin/audit-logs', icon: Shield },
-      { label: 'Error Logs', labelBn: 'এরর লগ', href: '/admin/error-logs', icon: AlertTriangle },
-      { label: 'Security', labelBn: 'নিরাপত্তা', href: '/admin/security', icon: ShieldCheck },
-      { label: 'Reports', labelBn: 'রিপোর্ট', href: '/admin/reports', icon: BarChart3 },
-      { label: 'Credentials', labelBn: 'API ক্রেডেনশিয়াল', href: '/admin/server-credentials', icon: Settings },
-      { label: 'Settings', labelBn: 'সেটিংস', href: '/admin/settings', icon: Settings },
+      { label: 'Contact Messages', labelBn: 'যোগাযোগ বার্তা', href: '/admin/cms/messages', icon: MessageSquare },
     ],
   },
+  {
+    label: 'ADMINISTRATION',
+    items: [
+      { label: 'Global Settings', labelBn: 'গ্লোবাল সেটিংস', href: '/admin/cms/settings', icon: Settings, restricted: true },
+      { label: 'Admin Users', labelBn: 'CMS অ্যাডমিন', href: '/admin/cms/admins', icon: Users, restricted: true },
+    ],
+  },
+];
+
+// Mobile bottom nav - simplified for CMS
+export const mobileBottomNavItems: BottomNavItem[] = [
+  {
+    label: 'Pages',
+    labelBn: 'পেজ',
+    icon: PanelTop,
+    href: '/admin/cms/pages',
+    activeRoutes: ['/admin/cms/pages'],
+  },
+  {
+    label: 'Pricing',
+    labelBn: 'প্রাইসিং',
+    icon: Tag,
+    href: '/admin/cms/pricing',
+    activeRoutes: ['/admin/cms/pricing'],
+  },
+  {
+    label: 'Blog',
+    labelBn: 'ব্লগ',
+    icon: FileEdit,
+    href: '/admin/cms/blog',
+    activeRoutes: ['/admin/cms/blog'],
+  },
+  {
+    label: 'FAQs',
+    labelBn: 'FAQ',
+    icon: HelpCircle,
+    href: '/admin/cms/faq',
+    activeRoutes: ['/admin/cms/faq'],
+  },
+];
+
+// "More" sheet items for mobile - additional CMS sections
+export const mobileMoreSheetItems: NavItem[] = [
+  { label: 'Announcements', labelBn: 'অ্যানাউন্সমেন্ট', href: '/admin/cms/announcements', icon: Megaphone },
+  { label: 'Testimonials', labelBn: 'টেস্টিমোনিয়াল', href: '/admin/cms/testimonials', icon: Quote },
+  { label: 'Contact Messages', labelBn: 'যোগাযোগ বার্তা', href: '/admin/cms/messages', icon: MessageSquare },
+  { label: 'Global Settings', labelBn: 'গ্লোবাল সেটিংস', href: '/admin/cms/settings', icon: Settings, restricted: true },
+  { label: 'Admin Users', labelBn: 'CMS অ্যাডমিন', href: '/admin/cms/admins', icon: Users, restricted: true },
 ];
 
 // Get page title from path
@@ -176,24 +111,12 @@ export const getPageTitle = (pathname: string, language: 'en' | 'bn' = 'en'): st
     return language === 'bn' && bottomItem.labelBn ? bottomItem.labelBn : bottomItem.label;
   }
   
-  // Default fallbacks
-  if (pathname.includes('hosting')) return language === 'bn' ? 'হোস্টিং' : 'Hosting';
-  if (pathname.includes('orders')) return language === 'bn' ? 'অর্ডার' : 'Orders';
-  if (pathname.includes('domain')) return language === 'bn' ? 'ডোমেইন' : 'Domain';
-  if (pathname.includes('canned')) return language === 'bn' ? 'ক্যানড রেসপন্স' : 'Canned Responses';
-  if (pathname.includes('analytics')) return language === 'bn' ? 'অ্যানালিটিক্স' : 'Analytics';
-  
-  return language === 'bn' ? 'অ্যাডমিন' : 'Admin';
+  // Default fallback for CMS
+  return language === 'bn' ? 'CMS অ্যাডমিন' : 'CMS Admin';
 };
 
 // Get active bottom nav item based on current path
 export const getActiveBottomNavItem = (pathname: string): BottomNavItem | null => {
-  // Exact match for dashboard
-  if (pathname === '/admin') {
-    return mobileBottomNavItems[0];
-  }
-  
-  // Check other items by their activeRoutes
   for (const item of mobileBottomNavItems) {
     if (item.activeRoutes.some(route => 
       route === pathname || pathname.startsWith(route + '/')
