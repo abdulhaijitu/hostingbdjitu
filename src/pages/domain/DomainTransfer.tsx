@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const DomainTransfer: React.FC = () => {
   const [domain, setDomain] = useState('');
@@ -153,7 +154,7 @@ const DomainTransfer: React.FC = () => {
                       : 'Make sure your domain is unlocked at your current registrar before starting the transfer.'}
                   </p>
                 </div>
-                <Button variant="hero" size="xl" className="w-full">
+                <Button variant="hero" size="xl" className="w-full" onClick={() => redirectToWHMCS(WHMCS_URLS.domainTransfer)}>
                   {language === 'bn' ? 'ট্রান্সফার শুরু করুন' : 'Start Transfer'} <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </form>
@@ -286,7 +287,7 @@ const DomainTransfer: React.FC = () => {
                 ? '১ বছর বিনামূল্যে এক্সটেনশন এবং WHOIS প্রাইভেসি সহ CHost-এ আসুন।'
                 : 'Get 1 year free extension and WHOIS privacy when you transfer to CHost.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(WHMCS_URLS.domainTransfer)}>
               {language === 'bn' ? 'ট্রান্সফার শুরু করুন' : 'Start Transfer'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>

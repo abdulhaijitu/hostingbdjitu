@@ -4,6 +4,7 @@ import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import SEOHead from '@/components/common/SEOHead';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const DomainReseller: React.FC = () => {
   const [isYearly, setIsYearly] = useState(true);
@@ -98,7 +99,7 @@ const DomainReseller: React.FC = () => {
               ? 'ডোমেইন রিসেলার হয়ে আপনার গ্রাহকদের হোয়াইট-লেবেল সল্যুশন দিয়ে ডোমেইন রেজিস্ট্রেশন সার্ভিস অফার করুন।'
               : 'Become a domain reseller and offer domain registration services to your customers with our white-label solution.'}
           </p>
-          <Button variant="hero" size="xl">
+          <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(WHMCS_URLS.domainSearch)}>
             {language === 'bn' ? 'শুরু করুন' : 'Get Started'} <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
@@ -218,7 +219,7 @@ const DomainReseller: React.FC = () => {
                     </li>
                   ))}
                 </ul>
-                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full" onClick={() => redirectToWHMCS(WHMCS_URLS.submitTicket)}>
                   {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
                 </Button>
               </div>
@@ -310,7 +311,7 @@ const DomainReseller: React.FC = () => {
                 ? 'আমাদের শক্তিশালী API এবং হোয়াইট-লেবেল সল্যুশন দিয়ে আপনার ডোমেইন বিজনেস শুরু করুন।'
                 : 'Start your domain business with our powerful API and white-label solution.'}
             </p>
-            <Button variant="hero" size="xl">
+            <Button variant="hero" size="xl" onClick={() => redirectToWHMCS(WHMCS_URLS.submitTicket)}>
               {language === 'bn' ? 'রিসেলার হিসেবে যোগ দিন' : 'Join as Reseller'} <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
