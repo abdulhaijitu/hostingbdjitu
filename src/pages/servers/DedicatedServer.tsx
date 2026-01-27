@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const DedicatedServer: React.FC = () => {
   const { language } = useLanguage();
@@ -223,7 +224,12 @@ const DedicatedServer: React.FC = () => {
                     <li className={cn('flex items-center gap-2', plan.featured ? 'text-primary-foreground' : '')}><HardDrive className="h-4 w-4 text-accent" /> {plan.storage}</li>
                     <li className={cn('flex items-center gap-2', plan.featured ? 'text-primary-foreground' : '')}><Zap className="h-4 w-4 text-accent" /> {plan.bandwidth} Bandwidth</li>
                   </ul>
-                  <Button variant={plan.featured ? 'accent' : 'hero'} size="lg" className="w-full">
+                  <Button 
+                    variant={plan.featured ? 'accent' : 'hero'} 
+                    size="lg" 
+                    className="w-full"
+                    onClick={() => redirectToWHMCS(WHMCS_URLS.servers.dedicated)}
+                  >
                     {language === 'bn' ? 'অর্ডার করুন' : 'Order Now'}
                   </Button>
                 </div>
@@ -294,11 +300,13 @@ const DedicatedServer: React.FC = () => {
               ? 'আমাদের সাথে যোগাযোগ করুন। আপনার প্রয়োজন অনুযায়ী কাস্টম সার্ভার কনফিগার করে দেব।'
               : 'Contact us to configure a custom server based on your requirements.'}
           </p>
-          <Button variant="accent" size="xl" asChild>
-            <a href="/contact">
-              {language === 'bn' ? 'যোগাযোগ করুন' : 'Contact Us'}
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </a>
+          <Button 
+            variant="accent" 
+            size="xl" 
+            onClick={() => redirectToWHMCS(WHMCS_URLS.submitTicket)}
+          >
+            {language === 'bn' ? 'যোগাযোগ করুন' : 'Contact Us'}
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>
       </section>

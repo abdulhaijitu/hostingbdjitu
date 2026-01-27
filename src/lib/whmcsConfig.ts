@@ -28,6 +28,20 @@ export const WHMCS_URLS = {
     wordpress: `${WHMCS_BASE_URL}/index.php?rp=/store/wordpress-hosting`,
     reseller: `${WHMCS_BASE_URL}/index.php?rp=/store/reseller-hosting`,
   },
+
+  // VPS Store Pages
+  vps: {
+    cloud: `${WHMCS_BASE_URL}/index.php?rp=/store/cloud-vps`,
+    whm: `${WHMCS_BASE_URL}/index.php?rp=/store/whm-cpanel-vps`,
+    custom: `${WHMCS_BASE_URL}/index.php?rp=/store/custom-vps`,
+  },
+
+  // Dedicated Server Store Pages
+  servers: {
+    dedicated: `${WHMCS_BASE_URL}/index.php?rp=/store/dedicated-server`,
+    whm: `${WHMCS_BASE_URL}/index.php?rp=/store/whm-cpanel-dedicated`,
+    custom: `${WHMCS_BASE_URL}/index.php?rp=/store/custom-dedicated`,
+  },
   
   // Legacy cart URLs (kept for reference)
   cart: `${WHMCS_BASE_URL}/cart.php`,
@@ -58,6 +72,32 @@ export const getHostingStoreUrl = (category: string): string => {
   };
   
   return categoryMap[category] || WHMCS_URLS.hosting.web;
+};
+
+/**
+ * Get WHMCS VPS store URL by type
+ */
+export const getVPSStoreUrl = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    cloud: WHMCS_URLS.vps.cloud,
+    whm: WHMCS_URLS.vps.whm,
+    custom: WHMCS_URLS.vps.custom,
+  };
+  
+  return typeMap[type] || WHMCS_URLS.vps.cloud;
+};
+
+/**
+ * Get WHMCS Dedicated Server store URL by type
+ */
+export const getServerStoreUrl = (type: string): string => {
+  const typeMap: Record<string, string> = {
+    dedicated: WHMCS_URLS.servers.dedicated,
+    whm: WHMCS_URLS.servers.whm,
+    custom: WHMCS_URLS.servers.custom,
+  };
+  
+  return typeMap[type] || WHMCS_URLS.servers.dedicated;
 };
 
 /**

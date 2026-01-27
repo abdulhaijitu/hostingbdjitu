@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import SEOHead from '@/components/common/SEOHead';
 import { ProductSchema, FAQSchema, BreadcrumbSchema } from '@/components/common/SchemaMarkup';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 const CloudVPS: React.FC = () => {
   const { language } = useLanguage();
@@ -229,7 +230,11 @@ const CloudVPS: React.FC = () => {
                     <li className={cn('flex items-center gap-2', plan.featured ? 'text-primary-foreground' : '')}><HardDrive className="h-4 w-4 text-accent" /> {plan.storage}</li>
                     <li className={cn('flex items-center gap-2', plan.featured ? 'text-primary-foreground' : '')}><Zap className="h-4 w-4 text-accent" /> {plan.bandwidth}</li>
                   </ul>
-                  <Button variant={plan.featured ? 'accent' : 'hero'} className="w-full">
+                  <Button 
+                    variant={plan.featured ? 'accent' : 'hero'} 
+                    className="w-full"
+                    onClick={() => redirectToWHMCS(WHMCS_URLS.vps.cloud)}
+                  >
                     {language === 'bn' ? 'ডিপ্লয় করুন' : 'Deploy Now'}
                   </Button>
                 </div>

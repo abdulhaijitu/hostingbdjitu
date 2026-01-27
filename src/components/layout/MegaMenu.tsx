@@ -16,9 +16,11 @@ import {
   ArrowRight,
   Rocket,
   Crown,
-  Users
+  Users,
+  ExternalLink
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { WHMCS_URLS, redirectToWHMCS } from '@/lib/whmcsConfig';
 
 interface MegaMenuItem {
   label: string;
@@ -26,6 +28,8 @@ interface MegaMenuItem {
   icon: React.ElementType;
   description: string;
   badge?: string;
+  whmcsUrl?: string; // External WHMCS URL
+  isExternal?: boolean;
 }
 
 interface MegaMenuCategory {
@@ -55,31 +59,39 @@ const getMegaMenuData = (language: string): Record<string, MegaMenuCategory> => 
         href: '/hosting/web',
         icon: Server,
         description: language === 'bn' ? 'সাশ্রয়ী মূল্যে শেয়ার্ড হোস্টিং' : 'Affordable shared hosting for websites',
-        badge: language === 'bn' ? 'জনপ্রিয়' : 'Popular'
+        badge: language === 'bn' ? 'জনপ্রিয়' : 'Popular',
+        whmcsUrl: WHMCS_URLS.hosting.web,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'প্রিমিয়াম হোস্টিং' : 'Premium Hosting',
         href: '/hosting/premium',
         icon: Crown,
-        description: language === 'bn' ? 'উচ্চ পারফরম্যান্স ও রিসোর্স' : 'High performance with more resources'
+        description: language === 'bn' ? 'উচ্চ পারফরম্যান্স ও রিসোর্স' : 'High performance with more resources',
+        whmcsUrl: WHMCS_URLS.hosting.premium,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'ওয়ার্ডপ্রেস হোস্টিং' : 'WordPress Hosting',
         href: '/hosting/wordpress',
         icon: Zap,
-        description: language === 'bn' ? 'ওয়ার্ডপ্রেসের জন্য অপটিমাইজড' : 'Optimized for WordPress sites'
+        description: language === 'bn' ? 'ওয়ার্ডপ্রেসের জন্য অপটিমাইজড' : 'Optimized for WordPress sites',
+        whmcsUrl: WHMCS_URLS.hosting.wordpress,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'রিসেলার হোস্টিং' : 'Reseller Hosting',
         href: '/hosting/reseller',
         icon: Users,
-        description: language === 'bn' ? 'নিজের হোস্টিং ব্যবসা শুরু করুন' : 'Start your own hosting business'
+        description: language === 'bn' ? 'নিজের হোস্টিং ব্যবসা শুরু করুন' : 'Start your own hosting business',
+        whmcsUrl: WHMCS_URLS.hosting.reseller,
+        isExternal: true
       }
     ],
     featured: {
       title: language === 'bn' ? 'নতুন বছরের অফার!' : 'New Year Sale!',
       description: language === 'bn' ? 'সকল হোস্টিং প্ল্যানে ৫০% ছাড়' : '50% OFF on all hosting plans',
-      href: '/hosting/web',
+      href: WHMCS_URLS.hosting.web,
       badge: '50% OFF'
     }
   },
@@ -91,19 +103,25 @@ const getMegaMenuData = (language: string): Record<string, MegaMenuCategory> => 
         href: '/vps/cloud',
         icon: Cloud,
         description: language === 'bn' ? 'স্কেলেবল ক্লাউড সার্ভার' : 'Scalable cloud-based VPS servers',
-        badge: language === 'bn' ? 'সেরা বিক্রি' : 'Best Seller'
+        badge: language === 'bn' ? 'সেরা বিক্রি' : 'Best Seller',
+        whmcsUrl: WHMCS_URLS.vps.cloud,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'WHM/cPanel VPS' : 'WHM/cPanel VPS',
         href: '/vps/whm-cpanel',
         icon: Settings,
-        description: language === 'bn' ? 'পূর্ব-ইনস্টল করা কন্ট্রোল প্যানেল' : 'Pre-installed control panel included'
+        description: language === 'bn' ? 'পূর্ব-ইনস্টল করা কন্ট্রোল প্যানেল' : 'Pre-installed control panel included',
+        whmcsUrl: WHMCS_URLS.vps.whm,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'কাস্টম VPS' : 'Custom VPS',
         href: '/vps/custom',
         icon: Cpu,
-        description: language === 'bn' ? 'আপনার প্রয়োজন অনুযায়ী কনফিগার করুন' : 'Configure according to your needs'
+        description: language === 'bn' ? 'আপনার প্রয়োজন অনুযায়ী কনফিগার করুন' : 'Configure according to your needs',
+        whmcsUrl: WHMCS_URLS.vps.custom,
+        isExternal: true
       }
     ]
   },
@@ -114,19 +132,25 @@ const getMegaMenuData = (language: string): Record<string, MegaMenuCategory> => 
         label: language === 'bn' ? 'ডেডিকেটেড সার্ভার' : 'Dedicated Server',
         href: '/servers/dedicated',
         icon: HardDrive,
-        description: language === 'bn' ? 'সম্পূর্ণ সার্ভার আপনার নিয়ন্ত্রণে' : 'Full server under your control'
+        description: language === 'bn' ? 'সম্পূর্ণ সার্ভার আপনার নিয়ন্ত্রণে' : 'Full server under your control',
+        whmcsUrl: WHMCS_URLS.servers.dedicated,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'WHM/cPanel ডেডিকেটেড' : 'WHM/cPanel Dedicated',
         href: '/servers/whm-cpanel',
         icon: Database,
-        description: language === 'bn' ? 'ম্যানেজড ডেডিকেটেড সার্ভার' : 'Managed dedicated with control panel'
+        description: language === 'bn' ? 'ম্যানেজড ডেডিকেটেড সার্ভার' : 'Managed dedicated with control panel',
+        whmcsUrl: WHMCS_URLS.servers.whm,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'কাস্টম ডেডিকেটেড' : 'Custom Dedicated',
         href: '/servers/custom',
         icon: Shield,
-        description: language === 'bn' ? 'এন্টারপ্রাইজ গ্রেড সলিউশন' : 'Enterprise-grade custom solutions'
+        description: language === 'bn' ? 'এন্টারপ্রাইজ গ্রেড সলিউশন' : 'Enterprise-grade custom solutions',
+        whmcsUrl: WHMCS_URLS.servers.custom,
+        isExternal: true
       }
     ]
   },
@@ -138,13 +162,17 @@ const getMegaMenuData = (language: string): Record<string, MegaMenuCategory> => 
         href: '/domain/register',
         icon: Globe,
         description: language === 'bn' ? 'নতুন ডোমেইন রেজিস্টার করুন' : 'Register your new domain name',
-        badge: language === 'bn' ? '৳৯৯৯ থেকে' : 'From ৳999'
+        badge: language === 'bn' ? '৳৯৯৯ থেকে' : 'From ৳999',
+        whmcsUrl: WHMCS_URLS.domainSearch,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'ডোমেইন ট্রান্সফার' : 'Domain Transfer',
         href: '/domain/transfer',
         icon: RefreshCw,
-        description: language === 'bn' ? 'আপনার ডোমেইন আমাদের কাছে আনুন' : 'Transfer your domain to us'
+        description: language === 'bn' ? 'আপনার ডোমেইন আমাদের কাছে আনুন' : 'Transfer your domain to us',
+        whmcsUrl: WHMCS_URLS.domainTransfer,
+        isExternal: true
       },
       {
         label: language === 'bn' ? 'ডোমেইন রিসেলার' : 'Domain Reseller',
@@ -190,34 +218,49 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ category, isActive, onClose, langua
           {/* Menu Items */}
           <div className="lg:col-span-2 p-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {data.items.map((item, idx) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={onClose}
-                  className="group flex items-start gap-3 p-3 rounded-xl hover:bg-primary/5 transition-all duration-200"
-                  style={{ animationDelay: `${idx * 50}ms` }}
-                >
-                  <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex-shrink-0">
-                    <item.icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                        {item.label}
-                      </span>
-                      {item.badge && (
-                        <span className="px-1.5 py-0.5 text-[10px] font-bold bg-accent text-accent-foreground rounded">
-                          {item.badge}
-                        </span>
-                      )}
+              {data.items.map((item, idx) => {
+                const handleClick = (e: React.MouseEvent) => {
+                  if (item.isExternal && item.whmcsUrl) {
+                    e.preventDefault();
+                    onClose();
+                    redirectToWHMCS(item.whmcsUrl);
+                  } else {
+                    onClose();
+                  }
+                };
+
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.isExternal ? '#' : item.href}
+                    onClick={handleClick}
+                    className="group flex items-start gap-3 p-3 rounded-xl hover:bg-primary/5 transition-all duration-200"
+                    style={{ animationDelay: `${idx * 50}ms` }}
+                  >
+                    <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors flex-shrink-0">
+                      <item.icon className="h-5 w-5" />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                      {item.description}
-                    </p>
-                  </div>
-                </Link>
-              ))}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                          {item.label}
+                        </span>
+                        {item.badge && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold bg-accent text-accent-foreground rounded">
+                            {item.badge}
+                          </span>
+                        )}
+                        {item.isExternal && (
+                          <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                        {item.description}
+                      </p>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
@@ -238,15 +281,19 @@ const MegaMenu: React.FC<MegaMenuProps> = ({ category, isActive, onClose, langua
                     {data.featured.description}
                   </p>
                 </div>
-                <Link
-                  to={data.featured.href}
-                  onClick={onClose}
+                <a
+                  href={data.featured.href}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onClose();
+                    redirectToWHMCS(data.featured!.href);
+                  }}
                   className="inline-flex items-center gap-1.5 mt-4 text-sm font-medium text-primary hover:text-accent transition-colors group"
                 >
                   <Rocket className="h-4 w-4" />
                   <span>{language === 'bn' ? 'এখনই শুরু করুন' : 'Get Started Now'}</span>
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
-                </Link>
+                </a>
               </div>
             </div>
           )}
