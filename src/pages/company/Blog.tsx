@@ -3,6 +3,7 @@ import { ArrowRight, Calendar, Clock, User, Tag, Search, ChevronRight } from 'lu
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 const Blog: React.FC = () => {
   const { language } = useLanguage();
@@ -157,10 +158,10 @@ const Blog: React.FC = () => {
               {featuredPosts.map((post) => (
                 <article key={post.id} className="group cursor-pointer">
                   <div className="relative overflow-hidden rounded-2xl mb-4">
-                    <img 
+                    <OptimizedImage 
                       src={post.image} 
                       alt={post.title}
-                      className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-64 group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-4 left-4">
                       <span className="px-3 py-1 rounded-full bg-primary text-primary-foreground text-xs font-medium">
@@ -222,10 +223,10 @@ const Blog: React.FC = () => {
               {(activeCategory === 'all' && searchQuery === '' ? regularPosts.filter(p => !p.featured) : filteredPosts).map((post) => (
                 <article key={post.id} className="bg-card rounded-2xl border border-border overflow-hidden group cursor-pointer hover:border-primary transition-colors">
                   <div className="relative overflow-hidden">
-                    <img 
+                    <OptimizedImage 
                       src={post.image} 
                       alt={post.title}
-                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="w-full h-48 group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute top-3 left-3">
                       <span className="px-2 py-0.5 rounded-full bg-background/90 text-xs font-medium">

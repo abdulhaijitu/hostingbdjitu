@@ -6,6 +6,7 @@ import { ArrowRight, Shield, Zap, Headphones, ExternalLink } from 'lucide-react'
 import SEOHead from '@/components/common/SEOHead';
 import { WHMCS_URLS } from '@/lib/whmcsConfig';
 import chostLogo from '@/assets/chost-logo.png';
+import OptimizedImage from '@/components/common/OptimizedImage';
 
 /**
  * Login Page - WHMCS Redirect Only
@@ -48,10 +49,11 @@ const Login: React.FC = () => {
           <div className="max-w-2xl mx-auto text-center">
             {/* Logo */}
             <div className="mb-8">
-              <img 
+              <OptimizedImage 
                 src={chostLogo} 
                 alt="CHost" 
                 className="h-16 w-auto mx-auto"
+                priority={true}
               />
             </div>
 
