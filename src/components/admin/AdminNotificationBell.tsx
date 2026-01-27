@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, ShoppingCart, MessageSquare, AlertCircle, CheckCircle, X, ExternalLink, CreditCard, Volume2, VolumeX, BellRing } from 'lucide-react';
+import { Bell, ShoppingCart, MessageSquare, AlertCircle, CheckCircle, X, ExternalLink, CreditCard, Volume2, VolumeX, BellRing, AlertTriangle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,7 +17,7 @@ import { bn } from 'date-fns/locale';
 
 interface Notification {
   id: string;
-  type: 'order' | 'ticket' | 'system' | 'payment';
+  type: 'order' | 'ticket' | 'system' | 'payment' | 'error';
   title: string;
   message: string;
   timestamp: Date;
@@ -73,6 +73,7 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
         payment: 660,  // Medium pitch for payments
         ticket: 440,   // Lower pitch for tickets
         system: 520,
+        error: 300,    // Low pitch for errors
       };
       
       oscillator.frequency.value = frequencies[type] || 600;
@@ -269,6 +270,28 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
       )
       .subscribe();
 
+    // Listen to critical errors
+    const errorLogsChannel = supabase
+      .channel('admin-error-logs')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'error_logs' },
+        (payload) => {
+          // Only notify for critical and error severity
+          if (payload.new.severity === 'critical' || payload.new.severity === 'error') {
+            addNotification({
+              type: 'error',
+              title: payload.new.severity === 'critical' ? '🚨 ক্রিটিক্যাল এরর' : '⚠️ সিস্টেম এরর',
+              message: `${payload.new.error_code}: ${payload.new.message?.substring(0, 50)}...`,
+              link: '/admin/error-logs',
+              data: payload.new,
+              priority: payload.new.severity === 'critical' ? 'high' : 'medium',
+            });
+          }
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(ordersChannel);
       supabase.removeChannel(ticketsChannel);
@@ -276,6 +299,7 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
       supabase.removeChannel(paymentsChannel);
       supabase.removeChannel(paymentUpdatesChannel);
       supabase.removeChannel(orderUpdatesChannel);
+      supabase.removeChannel(errorLogsChannel);
     };
   }, [addNotification]);
 
@@ -302,6 +326,8 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({ collapsed
         return <MessageSquare className={cn("h-4 w-4 text-amber-500", baseClass)} />;
       case 'payment':
         return <CreditCard className={cn("h-4 w-4 text-emerald-500", baseClass)} />;
+      case 'error':
+        return <AlertTriangle className={cn("h-4 w-4 text-red-500", baseClass)} />;
       default:
         return <AlertCircle className={cn("h-4 w-4 text-muted-foreground", baseClass)} />;
     }

@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { auditHosting } from '@/lib/auditLogger';
 
 export interface ProvisioningQueueItem {
   id: string;
@@ -131,7 +132,10 @@ export const useProvisionHosting = () => {
 
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, orderId) => {
+      // Log audit event for provisioning
+      auditHosting.provision(orderId, { source: 'admin_manual' });
+      
       queryClient.invalidateQueries({ queryKey: ['orders'] });
       queryClient.invalidateQueries({ queryKey: ['hosting-accounts'] });
       queryClient.invalidateQueries({ queryKey: ['provisioning-queue'] });
@@ -174,6 +178,9 @@ export const useSuspendAccount = () => {
         .eq('id', accountId);
 
       if (error) throw error;
+      
+      // Log audit event
+      auditHosting.suspend(accountId, reason);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hosting-accounts'] });
@@ -214,6 +221,9 @@ export const useUnsuspendAccount = () => {
         .eq('id', accountId);
 
       if (error) throw error;
+      
+      // Log audit event
+      auditHosting.unsuspend(accountId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hosting-accounts'] });
@@ -250,6 +260,9 @@ export const useTerminateAccount = () => {
         .eq('id', accountId);
 
       if (error) throw error;
+      
+      // Log audit event
+      auditHosting.terminate(accountId, 'Admin terminated via WHM');
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['hosting-accounts'] });

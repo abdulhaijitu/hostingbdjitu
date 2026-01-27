@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import type { Tables } from '@/integrations/supabase/types';
+import { auditHosting } from '@/lib/auditLogger';
 
 export type HostingAccountWithDetails = Tables<'hosting_accounts'> & {
   hosting_servers?: { id: string; name: string; hostname: string } | null;
@@ -58,6 +59,10 @@ export const useSuspendAccount = () => {
       });
 
       if (error) throw error;
+      
+      // Log audit event
+      auditHosting.suspend(accountId, reason);
+      
       return data;
     },
     onSuccess: () => {
@@ -77,6 +82,10 @@ export const useUnsuspendAccount = () => {
       });
 
       if (error) throw error;
+      
+      // Log audit event
+      auditHosting.unsuspend(accountId);
+      
       return data;
     },
     onSuccess: () => {
@@ -96,6 +105,10 @@ export const useTerminateAccount = () => {
       });
 
       if (error) throw error;
+      
+      // Log audit event
+      auditHosting.terminate(accountId, 'Admin terminated');
+      
       return data;
     },
     onSuccess: () => {
