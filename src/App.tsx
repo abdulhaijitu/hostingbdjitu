@@ -1,3 +1,4 @@
+import { Suspense, lazy } from 'react';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,51 +8,53 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { ThemeProvider } from "next-themes";
 import { HelmetProvider } from "react-helmet-async";
 import ErrorBoundary from "@/components/common/ErrorBoundary";
+import PageLoader from "@/components/common/PageLoader";
 
-// Pages
+// Critical pages - loaded immediately
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 
+// Lazy loaded pages - code splitting for better performance
 // Hosting Pages
-import WebHosting from "./pages/hosting/WebHosting";
-import PremiumHosting from "./pages/hosting/PremiumHosting";
-import WordPressHosting from "./pages/hosting/WordPressHosting";
-import ResellerHosting from "./pages/hosting/ResellerHosting";
+const WebHosting = lazy(() => import("./pages/hosting/WebHosting"));
+const PremiumHosting = lazy(() => import("./pages/hosting/PremiumHosting"));
+const WordPressHosting = lazy(() => import("./pages/hosting/WordPressHosting"));
+const ResellerHosting = lazy(() => import("./pages/hosting/ResellerHosting"));
 
 // VPS Pages
-import CloudVPS from "./pages/vps/CloudVPS";
-import WHMcPanelVPS from "./pages/vps/WHMcPanelVPS";
-import CustomVPS from "./pages/vps/CustomVPS";
+const CloudVPS = lazy(() => import("./pages/vps/CloudVPS"));
+const WHMcPanelVPS = lazy(() => import("./pages/vps/WHMcPanelVPS"));
+const CustomVPS = lazy(() => import("./pages/vps/CustomVPS"));
 
 // Server Pages
-import DedicatedServer from "./pages/servers/DedicatedServer";
-import WHMcPanelDedicated from "./pages/servers/WHMcPanelDedicated";
-import CustomDedicated from "./pages/servers/CustomDedicated";
+const DedicatedServer = lazy(() => import("./pages/servers/DedicatedServer"));
+const WHMcPanelDedicated = lazy(() => import("./pages/servers/WHMcPanelDedicated"));
+const CustomDedicated = lazy(() => import("./pages/servers/CustomDedicated"));
 
 // Domain Pages
-import DomainRegistration from "./pages/domain/DomainRegistration";
-import DomainTransfer from "./pages/domain/DomainTransfer";
-import DomainReseller from "./pages/domain/DomainReseller";
-import DomainPricing from "./pages/domain/DomainPricing";
+const DomainRegistration = lazy(() => import("./pages/domain/DomainRegistration"));
+const DomainTransfer = lazy(() => import("./pages/domain/DomainTransfer"));
+const DomainReseller = lazy(() => import("./pages/domain/DomainReseller"));
+const DomainPricing = lazy(() => import("./pages/domain/DomainPricing"));
 
 // Other Pages
-import EmailHosting from "./pages/EmailHosting";
-import WebsiteDesign from "./pages/services/WebsiteDesign";
-import Affiliate from "./pages/Affiliate";
-import Support from "./pages/Support";
+const EmailHosting = lazy(() => import("./pages/EmailHosting"));
+const WebsiteDesign = lazy(() => import("./pages/services/WebsiteDesign"));
+const Affiliate = lazy(() => import("./pages/Affiliate"));
+const Support = lazy(() => import("./pages/Support"));
 
 // Company Pages
-import About from "./pages/company/About";
-import Contact from "./pages/company/Contact";
-import Blog from "./pages/company/Blog";
+const About = lazy(() => import("./pages/company/About"));
+const Contact = lazy(() => import("./pages/company/Contact"));
+const Blog = lazy(() => import("./pages/company/Blog"));
 
 // Legal Pages
-import RefundPolicy from "./pages/legal/RefundPolicy";
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy";
-import TermsOfService from "./pages/legal/TermsOfService";
+const RefundPolicy = lazy(() => import("./pages/legal/RefundPolicy"));
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
 
-// Auth Pages (WHMCS Redirect)
-import Login from "./pages/auth/Login";
+// Auth Pages
+const Login = lazy(() => import("./pages/auth/Login"));
 
 // Configure React Query with optimized global settings
 const queryClient = new QueryClient({
@@ -74,6 +77,13 @@ const queryClient = new QueryClient({
   },
 });
 
+// Suspense wrapper for lazy routes
+const LazyRoute = ({ children }: { children: React.ReactNode }) => (
+  <Suspense fallback={<PageLoader />}>
+    {children}
+  </Suspense>
+);
+
 const App = () => (
   <ErrorBoundary>
   <HelmetProvider>
@@ -85,56 +95,57 @@ const App = () => (
               <Toaster />
               <Sonner />
               <Routes>
+                {/* Home - Critical route, loaded immediately */}
                 <Route path="/" element={<Index />} />
                 
-                {/* Hosting Routes */}
-                <Route path="/hosting" element={<WebHosting />} />
-                <Route path="/hosting/web" element={<WebHosting />} />
-                <Route path="/hosting/premium" element={<PremiumHosting />} />
-                <Route path="/hosting/wordpress" element={<WordPressHosting />} />
-                <Route path="/hosting/reseller" element={<ResellerHosting />} />
+                {/* Hosting Routes - Lazy loaded */}
+                <Route path="/hosting" element={<LazyRoute><WebHosting /></LazyRoute>} />
+                <Route path="/hosting/web" element={<LazyRoute><WebHosting /></LazyRoute>} />
+                <Route path="/hosting/premium" element={<LazyRoute><PremiumHosting /></LazyRoute>} />
+                <Route path="/hosting/wordpress" element={<LazyRoute><WordPressHosting /></LazyRoute>} />
+                <Route path="/hosting/reseller" element={<LazyRoute><ResellerHosting /></LazyRoute>} />
                 
-                {/* VPS Routes */}
-                <Route path="/vps" element={<CloudVPS />} />
-                <Route path="/vps/cloud" element={<CloudVPS />} />
-                <Route path="/vps/whm-cpanel" element={<WHMcPanelVPS />} />
-                <Route path="/vps/custom" element={<CustomVPS />} />
+                {/* VPS Routes - Lazy loaded */}
+                <Route path="/vps" element={<LazyRoute><CloudVPS /></LazyRoute>} />
+                <Route path="/vps/cloud" element={<LazyRoute><CloudVPS /></LazyRoute>} />
+                <Route path="/vps/whm-cpanel" element={<LazyRoute><WHMcPanelVPS /></LazyRoute>} />
+                <Route path="/vps/custom" element={<LazyRoute><CustomVPS /></LazyRoute>} />
                 
-                {/* Server Routes */}
-                <Route path="/servers" element={<DedicatedServer />} />
-                <Route path="/servers/dedicated" element={<DedicatedServer />} />
-                <Route path="/servers/whm-cpanel" element={<WHMcPanelDedicated />} />
-                <Route path="/servers/custom" element={<CustomDedicated />} />
+                {/* Server Routes - Lazy loaded */}
+                <Route path="/servers" element={<LazyRoute><DedicatedServer /></LazyRoute>} />
+                <Route path="/servers/dedicated" element={<LazyRoute><DedicatedServer /></LazyRoute>} />
+                <Route path="/servers/whm-cpanel" element={<LazyRoute><WHMcPanelDedicated /></LazyRoute>} />
+                <Route path="/servers/custom" element={<LazyRoute><CustomDedicated /></LazyRoute>} />
                 
-                {/* Domain Routes */}
-                <Route path="/domain" element={<DomainRegistration />} />
-                <Route path="/domain/register" element={<DomainRegistration />} />
-                <Route path="/domain/transfer" element={<DomainTransfer />} />
-                <Route path="/domain/reseller" element={<DomainReseller />} />
-                <Route path="/domain/pricing" element={<DomainPricing />} />
+                {/* Domain Routes - Lazy loaded */}
+                <Route path="/domain" element={<LazyRoute><DomainRegistration /></LazyRoute>} />
+                <Route path="/domain/register" element={<LazyRoute><DomainRegistration /></LazyRoute>} />
+                <Route path="/domain/transfer" element={<LazyRoute><DomainTransfer /></LazyRoute>} />
+                <Route path="/domain/reseller" element={<LazyRoute><DomainReseller /></LazyRoute>} />
+                <Route path="/domain/pricing" element={<LazyRoute><DomainPricing /></LazyRoute>} />
                 
-                {/* Other Service Routes */}
-                <Route path="/email" element={<EmailHosting />} />
-                <Route path="/services/website-design" element={<WebsiteDesign />} />
-                <Route path="/affiliate" element={<Affiliate />} />
-                <Route path="/support" element={<Support />} />
+                {/* Other Service Routes - Lazy loaded */}
+                <Route path="/email" element={<LazyRoute><EmailHosting /></LazyRoute>} />
+                <Route path="/services/website-design" element={<LazyRoute><WebsiteDesign /></LazyRoute>} />
+                <Route path="/affiliate" element={<LazyRoute><Affiliate /></LazyRoute>} />
+                <Route path="/support" element={<LazyRoute><Support /></LazyRoute>} />
                 
-                {/* Company Routes */}
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/blog" element={<Blog />} />
+                {/* Company Routes - Lazy loaded */}
+                <Route path="/about" element={<LazyRoute><About /></LazyRoute>} />
+                <Route path="/contact" element={<LazyRoute><Contact /></LazyRoute>} />
+                <Route path="/blog" element={<LazyRoute><Blog /></LazyRoute>} />
                 
-                {/* Legal Routes */}
-                <Route path="/refund-policy" element={<RefundPolicy />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/terms-of-service" element={<TermsOfService />} />
+                {/* Legal Routes - Lazy loaded */}
+                <Route path="/refund-policy" element={<LazyRoute><RefundPolicy /></LazyRoute>} />
+                <Route path="/privacy-policy" element={<LazyRoute><PrivacyPolicy /></LazyRoute>} />
+                <Route path="/terms-of-service" element={<LazyRoute><TermsOfService /></LazyRoute>} />
                 
-                {/* Auth Routes - WHMCS Redirect */}
-                <Route path="/auth/login" element={<Login />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Login />} />
+                {/* Auth Routes - Lazy loaded */}
+                <Route path="/auth/login" element={<LazyRoute><Login /></LazyRoute>} />
+                <Route path="/login" element={<LazyRoute><Login /></LazyRoute>} />
+                <Route path="/signup" element={<LazyRoute><Login /></LazyRoute>} />
                 
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                {/* 404 - Critical route */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
