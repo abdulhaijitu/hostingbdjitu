@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Package, Plus, Edit, Trash2, Server, Link2, Check, X
+  Package, Plus, Edit, Trash2, Server, Link2
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -24,14 +24,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -42,7 +34,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { 
@@ -56,6 +47,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import SEOHead from '@/components/common/SEOHead';
 import { ErrorState } from '@/components/common/DashboardSkeletons';
+import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
 
 const WHMPackageMapping: React.FC = () => {
   const { language } = useLanguage();
@@ -64,7 +56,6 @@ const WHMPackageMapping: React.FC = () => {
   const [editingMapping, setEditingMapping] = useState<any>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
-  // Form state
   const [formData, setFormData] = useState({
     hosting_plan_id: '',
     server_id: '',
@@ -165,6 +156,68 @@ const WHMPackageMapping: React.FC = () => {
     }
   };
 
+  // Columns for ResponsiveAdminTable
+  const columns = [
+    {
+      key: 'hosting_plan',
+      label: language === 'bn' ? 'হোস্টিং প্ল্যান' : 'Hosting Plan',
+      render: (mapping: any) => (
+        <div className="flex items-center gap-2">
+          <Package className="h-4 w-4 text-primary" />
+          <div>
+            <span className="font-medium">{mapping.hosting_plans?.name || 'Unknown'}</span>
+            <p className="text-xs text-muted-foreground">{mapping.hosting_plans?.category}</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'server',
+      label: language === 'bn' ? 'সার্ভার' : 'Server',
+      hideOnMobile: true,
+      render: (mapping: any) => (
+        <div className="flex items-center gap-2">
+          <Server className="h-4 w-4 text-muted-foreground" />
+          <span>{mapping.hosting_servers?.name || 'Unknown'}</span>
+        </div>
+      ),
+    },
+    {
+      key: 'whm_package_name',
+      label: language === 'bn' ? 'WHM প্যাকেজ' : 'WHM Package',
+      render: (mapping: any) => (
+        <code className="px-2 py-1 bg-muted rounded text-sm">
+          {mapping.whm_package_name}
+        </code>
+      ),
+    },
+    {
+      key: 'is_active',
+      label: language === 'bn' ? 'স্ট্যাটাস' : 'Status',
+      render: (mapping: any) => (
+        <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
+          {mapping.is_active 
+            ? (language === 'bn' ? 'সক্রিয়' : 'Active') 
+            : (language === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive')}
+        </Badge>
+      ),
+    },
+  ];
+
+  const actions = [
+    {
+      label: language === 'bn' ? 'এডিট' : 'Edit',
+      icon: <Edit className="h-4 w-4" />,
+      onClick: (mapping: any) => handleOpenDialog(mapping),
+    },
+    {
+      label: language === 'bn' ? 'ডিলিট' : 'Delete',
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: (mapping: any) => setDeleteId(mapping.id),
+      variant: 'destructive' as const,
+    },
+  ];
+
   return (
     <>
       <SEOHead 
@@ -173,121 +226,71 @@ const WHMPackageMapping: React.FC = () => {
         canonicalUrl="/admin/package-mapping"
       />
       
-      <div className="p-6 lg:p-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
-            <div>
-              <h1 className="text-2xl lg:text-3xl font-bold font-display flex items-center gap-3">
-                <Link2 className="h-7 w-7 text-primary" />
-                {language === 'bn' ? 'WHM প্যাকেজ ম্যাপিং' : 'WHM Package Mapping'}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {language === 'bn' 
-                  ? 'হোস্টিং প্ল্যান থেকে WHM প্যাকেজে ম্যাপ করুন'
-                  : 'Map hosting plans to WHM packages for automatic provisioning'}
-              </p>
-            </div>
-            <Button variant="hero" onClick={() => handleOpenDialog()}>
-              <Plus className="h-4 w-4 mr-2" />
-              {language === 'bn' ? 'নতুন ম্যাপিং' : 'Add Mapping'}
-            </Button>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-xl md:text-2xl lg:text-3xl font-bold font-display flex items-center gap-3">
+              <Link2 className="h-6 w-6 md:h-7 md:w-7 text-primary" />
+              {language === 'bn' ? 'WHM প্যাকেজ ম্যাপিং' : 'WHM Package Mapping'}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {language === 'bn' 
+                ? 'হোস্টিং প্ল্যান থেকে WHM প্যাকেজে ম্যাপ করুন'
+                : 'Map hosting plans to WHM packages'}
+            </p>
           </div>
+          <Button variant="hero" onClick={() => handleOpenDialog()} size="sm">
+            <Plus className="h-4 w-4 mr-2" />
+            {language === 'bn' ? 'নতুন' : 'Add'}
+          </Button>
+        </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>{language === 'bn' ? 'প্যাকেজ ম্যাপিং তালিকা' : 'Package Mappings'}</CardTitle>
-              <CardDescription>
-                {language === 'bn' 
-                  ? 'প্রতিটি হোস্টিং প্ল্যানের জন্য সার্ভার অনুযায়ী WHM প্যাকেজ সেট করুন'
-                  : 'Configure WHM package names for each hosting plan per server'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {isError ? (
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <CardTitle>{language === 'bn' ? 'প্যাকেজ ম্যাপিং তালিকা' : 'Package Mappings'}</CardTitle>
+            <CardDescription>
+              {mappings?.length || 0} {language === 'bn' ? 'টি ম্যাপিং' : 'mappings'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6 md:pt-0">
+            {isError ? (
+              <div className="p-4">
                 <ErrorState 
                   title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা হয়েছে' : 'Failed to load data'}
                   onRetry={() => refetch()}
                 />
-              ) : isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : mappings && mappings.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{language === 'bn' ? 'হোস্টিং প্ল্যান' : 'Hosting Plan'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'সার্ভার' : 'Server'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'WHM প্যাকেজ' : 'WHM Package'}</TableHead>
-                      <TableHead>{language === 'bn' ? 'স্ট্যাটাস' : 'Status'}</TableHead>
-                      <TableHead className="text-right">{language === 'bn' ? 'অ্যাকশন' : 'Actions'}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {mappings.map((mapping: any) => (
-                      <TableRow key={mapping.id}>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Package className="h-4 w-4 text-primary" />
-                            <div>
-                              <span className="font-medium">{mapping.hosting_plans?.name || 'Unknown'}</span>
-                              <p className="text-xs text-muted-foreground">{mapping.hosting_plans?.category}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Server className="h-4 w-4 text-muted-foreground" />
-                            <span>{mapping.hosting_servers?.name || 'Unknown'}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <code className="px-2 py-1 bg-muted rounded text-sm">
-                            {mapping.whm_package_name}
-                          </code>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={mapping.is_active ? 'default' : 'secondary'}>
-                            {mapping.is_active 
-                              ? (language === 'bn' ? 'সক্রিয়' : 'Active') 
-                              : (language === 'bn' ? 'নিষ্ক্রিয়' : 'Inactive')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => handleOpenDialog(mapping)}
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="icon"
-                              onClick={() => setDeleteId(mapping.id)}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-12">
-                  <Link2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {language === 'bn' ? 'কোন ম্যাপিং নেই' : 'No mappings found'}
-                  </p>
-                  <Button className="mt-4" onClick={() => handleOpenDialog()}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {language === 'bn' ? 'প্রথম ম্যাপিং তৈরি করুন' : 'Create First Mapping'}
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            ) : (
+              <ResponsiveAdminTable
+                data={mappings || []}
+                columns={columns}
+                actions={actions}
+                keyExtractor={(mapping) => mapping.id}
+                isLoading={isLoading}
+                getTitle={(mapping) => mapping.hosting_plans?.name || 'Unknown'}
+                getSubtitle={(mapping) => mapping.whm_package_name}
+                getBadge={(mapping) => ({
+                  text: mapping.is_active ? 'Active' : 'Inactive',
+                  variant: mapping.is_active ? 'success' : 'secondary',
+                })}
+                language={language as 'en' | 'bn'}
+                mobileExpandable={true}
+                emptyState={
+                  <div className="text-center py-12">
+                    <Link2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                    <p className="text-muted-foreground">
+                      {language === 'bn' ? 'কোন ম্যাপিং নেই' : 'No mappings found'}
+                    </p>
+                    <Button className="mt-4" onClick={() => handleOpenDialog()}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      {language === 'bn' ? 'প্রথম ম্যাপিং তৈরি করুন' : 'Create First Mapping'}
+                    </Button>
+                  </div>
+                }
+              />
+            )}
+          </CardContent>
+        </Card>
 
       {/* Create/Edit Dialog */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>

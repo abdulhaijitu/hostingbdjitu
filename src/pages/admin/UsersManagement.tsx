@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
@@ -20,6 +19,7 @@ import SEOHead from '@/components/common/SEOHead';
 import { format } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { usePagePerformance } from '@/hooks/usePagePerformance';
+import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
 
 interface UserWithProfile {
   id: string;
@@ -55,7 +55,6 @@ const UsersManagement: React.FC = () => {
   const [newRole, setNewRole] = useState<'customer' | 'admin'>('customer');
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
   
-  // Track page performance
   usePagePerformance('Users Management');
 
   useEffect(() => {
@@ -67,7 +66,6 @@ const UsersManagement: React.FC = () => {
     setIsError(false);
     setIsTimeout(false);
     
-    // 8 second failsafe timeout
     const timeoutId = setTimeout(() => {
       setIsLoading(false);
       setIsError(true);
@@ -75,7 +73,6 @@ const UsersManagement: React.FC = () => {
     }, 8000);
 
     try {
-      // Parallelize API calls for better performance
       const [profilesResult, rolesResult, ordersResult] = await Promise.all([
         supabase.from('profiles').select('*').order('created_at', { ascending: false }),
         supabase.from('user_roles').select('user_id, role'),
@@ -92,7 +89,6 @@ const UsersManagement: React.FC = () => {
       const roles = rolesResult.data;
       const orders = ordersResult.data;
 
-      // Combine data
       const usersData: UserWithProfile[] = profiles.map(profile => {
         const userRole = roles.find(r => r.user_id === profile.user_id);
         const userOrders = orders.filter(o => o.user_id === profile.user_id);
@@ -155,7 +151,6 @@ const UsersManagement: React.FC = () => {
   const handleRoleChange = async () => {
     if (!roleChangeUser) return;
     
-    // Prevent self-demotion
     if (roleChangeUser.id === currentUser?.id && newRole === 'customer') {
       toast({
         title: language === 'bn' ? 'অনুমতি নেই' : 'Not Allowed',
@@ -176,7 +171,6 @@ const UsersManagement: React.FC = () => {
 
       if (error) throw error;
 
-      // Update local state
       setUsers(prev => prev.map(u => 
         u.id === roleChangeUser.id ? { ...u, role: newRole } : u
       ));
@@ -213,27 +207,6 @@ const UsersManagement: React.FC = () => {
     );
   });
 
-  // Toggle single user selection
-  const toggleUserSelection = (userId: string) => {
-    const newSelection = new Set(selectedUsers);
-    if (newSelection.has(userId)) {
-      newSelection.delete(userId);
-    } else {
-      newSelection.add(userId);
-    }
-    setSelectedUsers(newSelection);
-  };
-
-  // Toggle all users selection
-  const toggleAllSelection = () => {
-    if (selectedUsers.size === filteredUsers.length) {
-      setSelectedUsers(new Set());
-    } else {
-      setSelectedUsers(new Set(filteredUsers.map(u => u.id)));
-    }
-  };
-
-  // Export to CSV
   const exportToCSV = (usersToExport: UserWithProfile[]) => {
     const headers = ['Name', 'Email', 'Phone', 'Company', 'Role', 'Orders', 'Total Spent', 'Joined Date'];
     const rows = usersToExport.map(user => [
@@ -270,7 +243,6 @@ const UsersManagement: React.FC = () => {
     });
   };
 
-  // Export to Excel (XLSX-like format using CSV with Excel compatibility)
   const exportToExcel = (usersToExport: UserWithProfile[]) => {
     const headers = ['Name', 'Email', 'Phone', 'Company', 'Role', 'Orders', 'Total Spent (BDT)', 'Joined Date'];
     const rows = usersToExport.map(user => [
@@ -284,7 +256,6 @@ const UsersManagement: React.FC = () => {
       format(new Date(user.created_at), 'yyyy-MM-dd'),
     ]);
 
-    // Create Excel-compatible CSV with BOM for proper UTF-8 encoding
     const BOM = '\uFEFF';
     const csvContent = BOM + [
       headers.join('\t'),
@@ -309,7 +280,6 @@ const UsersManagement: React.FC = () => {
     });
   };
 
-  // Export selected users
   const exportSelectedUsers = (format: 'csv' | 'excel') => {
     const usersToExport = users.filter(u => selectedUsers.has(u.id));
     if (usersToExport.length === 0) {
@@ -326,7 +296,6 @@ const UsersManagement: React.FC = () => {
     }
   };
 
-  // Export all users
   const exportAllUsers = (format: 'csv' | 'excel') => {
     if (format === 'csv') {
       exportToCSV(filteredUsers);
@@ -334,6 +303,85 @@ const UsersManagement: React.FC = () => {
       exportToExcel(filteredUsers);
     }
   };
+
+  // Columns for ResponsiveAdminTable
+  const columns = [
+    {
+      key: 'user',
+      label: language === 'bn' ? 'ইউজার' : 'User',
+      render: (user: UserWithProfile) => (
+        <div>
+          <p className="font-medium">{user.profile?.full_name || '-'}</p>
+          <p className="text-sm text-muted-foreground">{user.email}</p>
+        </div>
+      ),
+    },
+    {
+      key: 'contact',
+      label: language === 'bn' ? 'যোগাযোগ' : 'Contact',
+      hideOnMobile: true,
+      render: (user: UserWithProfile) => (
+        <div className="space-y-1">
+          {user.profile?.phone && (
+            <div className="flex items-center gap-1 text-sm">
+              <Phone className="h-3 w-3" />
+              {user.profile.phone}
+            </div>
+          )}
+          {user.profile?.company_name && (
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <Building className="h-3 w-3" />
+              {user.profile.company_name}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'role',
+      label: language === 'bn' ? 'রোল' : 'Role',
+      render: (user: UserWithProfile) => (
+        <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
+          {user.role === 'admin' ? (
+            <><Shield className="h-3 w-3 mr-1" /> Admin</>
+          ) : (
+            'Customer'
+          )}
+        </Badge>
+      ),
+    },
+    {
+      key: 'orders_count',
+      label: language === 'bn' ? 'অর্ডার' : 'Orders',
+      mobileLabel: language === 'bn' ? 'অর্ডার' : 'Orders',
+    },
+    {
+      key: 'total_spent',
+      label: language === 'bn' ? 'মোট খরচ' : 'Total Spent',
+      mobileLabel: language === 'bn' ? 'মোট' : 'Spent',
+      highlight: true,
+      render: (user: UserWithProfile) => `৳${user.total_spent.toLocaleString()}`,
+    },
+    {
+      key: 'created_at',
+      label: language === 'bn' ? 'যোগদান' : 'Joined',
+      hideOnMobile: true,
+      render: (user: UserWithProfile) => format(new Date(user.created_at), 'dd MMM yyyy'),
+    },
+  ];
+
+  const actions = [
+    {
+      label: language === 'bn' ? 'রোল' : 'Role',
+      icon: <UserCog className="h-4 w-4" />,
+      onClick: (user: UserWithProfile) => openRoleChangeDialog(user),
+    },
+    {
+      label: language === 'bn' ? 'অর্ডার' : 'Orders',
+      icon: <Package className="h-4 w-4" />,
+      onClick: (user: UserWithProfile) => viewUserOrders(user),
+    },
+  ];
 
   return (
     <>
@@ -343,115 +391,83 @@ const UsersManagement: React.FC = () => {
         canonicalUrl="/admin/users"
       />
       
-      <div className="p-6 lg:p-8">
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" size="icon" asChild>
-              <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
+      <div className="p-4 md:p-6 lg:p-8">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <Button variant="ghost" size="icon" asChild className="hidden md:flex">
+            <Link to="/admin"><ArrowLeft className="h-5 w-5" /></Link>
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl md:text-3xl font-bold font-display flex items-center gap-3">
+              <Users className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+              {language === 'bn' ? 'ইউজার ম্যানেজমেন্ট' : 'Users Management'}
+            </h1>
+            <p className="text-muted-foreground mt-1 text-sm">
+              {language === 'bn' 
+                ? `মোট ${users.length} জন ইউজার`
+                : `Total ${users.length} users`
+              }
+            </p>
+          </div>
+          {isError && (
+            <Button variant="outline" size="sm" onClick={fetchUsers}>
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Retry'}
             </Button>
-            <div className="flex-1">
-              <h1 className="text-3xl font-bold font-display flex items-center gap-3">
-                <Users className="h-8 w-8 text-primary" />
-                {language === 'bn' ? 'ইউজার ম্যানেজমেন্ট' : 'Users Management'}
-              </h1>
-              <p className="text-muted-foreground mt-1">
-                {language === 'bn' 
-                  ? `মোট ${users.length} জন ইউজার`
-                  : `Total ${users.length} users`
-                }
-              </p>
-            </div>
-            {isError && (
-              <Button variant="outline" size="sm" onClick={fetchUsers}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                {language === 'bn' ? 'আবার চেষ্টা করুন' : 'Retry'}
-              </Button>
-            )}
-          </div>
+          )}
+        </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {language === 'bn' ? 'মোট ইউজার' : 'Total Users'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-9 w-16" />
-                ) : (
-                  <div className="text-3xl font-bold">{users.length}</div>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {language === 'bn' ? 'অ্যাডমিন' : 'Admins'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-9 w-12" />
-                ) : (
-                  <div className="text-3xl font-bold">{users.filter(u => u.role === 'admin').length}</div>
-                )}
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  {language === 'bn' ? 'কাস্টমার' : 'Customers'}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <Skeleton className="h-9 w-12" />
-                ) : (
-                  <div className="text-3xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
+        {/* Stats */}
+        <div className="grid grid-cols-3 gap-3 md:gap-6 mb-6">
           <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex-1">
-                  <CardTitle>{language === 'bn' ? 'সকল ইউজার' : 'All Users'}</CardTitle>
-                  {selectedUsers.size > 0 && (
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {language === 'bn' 
-                        ? `${selectedUsers.size} জন নির্বাচিত`
-                        : `${selectedUsers.size} selected`
-                      }
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3">
-                  {/* Bulk Actions */}
-                  {selectedUsers.size > 0 && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" size="sm">
-                          <CheckSquare className="h-4 w-4 mr-2" />
-                          {language === 'bn' ? 'বাল্ক অ্যাকশন' : 'Bulk Actions'}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => exportSelectedUsers('csv')}>
-                          <Download className="h-4 w-4 mr-2" />
-                          {language === 'bn' ? 'CSV এক্সপোর্ট' : 'Export CSV'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => exportSelectedUsers('excel')}>
-                          <FileSpreadsheet className="h-4 w-4 mr-2" />
-                          {language === 'bn' ? 'Excel এক্সপোর্ট' : 'Export Excel'}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
+            <CardHeader className="pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                {language === 'bn' ? 'মোট ইউজার' : 'Total Users'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              {isLoading ? (
+                <Skeleton className="h-7 md:h-9 w-12 md:w-16" />
+              ) : (
+                <div className="text-xl md:text-3xl font-bold">{users.length}</div>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                {language === 'bn' ? 'অ্যাডমিন' : 'Admins'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              {isLoading ? (
+                <Skeleton className="h-7 md:h-9 w-10 md:w-12" />
+              ) : (
+                <div className="text-xl md:text-3xl font-bold">{users.filter(u => u.role === 'admin').length}</div>
+              )}
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2 p-3 md:p-6">
+              <CardTitle className="text-xs md:text-sm font-medium text-muted-foreground">
+                {language === 'bn' ? 'কাস্টমার' : 'Customers'}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 pt-0 md:p-6 md:pt-0">
+              {isLoading ? (
+                <Skeleton className="h-7 md:h-9 w-10 md:w-12" />
+              ) : (
+                <div className="text-xl md:text-3xl font-bold">{users.filter(u => u.role === 'customer').length}</div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-                  {/* Export All */}
+        <Card>
+          <CardHeader className="p-4 md:p-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle className="text-lg">{language === 'bn' ? 'সকল ইউজার' : 'All Users'}</CardTitle>
+                <div className="flex items-center gap-2">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm">
@@ -462,29 +478,30 @@ const UsersManagement: React.FC = () => {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => exportAllUsers('csv')}>
                         <Download className="h-4 w-4 mr-2" />
-                        {language === 'bn' ? 'সব CSV এক্সপোর্ট' : 'Export All CSV'}
+                        {language === 'bn' ? 'CSV' : 'CSV'}
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => exportAllUsers('excel')}>
                         <FileSpreadsheet className="h-4 w-4 mr-2" />
-                        {language === 'bn' ? 'সব Excel এক্সপোর্ট' : 'Export All Excel'}
+                        {language === 'bn' ? 'Excel' : 'Excel'}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-
-                  <div className="relative w-full sm:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                      placeholder={language === 'bn' ? 'সার্চ করুন...' : 'Search users...'} 
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      className="pl-9"
-                    />
-                  </div>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              {isError ? (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder={language === 'bn' ? 'সার্চ করুন...' : 'Search users...'} 
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 md:p-6 md:pt-0">
+            {isError ? (
+              <div className="p-4">
                 <ErrorState 
                   title={language === 'bn' ? 'ডেটা লোড করতে সমস্যা' : 'Failed to Load Data'}
                   description={isTimeout 
@@ -494,102 +511,31 @@ const UsersManagement: React.FC = () => {
                   onRetry={fetchUsers}
                   isTimeout={isTimeout}
                 />
-              ) : isLoading ? (
-                <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map(i => <Skeleton key={i} className="h-16 w-full" />)}
-                </div>
-              ) : filteredUsers.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-12">
-                          <Checkbox 
-                            checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
-                            onCheckedChange={toggleAllSelection}
-                          />
-                        </TableHead>
-                        <TableHead>{language === 'bn' ? 'ইউজার' : 'User'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'যোগাযোগ' : 'Contact'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'রোল' : 'Role'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'অর্ডার' : 'Orders'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'মোট খরচ' : 'Total Spent'}</TableHead>
-                        <TableHead>{language === 'bn' ? 'যোগদান' : 'Joined'}</TableHead>
-                        <TableHead className="text-right">{language === 'bn' ? 'অ্যাকশন' : 'Action'}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filteredUsers.map(user => (
-                        <TableRow key={user.id} className={selectedUsers.has(user.id) ? 'bg-primary/5' : ''}>
-                          <TableCell>
-                            <Checkbox 
-                              checked={selectedUsers.has(user.id)}
-                              onCheckedChange={() => toggleUserSelection(user.id)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <div>
-                              <p className="font-medium">{user.profile?.full_name || '-'}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {user.profile?.phone && (
-                                <div className="flex items-center gap-1 text-sm">
-                                  <Phone className="h-3 w-3" />
-                                  {user.profile.phone}
-                                </div>
-                              )}
-                              {user.profile?.company_name && (
-                                <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                                  <Building className="h-3 w-3" />
-                                  {user.profile.company_name}
-                                </div>
-                              )}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge 
-                              variant={user.role === 'admin' ? 'default' : 'secondary'}
-                              className="cursor-pointer hover:opacity-80"
-                              onClick={() => openRoleChangeDialog(user)}
-                            >
-                              {user.role === 'admin' ? (
-                                <><Shield className="h-3 w-3 mr-1" /> Admin</>
-                              ) : (
-                                'Customer'
-                              )}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{user.orders_count}</TableCell>
-                          <TableCell className="font-semibold">৳{user.total_spent.toLocaleString()}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {format(new Date(user.created_at), 'dd MMM yyyy')}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button variant="ghost" size="sm" onClick={() => openRoleChangeDialog(user)}>
-                                <UserCog className="h-4 w-4" />
-                              </Button>
-                              <Button variant="ghost" size="sm" onClick={() => viewUserOrders(user)}>
-                                <Package className="h-4 w-4 mr-1" />
-                                {language === 'bn' ? 'অর্ডার' : 'Orders'}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              ) : (
-                <p className="text-center text-muted-foreground py-8">
-                  {language === 'bn' ? 'কোন ইউজার পাওয়া যায়নি' : 'No users found'}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              </div>
+            ) : (
+              <ResponsiveAdminTable
+                data={filteredUsers}
+                columns={columns}
+                actions={actions}
+                keyExtractor={(user) => user.id}
+                isLoading={isLoading}
+                getTitle={(user) => user.profile?.full_name || user.email}
+                getSubtitle={(user) => user.email}
+                getBadge={(user) => ({
+                  text: user.role === 'admin' ? 'Admin' : 'Customer',
+                  variant: user.role === 'admin' ? 'default' : 'secondary',
+                })}
+                language={language as 'en' | 'bn'}
+                mobileExpandable={true}
+                emptyState={
+                  <p className="text-muted-foreground py-8">
+                    {language === 'bn' ? 'কোন ইউজার পাওয়া যায়নি' : 'No users found'}
+                  </p>
+                }
+              />
+            )}
+          </CardContent>
+        </Card>
 
       {/* User Orders Dialog */}
       <Dialog open={isOrdersDialogOpen} onOpenChange={setIsOrdersDialogOpen}>
