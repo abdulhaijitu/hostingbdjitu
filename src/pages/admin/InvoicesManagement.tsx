@@ -7,8 +7,6 @@ import { usePagePerformance } from '@/hooks/usePagePerformance';
 import { format } from 'date-fns';
 import { 
   FileText, 
-  Download, 
-  Eye, 
   Search, 
   Filter,
   CheckCircle2,
@@ -29,6 +27,7 @@ import {
 } from '@/components/ui/select';
 import { AdminStatsGridSkeleton } from '@/components/admin/AdminSkeletons';
 import ResponsiveAdminTable from '@/components/admin/ResponsiveAdminTable';
+import InvoiceActions from '@/components/billing/InvoiceActions';
 
 const QUERY_CONFIG = {
   staleTime: 30 * 1000,
@@ -109,7 +108,6 @@ const InvoicesManagement: React.FC = () => {
     }
   };
 
-  // Columns for ResponsiveAdminTable
   const columns = [
     {
       key: 'invoice_number',
@@ -118,17 +116,6 @@ const InvoicesManagement: React.FC = () => {
       render: (invoice: any) => (
         <span className="font-medium">{invoice.invoice_number}</span>
       ),
-    },
-    {
-      key: 'amount',
-      label: 'Amount',
-      render: (invoice: any) => `৳${invoice.amount.toLocaleString()}`,
-    },
-    {
-      key: 'tax',
-      label: 'Tax',
-      hideOnMobile: true,
-      render: (invoice: any) => `৳${(invoice.tax || 0).toLocaleString()}`,
     },
     {
       key: 'total',
@@ -149,25 +136,16 @@ const InvoicesManagement: React.FC = () => {
       hideOnMobile: true,
       render: (invoice: any) => format(new Date(invoice.created_at), 'MMM dd, yyyy'),
     },
-  ];
-
-  const actions = [
     {
-      label: 'View',
-      icon: <Eye className="h-4 w-4" />,
-      onClick: (invoice: any) => {
-        // View invoice details
-        console.log('View invoice:', invoice.id);
-      },
-    },
-    {
-      label: 'Download',
-      icon: <Download className="h-4 w-4" />,
-      onClick: (invoice: any) => {
-        if (invoice.pdf_url) {
-          window.open(invoice.pdf_url, '_blank');
-        }
-      },
+      key: 'actions',
+      label: 'Actions',
+      render: (invoice: any) => (
+        <InvoiceActions 
+          invoiceId={invoice.id} 
+          invoiceStatus={invoice.status}
+          variant="dropdown"
+        />
+      ),
     },
   ];
 
@@ -179,7 +157,6 @@ const InvoicesManagement: React.FC = () => {
       />
       
       <div className="p-4 md:p-6 lg:p-8 space-y-6">
-        {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-foreground">
@@ -197,7 +174,6 @@ const InvoicesManagement: React.FC = () => {
           )}
         </div>
 
-        {/* Stats Cards */}
         {isLoading ? (
           <AdminStatsGridSkeleton count={4} />
         ) : (
@@ -241,7 +217,6 @@ const InvoicesManagement: React.FC = () => {
           </div>
         )}
 
-        {/* Filters */}
         <Card>
           <CardContent className="p-4">
             <div className="flex flex-col sm:flex-row gap-4">
@@ -270,7 +245,6 @@ const InvoicesManagement: React.FC = () => {
           </CardContent>
         </Card>
 
-        {/* Invoices Table */}
         <Card>
           <CardHeader className="p-4 md:p-6">
             <CardTitle>{language === 'bn' ? 'ইনভয়েস তালিকা' : 'Invoices List'}</CardTitle>
@@ -291,22 +265,14 @@ const InvoicesManagement: React.FC = () => {
               <ResponsiveAdminTable
                 data={filteredInvoices}
                 columns={columns}
-                actions={actions}
                 keyExtractor={(invoice) => invoice.id}
                 isLoading={isLoading}
                 getTitle={(invoice) => invoice.invoice_number}
                 getSubtitle={(invoice) => `৳${invoice.total.toLocaleString()}`}
-                getBadge={(invoice) => {
-                  const variantMap: Record<string, 'success' | 'warning' | 'destructive' | 'secondary'> = {
-                    paid: 'success',
-                    unpaid: 'warning',
-                    overdue: 'destructive',
-                  };
-                  return {
-                    text: invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1),
-                    variant: variantMap[invoice.status] || 'secondary',
-                  };
-                }}
+                getBadge={(invoice) => ({
+                  text: invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1),
+                  variant: invoice.status === 'paid' ? 'success' : invoice.status === 'unpaid' ? 'warning' : 'destructive',
+                })}
                 language={language as 'en' | 'bn'}
                 mobileExpandable={true}
                 emptyState={

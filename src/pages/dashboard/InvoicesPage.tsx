@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, FileText, Download, CheckCircle, Clock, XCircle } from 'lucide-react';
+import { ArrowLeft, FileText, Download, CheckCircle, Clock, XCircle, Eye, Mail, RefreshCw } from 'lucide-react';
 import Layout from '@/components/layout/Layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -8,9 +8,11 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useInvoicePDF } from '@/hooks/useInvoicePDF';
 import { Skeleton } from '@/components/ui/skeleton';
 import SEOHead from '@/components/common/SEOHead';
 import { format } from 'date-fns';
+import InvoiceActions from '@/components/billing/InvoiceActions';
 
 const InvoicesPage: React.FC = () => {
   const { language } = useLanguage();
@@ -132,15 +134,11 @@ const InvoicesPage: React.FC = () => {
                             {format(new Date(invoice.created_at), 'dd MMM yyyy')}
                           </TableCell>
                           <TableCell className="text-right">
-                            {invoice.pdf_url ? (
-                              <Button variant="ghost" size="sm" asChild>
-                                <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer">
-                                  <Download className="h-4 w-4" />
-                                </a>
-                              </Button>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">-</span>
-                            )}
+                            <InvoiceActions 
+                              invoiceId={invoice.id} 
+                              invoiceStatus={invoice.status}
+                              variant="compact"
+                            />
                           </TableCell>
                         </TableRow>
                       ))}
