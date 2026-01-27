@@ -1,4 +1,4 @@
-import React, { useMemo, Suspense } from 'react';
+import React, { useMemo, Suspense, lazy } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   TrendingUp, DollarSign, ShoppingCart,
@@ -22,12 +22,19 @@ import {
   ErrorState 
 } from '@/components/common/DashboardSkeletons';
 import { cn } from '@/lib/utils';
+import { useAnalyticsDashboard } from '@/hooks/useAnalyticsDashboard';
+
+// Lazy load KPI cards for better performance
+const AnalyticsKPICards = lazy(() => import('@/components/admin/analytics/AnalyticsKPICards'));
 
 const AdminDashboard: React.FC = () => {
   const { language } = useLanguage();
   const isMobile = useIsMobile();
   const { data: orders, isLoading: ordersLoading, isError: ordersError, refetch: refetchOrders } = useOrders();
   const { data: payments, isLoading: paymentsLoading, isError: paymentsError, refetch: refetchPayments } = usePayments();
+  
+  // Analytics KPI data
+  const { kpiData, isLoading: analyticsLoading, refetchAll: refetchAnalytics } = useAnalyticsDashboard();
   
   // Track page performance
   usePagePerformance('Admin Dashboard');
@@ -53,6 +60,7 @@ const AdminDashboard: React.FC = () => {
   const handleRetry = () => {
     refetchOrders();
     refetchPayments();
+    refetchAnalytics();
   };
 
   const hasError = ordersError || paymentsError;
@@ -95,46 +103,22 @@ const AdminDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Stats Cards - Responsive grid */}
-        <div className={cn(
-          "grid gap-3",
-          isMobile ? "grid-cols-2 px-4 mb-4" : "grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
-        )}>
-          <MobileStatCard
-            title="Total Revenue"
-            titleBn="মোট রেভিনিউ"
-            value={`৳${stats.totalRevenue.toLocaleString()}`}
-            icon={<DollarSign className="h-5 w-5" />}
-            isLoading={paymentsLoading}
-            variant="primary"
-            language={language as 'en' | 'bn'}
-          />
-          <MobileStatCard
-            title="Total Orders"
-            titleBn="মোট অর্ডার"
-            value={stats.totalOrders}
-            icon={<ShoppingCart className="h-5 w-5" />}
-            isLoading={ordersLoading}
-            language={language as 'en' | 'bn'}
-          />
-          <MobileStatCard
-            title="Pending"
-            titleBn="পেন্ডিং"
-            value={stats.pendingOrders}
-            icon={<Package className="h-5 w-5" />}
-            isLoading={ordersLoading}
-            variant="warning"
-            language={language as 'en' | 'bn'}
-          />
-          <MobileStatCard
-            title="Completed"
-            titleBn="সম্পন্ন"
-            value={stats.completedOrders}
-            icon={<TrendingUp className="h-5 w-5" />}
-            isLoading={ordersLoading}
-            variant="success"
-            language={language as 'en' | 'bn'}
-          />
+        {/* Real-time KPI Cards */}
+        <div className={cn(isMobile ? "px-4 mb-4" : "mb-8")}>
+          <Suspense fallback={
+            <div className={cn("grid gap-3", isMobile ? "grid-cols-2" : "grid-cols-2 lg:grid-cols-4")}>
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-24 bg-card rounded-xl border animate-pulse" />
+              ))}
+            </div>
+          }>
+            <AnalyticsKPICards
+              data={kpiData}
+              isLoading={analyticsLoading}
+              language={language as 'en' | 'bn'}
+              isMobile={isMobile}
+            />
+          </Suspense>
         </div>
 
         {/* Quick Access Cards - Static, no loading needed */}
