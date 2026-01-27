@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChevronDown, Menu, X, Globe, Sun, Moon, Search, Phone, Mail, User, UserPlus, Headphones, Gift, LayoutDashboard } from 'lucide-react';
+import { ChevronDown, Menu, X, Globe, Sun, Moon, Search, Phone, Mail, User, Headphones, Gift, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useTheme } from 'next-themes';
-import { useAuth } from '@/contexts/AuthContext';
 import { cn } from '@/lib/utils';
+import { WHMCS_URLS } from '@/lib/whmcsConfig';
 import chostLogo from '@/assets/chost-logo.png';
 import SiteSearch from '@/components/common/SiteSearch';
 import PromoBanner from './PromoBanner';
@@ -15,6 +15,7 @@ interface MenuItem {
   label: string;
   href: string;
   key?: string;
+  external?: boolean;
   children?: Omit<MenuItem, 'children'>[];
 }
 
@@ -26,7 +27,6 @@ const Header: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const { language, setLanguage, t } = useLanguage();
   const { setTheme, resolvedTheme } = useTheme();
-  const { user } = useAuth();
 
   // Prevent hydration mismatch
   useEffect(() => {
@@ -151,23 +151,27 @@ const Header: React.FC = () => {
 
             {/* Right - Quick Links & Actions */}
             <div className="flex items-center gap-1 sm:gap-2 ml-auto">
-              {/* Affiliate Link */}
-              <Link 
-                to="/affiliate" 
+              {/* Affiliate Link - WHMCS */}
+              <a 
+                href={WHMCS_URLS.affiliates}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
               >
                 <Gift className="h-3.5 w-3.5" />
                 <span>{t('nav.affiliate')}</span>
-              </Link>
+              </a>
 
-              {/* Support Link */}
-              <Link 
-                to="/support" 
+              {/* Support Link - WHMCS */}
+              <a 
+                href={WHMCS_URLS.submitTicket}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
               >
                 <Headphones className="h-3.5 w-3.5" />
                 <span>{t('nav.support')}</span>
-              </Link>
+              </a>
 
               {/* Divider */}
               <div className="hidden md:block w-px h-4 bg-white/20 mx-1" />
@@ -206,36 +210,27 @@ const Header: React.FC = () => {
               {/* Divider */}
               <div className="hidden sm:block w-px h-4 bg-white/20 mx-1" />
 
-              {/* Auth - Show Dashboard if logged in, otherwise Login/Signup */}
-              {user ? (
-                <Link 
-                  to="/client" 
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" />
-                  <span className="hidden sm:inline">{language === 'bn' ? 'ড্যাশবোর্ড' : 'Dashboard'}</span>
-                </Link>
-              ) : (
-                <>
-                  {/* Login */}
-                  <Link 
-                    to="/login" 
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
-                  >
-                    <User className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{t('nav.login')}</span>
-                  </Link>
+              {/* Login - WHMCS Client Area */}
+              <a 
+                href={WHMCS_URLS.clientArea}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium hover:bg-white/10 rounded-md transition-colors"
+              >
+                <User className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t('nav.login')}</span>
+              </a>
 
-                  {/* Sign Up */}
-                  <Link 
-                    to="/signup" 
-                    className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
-                  >
-                    <UserPlus className="h-3.5 w-3.5" />
-                    <span className="hidden sm:inline">{t('nav.signup')}</span>
-                  </Link>
-                </>
-              )}
+              {/* Client Area Button */}
+              <a 
+                href={WHMCS_URLS.clientArea}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold bg-white text-primary hover:bg-white/90 rounded-md transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{language === 'bn' ? 'ক্লায়েন্ট এরিয়া' : 'Client Area'}</span>
+              </a>
             </div>
           </div>
         </div>
@@ -317,16 +312,14 @@ const Header: React.FC = () => {
                 </kbd>
               </button>
 
-              {/* Get Started Button */}
+              {/* Get Started Button - WHMCS */}
               <Button 
                 variant="hero" 
                 size="default" 
                 className="hidden sm:flex shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all duration-300"
-                asChild
+                onClick={() => window.location.href = WHMCS_URLS.billingHome}
               >
-                <Link to="/hosting/web">
-                  {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
-                </Link>
+                {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
               </Button>
 
               {/* Mobile Menu Toggle */}
@@ -386,24 +379,28 @@ const Header: React.FC = () => {
                 ))}
               </div>
 
-              {/* Mobile Quick Links */}
+              {/* Mobile Quick Links - WHMCS */}
               <div className="grid grid-cols-2 gap-2 pt-4 border-t border-border">
-                <Link
-                  to="/affiliate"
+                <a
+                  href={WHMCS_URLS.affiliates}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary bg-muted/30 hover:bg-primary/5 rounded-xl transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <Gift className="h-4 w-4" />
                   {t('nav.affiliate')}
-                </Link>
-                <Link
-                  to="/support"
+                </a>
+                <a
+                  href={WHMCS_URLS.submitTicket}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium text-foreground/80 hover:text-primary bg-muted/30 hover:bg-primary/5 rounded-xl transition-colors"
                   onClick={() => setIsOpen(false)}
                 >
                   <Headphones className="h-4 w-4" />
                   {t('nav.support')}
-                </Link>
+                </a>
               </div>
               
               {/* Mobile Theme & Language */}
@@ -435,20 +432,32 @@ const Header: React.FC = () => {
                 </button>
               </div>
 
-              {/* Mobile Auth Buttons */}
+              {/* Mobile Auth Buttons - WHMCS */}
               <div className="flex gap-2 pt-4 border-t border-border">
-                <Button variant="outline" className="flex-1" asChild>
-                  <Link to="/login" onClick={() => setIsOpen(false)}>
+                <a 
+                  href={WHMCS_URLS.clientArea}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Button variant="outline" className="w-full">
                     <User className="h-4 w-4 mr-2" />
                     {t('nav.login')}
-                  </Link>
-                </Button>
-                <Button variant="hero" className="flex-1" asChild>
-                  <Link to="/signup" onClick={() => setIsOpen(false)}>
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    {t('nav.signup')}
-                  </Link>
-                </Button>
+                  </Button>
+                </a>
+                <a 
+                  href={WHMCS_URLS.billingHome}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1"
+                  onClick={() => setIsOpen(false)}
+                >
+                  <Button variant="hero" className="w-full">
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
+                  </Button>
+                </a>
               </div>
             </div>
           </div>

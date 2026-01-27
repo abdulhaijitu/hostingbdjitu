@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Search, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { WHMCS_URLS } from '@/lib/whmcsConfig';
 
 const DomainSearch: React.FC = () => {
   const { t } = useLanguage();
@@ -17,8 +18,8 @@ const DomainSearch: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock search - just UI
-    console.log('Searching for:', domain);
+    // Redirect to WHMCS domain search
+    window.location.href = WHMCS_URLS.domainSearch;
   };
 
   return (
@@ -56,13 +57,14 @@ const DomainSearch: React.FC = () => {
         {/* Domain Extensions */}
         <div className="flex flex-wrap justify-center gap-4">
           {domainExtensions.map((item) => (
-            <div
+            <button
               key={item.ext}
+              onClick={() => window.location.href = WHMCS_URLS.domainSearch}
               className="flex items-center gap-2 px-5 py-3 rounded-xl bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20 transition-colors cursor-pointer"
             >
               <span className="font-semibold">{item.ext}</span>
               <span className="text-primary-foreground/60 text-sm">{item.price}/yr</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
