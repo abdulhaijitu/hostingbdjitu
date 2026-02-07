@@ -161,6 +161,13 @@ const PricingSection: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Billing Disclaimer */}
+        <p className="text-center text-sm text-muted-foreground mt-8">
+          {language === 'bn' 
+            ? '💳 বিলিং এবং পেমেন্ট আমাদের বিলিং পোর্টালের মাধ্যমে নিরাপদভাবে প্রক্রিয়া করা হয়।'
+            : '💳 Billing and payments are securely processed via our billing portal.'}
+        </p>
       </div>
     </section>
   );
