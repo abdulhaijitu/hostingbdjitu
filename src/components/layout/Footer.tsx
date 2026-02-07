@@ -153,6 +153,17 @@ const Footer: React.FC = () => {
         </div>
       </div>
 
+      {/* Billing Disclaimer */}
+      <div className="border-t border-primary-foreground/10">
+        <div className="container-wide py-4">
+          <p className="text-center text-xs text-primary-foreground/50">
+            {language === 'bn' 
+              ? '💳 বিলিং এবং পেমেন্ট আমাদের ক্লায়েন্ট পোর্টালের মাধ্যমে নিরাপদভাবে পরিচালিত হয়।'
+              : '💳 Billing and payments are securely handled via our client portal.'}
+          </p>
+        </div>
+      </div>
+
       {/* Bottom Bar */}
       <div className="border-t border-primary-foreground/10">
         <div className="container-wide py-6">
