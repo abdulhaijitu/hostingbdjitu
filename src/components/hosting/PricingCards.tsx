@@ -37,16 +37,23 @@ const PricingCards: React.FC<PricingCardsProps> = ({ category = 'web', isYearly 
   }
 
   return (
-    <div className="grid md:grid-cols-3 gap-8">
-      {filteredPlans.map((plan) => (
-        <PlanCard 
-          key={plan.id} 
-          plan={plan} 
-          isYearly={isYearly} 
-          language={language}
-          category={category}
-        />
-      ))}
+    <div>
+      <div className="grid md:grid-cols-3 gap-8">
+        {filteredPlans.map((plan) => (
+          <PlanCard 
+            key={plan.id} 
+            plan={plan} 
+            isYearly={isYearly} 
+            language={language}
+            category={category}
+          />
+        ))}
+      </div>
+      <p className="text-center text-sm text-muted-foreground mt-8">
+        {language === 'bn' 
+          ? '💳 বিলিং এবং পেমেন্ট আমাদের বিলিং পোর্টালের মাধ্যমে নিরাপদভাবে প্রক্রিয়া করা হয়।'
+          : '💳 Billing and payments are securely processed via our billing portal.'}
+      </p>
     </div>
   );
 };
@@ -97,6 +104,9 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, language, category 
         </p>
 
         <div className="mb-6">
+          <span className={cn('text-sm block mb-1', plan.is_featured ? 'text-primary-foreground/70' : 'text-muted-foreground')}>
+            {language === 'bn' ? 'শুরু হচ্ছে' : 'Starting from'}
+          </span>
           <div className="flex items-baseline gap-1">
             <span className={cn(
               'text-4xl lg:text-5xl font-bold font-display transition-all',
@@ -156,7 +166,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, isYearly, language, category 
           className="w-full"
           onClick={handleOrderClick}
         >
-          {language === 'bn' ? 'অর্ডার করুন' : 'Order Now'}
+          {language === 'bn' ? 'শুরু করুন' : 'Get Started'}
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
       </div>
